@@ -27,7 +27,11 @@ Evaders tools:
 CJ101 v5.0.5
 
 - Added /addtoset command
-- Added /ghost teleort Command_AddAlt
+- Added /ghost teleort Command
+- Added /mc to teleport to mount Chiliad
+- Added NRGs around mount Chiliad
+- Fixed some crashes
+- 
 -----------------------------------------------------------------------------------------
 
 */
@@ -1414,7 +1418,8 @@ public OnGameModeInit()
 	Server[boxtype] = 0;
 
 
- 
+	LoadProperties(); 
+
 	helislist = LoadModelSelectionMenu("helis.txt");
 	
 	new pName[MAX_PLAYER_NAME];
@@ -1747,10 +1752,9 @@ public OnGameModeInit()
 	AddStaticVehicle(522,-2710.1287,596.5121,14.0241,307.0720,8,82); // nrg
 	AddStaticVehicle(522,-2710.4766,601.4484,14.0258,307.8447,8,82); // nrg
 
-
-    
-//	LoadVehicles();
-
+	AddStaticVehicle(522,-2340.5168,-1675.6548,483.9260,355.1017,3,8); // nrg MC
+	AddStaticVehicle(522,-2336.3188,-1678.0830,483.4767,337.8435,3,8); // nrg
+	AddStaticVehicle(522,-2331.8174,-1680.3480,482.9688,325.6906,3,8); // nrg
     new tmpveh;
     // minigame vehicles
     tmpveh = AddStaticVehicleEx(470,221.5429,1919.9437,17.6327,183.6484,43,0,60); // patriot
@@ -1827,6 +1831,7 @@ public OnGameModeInit()
 	DB_StreamObjects("GasRep1");
 	DB_StreamObjects("ArmySpawn1");
 	DB_StreamObjects("ArmySpawn2");
+	DB_StreamObjects("SFAStuff");
 	BuildObjects();
 	
 	AutoNewsChange(random(5));
@@ -1881,7 +1886,7 @@ public OnGameModeExit()
 
 	//SaveServerConfig();
 	SendClientMessageToAll(COLOR_RED,"** The server is restarting, you have been kicked.");
-	SendClientMessageToAll(COLOR_RED,"** Add The Server To your favourites. IP: 139.99.137.130:1337");
+	SendClientMessageToAll(COLOR_RED,"** Add The Server To your favourites. IP: 15.204.209.239:7777");
 	for(new i = 0; i < MAX_PLAYERS; i++)
 	{
 		if(IsPlayerConnected(i) && Players[i][Logged] == true)
@@ -2710,19 +2715,12 @@ public OnPlayerConnect(playerid)
 	PlayerTextDrawSetOutline(playerid,AnnText[playerid],1);
 	PlayerTextDrawSetProportional(playerid,AnnText[playerid],true);
 	PlayerTextDrawSetShadow(playerid,AnnText[playerid],1);
-	if(GetUserID(playerid) != -1) LoadEasterEggs(playerid);
-
 	//TextDrawShowForPlayer(playerid, RXDM[0]);
 	TextDrawShowForPlayer(playerid, RXDM[1]);
 	//TextDrawShowForPlayer(playerid, RXDM[2]);
 	TextDrawShowForPlayer(playerid, RXDM[3]);
 	TextDrawShowForPlayer(playerid, RXDM[4]);
 	TextDrawShowForPlayer(playerid, RXDM[5]);
-
-	if(GetPlayerCount() == 1)
-	{
-	    AutoNewsChange(random(5));
-	}
 
 	Players[playerid][myramp] = 0;
 	
@@ -4908,8 +4906,6 @@ public RandomMessages()
 				format(xstring, 64, "You earned $%d from your properties!", Players[i][Earnings]);
 				SendClientMessage(i,COLOR_PINK, xstring);
 			}
-	        
-	        Save(i);
    		}
    		
 	}
@@ -4930,10 +4926,7 @@ public RandomMessages()
 	}  
 	else 
 	{
-		for(new i = 0; i < MAX_PLAYERS; i++)
-		{
-			Players[i][Lotto] = 0;
-		}
+		foreach(new i : Player) Players[i][Lotto] = 0;
 		SendClientMessageToAll(0xFF0BF468,"[##] Nobody won the lottery. Another winner will be picked soon! Type /lotto to buy a ticket");
 	}	
 
@@ -4968,7 +4961,7 @@ public OnPlayerModelSelectionEx(playerid, response, extraid, modelid)
 			new Float:ang;
 			GetPlayerFacingAngle(playerid,ang);
 			GetXYInFrontOfPlayer(playerid,x,y,0);
-   			new store = CreateDynamicObject(modelid,x+4,y,z,0,0,ang,GetPlayerVirtualWorld(playerid),-1,-1,STREAMER_OBJECT_DD);
+   			new store = CreateDynamicObject(modelid,x+4,y,z,0,0,ang,GetPlayerVirtualWorld(playerid),-1,-1);
 		    Streamer_UpdateEx(playerid,x,y,z);
 		    Streamer_SetIntData(STREAMER_TYPE_OBJECT,store,E_STREAMER_EXTRA_ID,Players[playerid][userID]); // store who created dis shit!
 			format(xstring,sizeof(xstring),"Object ID %d Created. (Model: %d)",store, modelid);
@@ -11322,7 +11315,6 @@ public DerbyTimer()
 	    			ActiveDerby = false;
 	 		    	DerbyLoaded = false;
 	 		    	DerbyPlayers = 0;
-		 		    DestroyDerbyObjects();
 					DerbyZ = 0;
 					new winnerid;
 					for(new p = 0; p < MAX_PLAYERS; p++)
@@ -11837,9 +11829,9 @@ stock GetPlayerCountExNPC()
 stock GetPlayerCount()
 {
 	new count;
-	for(new v = 0; v < MAX_PLAYERS; v++)
+	foreach(new i : Player)
 	{
-		if(IsPlayerConnected(v)) count++;
+		count++;
 	}
 	return count;
 }
@@ -12061,29 +12053,6 @@ stock Login(playerid)
 			if(value == 0) Players[playerid][readteles] = false; else Players[playerid][readteles] = true;
 		}
 
-
-		/*
-		switch(Players[playerid][AdminLvl])
-		{
-			case 1 .. 8:
-   			{
-				if(IsValidDynamic3DTextLabel(Players[playerid][MyLabel])) DestroyDynamic3DTextLabel(Players[playerid][MyLabel]);
-				Players[playerid][MyLabel] = CreateDynamic3DTextLabel("Admin", COLOR_PINK ,0,0,0.4,100,playerid);
-	    	}
-
-			case 9:
-			{
-				if(IsValidDynamic3DTextLabel(Players[playerid][MyLabel])) DestroyDynamic3DTextLabel(Players[playerid][MyLabel]);
-				Players[playerid][MyLabel] = CreateDynamic3DTextLabel("Management", COLOR_PINK ,0,0,0.4,100,playerid);
-			}
-
-			case 10:
-			{
-				if(IsValidDynamic3DTextLabel(Players[playerid][MyLabel])) DestroyDynamic3DTextLabel(Players[playerid][MyLabel]);
-				Players[playerid][MyLabel] = CreateDynamic3DTextLabel("Server Owner", COLOR_PINK ,0,0,0.4,100,playerid);
-			}
-		}
-		*/
 		
 		SendClientMessage(playerid,COLOR_AMSG,"* Don't forget, you can change your Admin Settings with /as");
 	}
@@ -12095,6 +12064,7 @@ stock Login(playerid)
 		Players[playerid][God] = true;
 	}
 	LoadKeys(playerid);
+ 	LoadEasterEggs(playerid);
 	return 1;
 }
 
@@ -12137,7 +12107,7 @@ stock Save(playerid)
 		GetPVarString(playerid,"IP",ip,16);
 	   	format(xstring, sizeof(xstring), "UPDATE `users` SET `score` = '%d',`Deaths` = '%d', `Money` = '%d',`AdminLvl` = '%d',`Color` = '%d', `oranges` = '%d', `apples` = '%d' WHERE `Name` = '%p'", Players[playerid][score],Players[playerid][Deaths],Players[playerid][Money],Players[playerid][AdminLvl],Players[playerid][Color],Players[playerid][oranges],Players[playerid][apples],playerid);
 	 	mysql_query(SQL,xstring);
-		format(xstring, sizeof(xstring), "UPDATE `users` SET `Skin` = '%d',`RacesWon` = '%d',`RacesJoined` = '%d', `AdminMsgs` = '%d', `MyCar` = '%d', `groupName` = '%s',`Rank` = '%d',`Exp`='%d' WHERE `Name` = '%p'", Players[playerid][Skin],Players[playerid][RacesWon],Players[playerid][RacesJoined],IntBool(Players[playerid][AdminMsgs]),Players[playerid][MyCar],Players[playerid][groupName],Players[playerid][Rank],Players[playerid][Expierience],playerid);
+		format(xstring, sizeof(xstring), "UPDATE `users` SET `Skin` = '%d',`RacesWon` = '%d',`RacesJoined` = '%d', `AdminMsgs` = '%d', `MyCar` = '%d', `groupName` = '%s',`Rank` = '%d',`Exp`='%d' WHERE `Name` = '%p'", Players[playerid][Skin],Players[playerid][RacesWon],Players[playerid][RacesJoined],Players[playerid][AdminMsgs],Players[playerid][MyCar],Players[playerid][groupName],Players[playerid][Rank],Players[playerid][Expierience],playerid);
  		mysql_query(SQL,xstring);
 
 	   	format(xstring, sizeof(xstring), "UPDATE `users` SET `IPAddress` = '%s', `TimeIngame` = '%d', `VIP` = '%d', `Token` = '%d', `LastOnline` = CURDATE(), `banked` = '%d', `favwpn` = '%d' WHERE `Name` = '%p'",ip,Players[playerid][PlayTime],Players[playerid][VIP],Players[playerid][Token],Players[playerid][banked],Players[playerid][favwpn],playerid);
@@ -18367,6 +18337,15 @@ CMD:cage(playerid,params[])
   	return 1;
 }
 
+CMD:m2(playerid,params[])
+{
+	if(Players[playerid][Minigame] != 0) return SendClientMessage(playerid,COLOR_RED,"You cannot use commands in minigames (or in jail)");
+	SetPlayerInterior(playerid,0);
+ 	GotoPosition(playerid,-2394.1541,-2204.1350,33.2891,true);
+  	GameTextForPlayer(playerid,"~w~ Mount Chilliad",500,3);
+	return 1;
+}
+
 CMD:m1(playerid,params[])
 {
 	if(Players[playerid][Minigame] != 0) return SendClientMessage(playerid,COLOR_RED,"You cannot use commands in minigames (or in jail)");
@@ -18376,14 +18355,6 @@ CMD:m1(playerid,params[])
 	return 1;
 }
 
-CMD:m2(playerid,params[])
-{
-	if(Players[playerid][Minigame] != 0) return SendClientMessage(playerid,COLOR_RED,"You cannot use commands in minigames (or in jail)");
-	SetPlayerInterior(playerid,0);
- 	GotoPosition(playerid,-2316.4858,-1643.9733,483.7031,true);
-  	GameTextForPlayer(playerid,"~w~ Mount Chilliad",500,3);
-	return 1;
-}
 
 CMD:m3(playerid,params[])
 {
@@ -18393,6 +18364,46 @@ CMD:m3(playerid,params[])
   	GameTextForPlayer(playerid,"~w~ Mount Chilliad",500,3);
 	return 1;
 }
+
+CMD:mc(playerid,params[])
+{
+	if(Players[playerid][Minigame] != 0) return SendClientMessage(playerid,COLOR_RED,"You cannot use commands in minigames (or in jail)");
+	SetPlayerInterior(playerid,0);
+	switch(random(2))
+	{
+	    case 0:
+	    {
+	        SetCameraBehindPlayer(playerid);
+    		Streamer_UpdateEx(playerid,-2288.3550,-1641.0165,483.5883);
+	  		GotoPosition(playerid,-2288.3550,-1641.0165,483.5883,true);
+	  		SetPlayerFacingAngle(playerid,91.0431);
+	   		GameTextForPlayer(playerid,"~w~Mount Chiliad",800,3);
+	    }
+
+	    case 1:
+	    {
+	        SetCameraBehindPlayer(playerid);
+    		Streamer_UpdateEx(playerid,-2326.3452,-1591.1569,483.7349);
+	  		GotoPosition(playerid,-2326.3452,-1591.1569,483.7349,true);
+	  		SetPlayerFacingAngle(playerid,205.7242);
+	   		GameTextForPlayer(playerid,"~w~Mount Chiliad",800,3);
+	    }
+
+	    case 2:
+	    {
+	        SetCameraBehindPlayer(playerid);
+    		Streamer_UpdateEx(playerid,-2347.5100,-1657.4861,483.7143);
+	  		GotoPosition(playerid,-2347.5100,-1657.4861,483.7143,true);
+	  		SetPlayerFacingAngle(playerid,304.1118);
+	   		GameTextForPlayer(playerid,"~w~Mount Chiliad",800,3);
+	    }
+	}
+	
+	format(xstring, sizeof(xstring),"Player %p (ID:%d) teleported to /mc (mount chiliad)",playerid,playerid);
+	SendTeleMessageToAdmins(COLOR_YELLOW,2,xstring);
+	return 1;
+}
+
 
 CMD:da(playerid,params[])
 {
@@ -20772,20 +20783,11 @@ CMD:drift(playerid,params[])
 			SetVehicleVirtualWorld(GetPlayerVehicleID(playerid), GetPlayerVirtualWorld(playerid));
 		}
 
-		new str[1200];//format(str,sizeof str,"");
+		new str[1000];
 		mysql_query(SQL,"SELECT  `dID`,`dName`, `X`, `Y`, `Z`, `A` FROM `drift` ORDER BY `drift`.`dName` ASC");
-		//mysql_store_result();
-		//new x=0;
-		if(cache_num_rows() == 0)
-		{
-
-			SendClientMessage(playerid, -1, "No tracks avaiable in Drift");
-		}
+		if(cache_num_rows() == 0) SendClientMessage(playerid, COLOR_RED, "No tracks avaiable in Drift");
 		else
 		{
-		//	while(mysql_fetch_row(line))
-		//	{
-			//sscanf(line,"p<|>ds[32]ffff",__loading[playerid][x],DriftName[playerid],DriftPos[playerid][0],DriftPos[playerid][1],DriftPos[playerid][2],DriftPos[playerid][3]);
 			for(new x=0;x<cache_num_rows();x++)
 			{
 				cache_get_value_name_int(x,"dID", __loading[playerid][x]);
@@ -20796,23 +20798,23 @@ CMD:drift(playerid,params[])
 				cache_get_value_name_float(x,"A", DriftPos[playerid][3]);
 				if(x == 0) format(str,sizeof str,"{00A86B}%d. %s",x+1,DriftName[playerid]);
 				else format(str,sizeof str,"%s\n{00A86B}%d. %s",str,x+1,DriftName[playerid]);
-		//	x++;
 			}
-			//format(str, sizeof(str), "{00FFFF}Try Again!?!\n{FF9900}Random TT Race\n%s", str);
 			ShowPlayerDialog(playerid,3894,DIALOG_STYLE_LIST,"{FFFFFF}Drift Mode  - {FF0000}v1", str,"VEHICLES!","Exit");
-			for(new i = 143; i < MAX_VEHICLES; i++)
+			new i = 143;
+			foreach(i : Vehicle)
+			{
+				if(!IsSeatTaken(i,0)) DestroyVehicleEx(i);
+			}
+			/*
+			for(i = 143; i < MAX_VEHICLES; i++)
 			{
 				if(!IsSeatTaken(i,0))
 				{
 						DestroyVehicleEx(i);
 				}
 			}
+			*/
 		}
-		//mysql_free_result();
-
-		//DriftPos
-
-		// dialog id .. 1st place -> then vehicle
     	return 1;
 }
 
@@ -21529,13 +21531,12 @@ CMD:car(playerid,params[])
 	{
 		if(Players[playerid][Minigame] != 0) return SendClientMessage(playerid,COLOR_RED,"You cannot use commands in minigames (or in jail)");
 		if(IsPlayerInAnyVehicle(playerid)) return SendClientMessage(playerid,COLOR_RED,"Get out of your vehicle first!");
-		//if(IsVehicleSpawned(GetPVarInt(playerid,"CallCar"))) DestroyVehicleEx(GetPVarInt(playerid,"CallCar"));
 		new Float:angle;
 		new color = random(125);
 		new Float:X,Float:Y,Float:Z;
 		GetPlayerPos(playerid,X,Y,Z);
 		GetPlayerFacingAngle(playerid,angle);
-		new car = CreateVehicle(411,X,Y,Z,angle,color,color,0);
+		new car = CreateVehicle(411,X,Y,Z,angle,color,color,-1);
 		SetVehicleVirtualWorld(car, GetPlayerVirtualWorld(playerid));
 		PutPlayerInVehicle(playerid,car,0);
 		Players[playerid][LastCar] = car;
@@ -21545,13 +21546,12 @@ CMD:car(playerid,params[])
 	{
 		if(Players[playerid][Minigame] != 0) return SendClientMessage(playerid,COLOR_RED,"You cannot use commands in minigames (or in jail)");
 		if(IsPlayerInAnyVehicle(playerid)) return SendClientMessage(playerid,COLOR_RED,"Get out of your vehicle first!");
-		//if(IsVehicleSpawned(GetPVarInt(playerid,"CallCar"))) DestroyVehicleEx(GetPVarInt(playerid,"CallCar"));
 		new Float:angle;
 		new color = random(125);
 		new Float:X,Float:Y,Float:Z;
 		GetPlayerPos(playerid,X,Y,Z);
 		GetPlayerFacingAngle(playerid,angle);
-		new car = CreateVehicle(Players[playerid][MyCar],X,Y,Z,angle,color,color,0);
+		new car = CreateVehicle(Players[playerid][MyCar],X,Y,Z,angle,color,color,-1);
 		SetVehicleVirtualWorld(car, GetPlayerVirtualWorld(playerid));
 		PutPlayerInVehicle(playerid,car,0);
 		Players[playerid][LastCar] = car;
@@ -22222,13 +22222,6 @@ public RandomMinigame()
 
 				DerbyTime = SetTimer("DerbyTimer",1000,true);
 
-	            if(strlen(ObjSet) > 0)
-	            {
-	                // load the needed object set - stored in id 102
-	                LoadDerbyMap(ObjSet);
-	                // DestroyAllAdminObjects(102)
-	            }
-
 				// load the derby spawns
 				format(xstring,sizeof xstring,"SELECT * FROM `dSpawns` WHERE `dName` = '%s'",dname);
 				mysql_query(SQL,xstring);
@@ -22243,11 +22236,8 @@ public RandomMinigame()
 					cache_get_value_name_float(e,"dRot", DerbySpawns[e][3]);
 				}
 
-
-				// load the derby pickups
 				format(xstring,sizeof xstring,"SELECT * FROM `dPickups` WHERE `dName` = '%s'",dname);
 				mysql_query(SQL,xstring);
-				//total = cache_num_rows();
 				new Float:px,Float:py,Float:pz;
 
 
@@ -22266,9 +22256,8 @@ public RandomMinigame()
 				DerbyLoaded = true;
 	            DerbyPlayers = 0;
 
-				format(xstring,sizeof xstring,">> Derby '%s' (Created by %s) starts soon! /joinderby",dname,Creator);
-				SendClientMessageToAll(COLOR_MINIGAME,xstring);
-				SendClientMessageToAll(COLOR_MINIGAME,">> You can join this derby by using the /joinderby command");
+				format(xstring,sizeof xstring,">> Derby '{FFFFFF}%s' {FFDD00}starts soon! To join this derby, type {D52DFF}/joinderby",dname,Creator);
+				SendClientMessageToAll(COLOR_YELLOW,xstring);
 				PlaySoundForAll(1056);
 				SetTimer("StartDerby",60000,false);
 
@@ -22299,7 +22288,6 @@ public RandomMinigame()
 				cache_get_value_name(0,"sCreator",creator);
 		
 				new Float:x,Float:y,Float:z,Float:rx,Float:ry,Float:rz,aModel,an,to;
-				//new ma,mmodel,txd[20],textname[20],macolor;
 		
 		
 				format(xstring,sizeof xstring,"SELECT * FROM `objectdata` WHERE `setID` = '%d'", setID);
@@ -22326,7 +22314,7 @@ public RandomMinigame()
 					// Actually Create the object!
 					if(aModel != 0)
 		 			{
-						an = CreateDynamicObject(aModel,x,y,z,rx,ry,rz,875,-1,-1,STREAMER_OBJECT_DD);
+						an = CreateDynamicObject(aModel,x,y,z,rx,ry,rz,875,-1,-1);
 					 	Streamer_SetIntData(STREAMER_TYPE_OBJECT,an,E_STREAMER_EXTRA_ID,300); // store who created dis shit!
 						to++;
 
@@ -22437,7 +22425,6 @@ public StartDerby()
 		ActiveDerby = false;
 		DerbyVehicle = 0;
 		DerbyPlayers = 0;
-		DestroyDerbyObjects();
 
 		foreach(new e : Player)
 		{
@@ -22879,7 +22866,7 @@ CMD:loadsurvival(playerid, params[])
 			// Actually Create the object!
 			if(aModel != 0)
  			{
-				an = CreateDynamicObject(aModel,x,y,z,rx,ry,rz,875,-1,-1,STREAMER_OBJECT_DD);
+				an = CreateDynamicObject(aModel,x,y,z,rx,ry,rz,875,-1,-1);
 			 	Streamer_SetIntData(STREAMER_TYPE_OBJECT,an,E_STREAMER_EXTRA_ID,300); // store who created dis shit!
 				to++;
 
@@ -23171,7 +23158,6 @@ CMD:unloadderby(playerid, params[])
 	
 	DerbyLoaded = false;
 	DerbyVehicle = 0;
-	DestroyDerbyObjects();
 	DerbyPlayers = 0;
 	DerbyZ = 0.0;
 	DerbyInterior = 0;
@@ -23214,7 +23200,6 @@ CMD:startderby(playerid, params[])
 	    	DerbyLoaded = false;
 			ActiveDerby = false;
 			DerbyVehicle = 0;
-			DestroyDerbyObjects();
 			DerbyPlayers = 0;
 
 			for(new e=0; e < MAX_PLAYERS; e++)
@@ -23687,7 +23672,7 @@ CMD:loopobj(playerid,params[])
 			new Float:ang;
 			GetPlayerFacingAngle(playerid,ang);
 			GetXYInFrontOfPlayer(playerid,x,y,0);
-			store = CreateDynamicObject(mod,x+tmp2[0],y+tmp2[1],z+tmp2[2],rot[0],rot[1],ang+rot[2],GetPlayerVirtualWorld(playerid),-1,-1,STREAMER_OBJECT_DD);
+			store = CreateDynamicObject(mod,x+tmp2[0],y+tmp2[1],z+tmp2[2],rot[0],rot[1],ang+rot[2],GetPlayerVirtualWorld(playerid),-1,-1);
 			Streamer_SetIntData(STREAMER_TYPE_OBJECT,store,E_STREAMER_EXTRA_ID,Players[playerid][userID]); // store who created dis shit!
 			Streamer_UpdateEx(playerid,x,y,z);
 			tmp2[0] += tmp[0];
@@ -23760,7 +23745,7 @@ CMD:loopobj3(playerid,params[])
 				new Float:ang;
 				GetPlayerFacingAngle(playerid,ang);
 				GetXYInFrontOfPlayer(playerid,x,y,0);
-				store= CreateDynamicObject(mod,x+tmp2[0],y+tmp2[1],z+tmp2[2],rot[0],rot[1],ang+rot[2],GetPlayerVirtualWorld(playerid),-1,-1,STREAMER_OBJECT_DD);
+				store= CreateDynamicObject(mod,x+tmp2[0],y+tmp2[1],z+tmp2[2],rot[0],rot[1],ang+rot[2],GetPlayerVirtualWorld(playerid),-1,-1);
                 Streamer_SetIntData(STREAMER_TYPE_OBJECT,store,E_STREAMER_EXTRA_ID,Players[playerid][userID]); // store who created dis shit!
 				format(str,sizeof(str),"Object %d Created. (Model: %d)",store,mod);
 				SendClientMessage(playerid,COLOR_OBJ,str);
@@ -23786,7 +23771,7 @@ CMD:myramp(playerid,params[])
 	    new Float:x,Float:y,Float:z,Float:ang;
 	    GetPlayerFacingAngle(playerid, ang);
 	    GetPlayerPos(playerid,x,y,z);
-	    Players[playerid][myramp] = CreateDynamicObject(1634,x,y+3,z-1,0,0,ang,GetPlayerVirtualWorld(playerid),-1,playerid,STREAMER_OBJECT_DD);
+	    Players[playerid][myramp] = CreateDynamicObject(1634,x,y+3,z-1,0,0,ang,GetPlayerVirtualWorld(playerid),-1,playerid);
 	    GameTextForPlayer(playerid,"~g~ramp created!",800,3);
 		SendClientMessage(playerid,COLOR_GREEN,"* You can use /deleteramp (/dramp) to delete. [ Only you can see the ramp ]");
 	}   else SendClientMessage(playerid,COLOR_GREEN,"* You already made a ramp!");
@@ -23914,7 +23899,7 @@ CMD:loadobjects(playerid,params[])
 			// Actually Create the object!
 			if(aModel != 0)
  			{
-				an = CreateDynamicObject(aModel,x,y,z,rx,ry,rz,0,-1,playerid,STREAMER_OBJECT_DD);
+				an = CreateDynamicObject(aModel,x,y,z,rx,ry,rz,0,-1,playerid);
 				if(a == 0) first = an;
 			 	Streamer_SetIntData(STREAMER_TYPE_OBJECT,an,E_STREAMER_EXTRA_ID,Players[playerid][userID]); // store who created dis shit!
 				to++;
@@ -24039,7 +24024,7 @@ CMD:streamset(playerid,params[])
 
 			if(aModel != 0)
  			{
-				an = CreateDynamicObject(aModel,x,y,z,rx,ry,rz,0,-1,-1,STREAMER_OBJECT_DD);
+				an = CreateDynamicObject(aModel,x,y,z,rx,ry,rz,0,-1,-1);
 				objids[a] = an;
 			 	Streamer_SetIntData(STREAMER_TYPE_OBJECT,an,E_STREAMER_EXTRA_ID,-2); // store who created dis shit!
 				to++;
@@ -24144,7 +24129,7 @@ CMD:loadset(playerid,params[])
 			// Actually Create the object!
 			if(aModel != 0)
  			{
-				an = CreateDynamicObject(aModel,x,y,z,rx,ry,rz,0,intr,-1,STREAMER_OBJECT_DD);
+				an = CreateDynamicObject(aModel,x,y,z,rx,ry,rz,0,intr,-1);
 				objids[a] = an;
 				if(a == 0) first = an;
 			 	Streamer_SetIntData(STREAMER_TYPE_OBJECT,an,E_STREAMER_EXTRA_ID,Players[playerid][userID]); // store who created dis shit!
@@ -24478,7 +24463,7 @@ CMD:cno(playerid,params[])
 		 	new store;
 		  	new Float:x,Float:y,Float:z;
 			GetPlayerPos(playerid,x,y,z);
-		    store = CreateDynamicObject(obj,x+4,y,z,0,0,0,GetPlayerVirtualWorld(playerid),-1,playerid,STREAMER_OBJECT_DD);
+		    store = CreateDynamicObject(obj,x+4,y,z,0,0,0,GetPlayerVirtualWorld(playerid),-1,playerid);
 		    Streamer_SetIntData(STREAMER_TYPE_OBJECT,store,E_STREAMER_EXTRA_ID,Players[playerid][userID]); // store who created dis shit!
 			format(xstring,sizeof(xstring),"Object %d Created. (Model: %d) (Stream Object Count: %d)",store,obj,CountDynamicObjects());
 			SendClientMessage(playerid,COLOR_OBJ,xstring);
@@ -24491,7 +24476,7 @@ CMD:cno(playerid,params[])
 		 	new store;
 		  	new Float:x,Float:y,Float:z;
 			GetPlayerPos(playerid,x,y,z);
-		    store = CreateDynamicObject(obj,x+4,y,z,0,0,0,GetPlayerVirtualWorld(playerid),-1,playerid,STREAMER_OBJECT_DD);
+		    store = CreateDynamicObject(obj,x+4,y,z,0,0,0,GetPlayerVirtualWorld(playerid),-1,playerid);
 		    Streamer_SetIntData(STREAMER_TYPE_OBJECT,store,E_STREAMER_EXTRA_ID,Players[playerid][userID]); // store who created dis shit!
 			format(xstring,sizeof(xstring),"Object %d Created. (Model: %d) (Stream Object Count: %d)",store,obj,CountDynamicObjects());
 			SendClientMessage(playerid,COLOR_OBJ,xstring);
@@ -24600,7 +24585,7 @@ CMD:obj(playerid,params[])
 		new Float:ang;
 		GetPlayerFacingAngle(playerid,ang);
 		GetXYInFrontOfPlayer(playerid,x,y,0);
-  		store = CreateDynamicObject(obj,x+4,y,z,0,0,ang,GetPlayerVirtualWorld(playerid),-1,-1,STREAMER_OBJECT_DD);
+  		store = CreateDynamicObject(obj,x+4,y,z,0,0,ang,GetPlayerVirtualWorld(playerid));
     	Streamer_SetIntData(STREAMER_TYPE_OBJECT,store,E_STREAMER_EXTRA_ID,Players[playerid][userID]); // store who created dis shit!
 	    Streamer_UpdateEx(playerid,x,y,z);
 		format(xstring,sizeof(xstring),"Object {E0E494}%d Created{FFFFFF}. (Model: {E0E494}%d{FFFFFF}). If you see a question mark, that is not a valid object.",store,obj);
@@ -24803,7 +24788,7 @@ CMD:door(playerid,params[])
 	    GetPlayerPos(playerid,x,y,z);
 	    GetXYInFrontOfPlayer(playerid,x,y,0.5);
 	    GetPlayerPos(playerid,x,y,z);
-	    store = CreateDynamicObject(1502,x+1.0,y,z,0,0,0,0,-1,-1,STREAMER_OBJECT_DD);
+	    store = CreateDynamicObject(1502,x+1.0,y,z,0,0,0,0,-1,-1);
     	Streamer_SetIntData(STREAMER_TYPE_OBJECT,store,E_STREAMER_EXTRA_ID,Players[playerid][userID]); // store who created dis shit
 		format(xstring,sizeof(xstring),"Object {E0E494}%d{FFFFFF} Created. Model ID: {E0E494}3865",store);
 		SendClientMessage(playerid,COLOR_WHITE,xstring);
@@ -24818,7 +24803,7 @@ CMD:door(playerid,params[])
 	    GetPlayerPos(playerid,x,y,z);
 	    GetXYInFrontOfPlayer(playerid,x,y,0.5);
 	    GetPlayerPos(playerid,x,y,z);
-	    store = CreateDynamicObject(1502,x+1.0,y,z,0,0,0,0,-1,playerid,STREAMER_OBJECT_DD);
+	    store = CreateDynamicObject(1502,x+1.0,y,z,0,0,0,0,-1,playerid);
     	Streamer_SetIntData(STREAMER_TYPE_OBJECT,store,E_STREAMER_EXTRA_ID,Players[playerid][userID]); // store who created dis shit
 		format(xstring,sizeof(xstring),"Object {E0E494}%d{FFFFFF} Created. Model ID: {E0E494}3865",store);
 		SendClientMessage(playerid,COLOR_WHITE,xstring);
@@ -24839,7 +24824,7 @@ CMD:pipe(playerid,params[])
 	    GetPlayerPos(playerid,x,y,z);
 	    GetXYInFrontOfPlayer(playerid,x,y,0.5);
 	    GetPlayerPos(playerid,x,y,z);
-	    store = CreateDynamicObject(3865,x+1.0,y,z,0,0,0,0,-1,-1,STREAMER_OBJECT_DD);
+	    store = CreateDynamicObject(3865,x+1.0,y,z,0,0,0,0,-1,-1);
     	Streamer_SetIntData(STREAMER_TYPE_OBJECT,store,E_STREAMER_EXTRA_ID,Players[playerid][userID]); // store who created dis shit
 		format(xstring,sizeof(xstring),"Object {E0E494}%d{FFFFFF} Created. Model ID: {E0E494}3865",store);
 		SendClientMessage(playerid,COLOR_WHITE,xstring);
@@ -24859,7 +24844,7 @@ CMD:stair(playerid,params[])
 	    GetPlayerPos(playerid,x,y,z);
 	    GetXYInFrontOfPlayer(playerid,x,y,0.5);
 		GetPlayerFacingAngle(playerid,ang);
-	    store = CreateDynamicObject(12950,x,y,z,0,0,ang,0,-1,-1,STREAMER_OBJECT_DD);
+	    store = CreateDynamicObject(12950,x,y,z,0,0,ang,0,-1,-1);
      	Streamer_SetIntData(STREAMER_TYPE_OBJECT,store,E_STREAMER_EXTRA_ID,Players[playerid][userID]); // store who created dis shit!
 		format(xstring,sizeof(xstring),"Object {E0E494}%d{FFFFFF} Created. Model ID: {E0E494}12950",store);
 		SendClientMessage(playerid,COLOR_WHITE,xstring);
@@ -24874,7 +24859,7 @@ CMD:stair(playerid,params[])
 	    GetPlayerPos(playerid,x,y,z);
 	    GetXYInFrontOfPlayer(playerid,x,y,0.5);
 	    GetPlayerPos(playerid,x,y,z);
-	    store = CreateDynamicObject(12950,x,y,z,0,0,0,0,-1,playerid,STREAMER_OBJECT_DD);
+	    store = CreateDynamicObject(12950,x,y,z,0,0,0,0,-1,playerid);
     	Streamer_SetIntData(STREAMER_TYPE_OBJECT,store,E_STREAMER_EXTRA_ID,Players[playerid][userID]); // store who created dis shit
 		format(xstring,sizeof(xstring),"Object {E0E494}%d{FFFFFF} Created. Model ID: {E0E494}12950",store);
 		SendClientMessage(playerid,COLOR_WHITE,xstring);
@@ -24894,7 +24879,7 @@ CMD:funnel2(playerid,params[])
 	    GetPlayerPos(playerid,x,y,z);
 	    GetPlayerFacingAngle(playerid,ang);
 		GetXYInFrontOfPlayer(playerid,x,y,1);
-	    store = CreateDynamicObject(18994,x,y+5,z-1,0,0,ang,0,-1,-1,STREAMER_OBJECT_DD);
+	    store = CreateDynamicObject(18994,x,y+5,z-1,0,0,ang,0,-1,-1);
     	Streamer_SetIntData(STREAMER_TYPE_OBJECT,store,E_STREAMER_EXTRA_ID,Players[playerid][userID]); // store who created dis shit!
 		format(xstring,sizeof(xstring),"Object {E0E494}%d{FFFFFF} Created. Model ID: {E0E494}18994",store);
 		SendClientMessage(playerid,COLOR_YELLOW,xstring);
@@ -24909,7 +24894,7 @@ CMD:funnel2(playerid,params[])
 	    GetPlayerPos(playerid,x,y,z);
 	    GetXYInFrontOfPlayer(playerid,x,y,0.5);
 	    GetPlayerPos(playerid,x,y,z);
-	    store = CreateDynamicObject(18994,x,y+5,z-1,0,0,0,0,-1,playerid,STREAMER_OBJECT_DD);
+	    store = CreateDynamicObject(18994,x,y+5,z-1,0,0,0,0,-1,playerid);
     	Streamer_SetIntData(STREAMER_TYPE_OBJECT,store,E_STREAMER_EXTRA_ID,Players[playerid][userID]); // store who created dis shit
 		format(xstring,sizeof(xstring),"Object {E0E494}%d{FFFFFF} Created. Model ID: {E0E494}18994",store);
 		SendClientMessage(playerid,COLOR_WHITE,xstring);
@@ -24929,7 +24914,7 @@ CMD:spotlight(playerid,params[])
 	    GetPlayerPos(playerid,x,y,z);
 	    GetPlayerFacingAngle(playerid,ang);
 		GetXYInFrontOfPlayer(playerid,x,y,1);
-	    store = CreateDynamicObject(18656,x,y,z-1,0,0,ang,0,-1,-1,STREAMER_OBJECT_DD);
+	    store = CreateDynamicObject(18656,x,y,z-1,0,0,ang,0,-1,-1);
     	Streamer_SetIntData(STREAMER_TYPE_OBJECT,store,E_STREAMER_EXTRA_ID,Players[playerid][userID]); // store who created dis shit!
 		format(xstring,sizeof(xstring),"Object {E0E494}%d{FFFFFF} Created. Model ID: {E0E494}18656",store);
 		SendClientMessage(playerid,COLOR_YELLOW,xstring);
@@ -24944,7 +24929,7 @@ CMD:spotlight(playerid,params[])
 	    GetPlayerPos(playerid,x,y,z);
 	    GetXYInFrontOfPlayer(playerid,x,y,0.5);
 	    GetPlayerPos(playerid,x,y,z);
-	    store = CreateDynamicObject(18656,x,y,z-1,0,0,0,0,-1,playerid,STREAMER_OBJECT_DD);
+	    store = CreateDynamicObject(18656,x,y,z-1,0,0,0,0,-1,playerid);
     	Streamer_SetIntData(STREAMER_TYPE_OBJECT,store,E_STREAMER_EXTRA_ID,Players[playerid][userID]); // store who created dis shit
 		format(xstring,sizeof(xstring),"Object {E0E494}%d{FFFFFF} Created. Model ID: {E0E494}18656",store);
 		SendClientMessage(playerid,COLOR_WHITE,xstring);
@@ -24964,7 +24949,7 @@ CMD:funnel1(playerid,params[])
 	    GetPlayerPos(playerid,x,y,z);
 	    GetPlayerFacingAngle(playerid,ang);
 		GetXYInFrontOfPlayer(playerid,x,y,1);
-	    store = CreateDynamicObject(18983,x,y+8,z-1,0,0,ang,0,-1,-1,STREAMER_OBJECT_DD);
+	    store = CreateDynamicObject(18983,x,y+8,z-1,0,0,ang,0,-1,-1);
     	Streamer_SetIntData(STREAMER_TYPE_OBJECT,store,E_STREAMER_EXTRA_ID,Players[playerid][userID]); // store who created dis shit!
 		format(xstring,sizeof(xstring),"Object {E0E494}%d{FFFFFF} Created. Model ID: {E0E494}18983",store);
 		SendClientMessage(playerid,COLOR_YELLOW,xstring);
@@ -24979,7 +24964,7 @@ CMD:funnel1(playerid,params[])
 	    GetPlayerPos(playerid,x,y,z);
 	    GetXYInFrontOfPlayer(playerid,x,y,0.5);
 	    GetPlayerPos(playerid,x,y,z);
-	    store = CreateDynamicObject(18983,x,y+8,z-1,0,0,0,0,-1,playerid,STREAMER_OBJECT_DD);
+	    store = CreateDynamicObject(18983,x,y+8,z-1,0,0,0,0,-1,playerid);
     	Streamer_SetIntData(STREAMER_TYPE_OBJECT,store,E_STREAMER_EXTRA_ID,Players[playerid][userID]); // store who created dis shit
 		format(xstring,sizeof(xstring),"Object {E0E494}%d{FFFFFF} Created. Model ID: {E0E494}18983",store);
 		SendClientMessage(playerid,COLOR_WHITE,xstring);
@@ -24999,7 +24984,7 @@ CMD:ramp(playerid,params[])
 	    GetPlayerPos(playerid,x,y,z);
 	    GetPlayerFacingAngle(playerid,ang);
 		GetXYInFrontOfPlayer(playerid,x,y,1);
-	    store = CreateDynamicObject(1634,x,y+0.5,z-1,0,0,ang,0,-1,-1,STREAMER_OBJECT_DD);
+	    store = CreateDynamicObject(1634,x,y+0.5,z-1,0,0,ang,0,-1,-1);
     	Streamer_SetIntData(STREAMER_TYPE_OBJECT,store,E_STREAMER_EXTRA_ID,Players[playerid][userID]); // store who created dis shit!
 		format(xstring,sizeof(xstring),"Object {E0E494}%d{FFFFFF} Created. Model ID: {E0E494}1634",store);
 		SendClientMessage(playerid,COLOR_YELLOW,xstring);
@@ -25014,7 +24999,7 @@ CMD:ramp(playerid,params[])
 	    GetPlayerPos(playerid,x,y,z);
 	    GetXYInFrontOfPlayer(playerid,x,y,0.5);
 	    GetPlayerPos(playerid,x,y,z);
-	    store = CreateDynamicObject(1634,x,y+0.5,z-1,0,0,0,0,-1,playerid,STREAMER_OBJECT_DD);
+	    store = CreateDynamicObject(1634,x,y+0.5,z-1,0,0,0,0,-1,playerid);
     	Streamer_SetIntData(STREAMER_TYPE_OBJECT,store,E_STREAMER_EXTRA_ID,Players[playerid][userID]); // store who created dis shit
 		format(xstring,sizeof(xstring),"Object {E0E494}%d{FFFFFF} Created. Model ID: {E0E494}1634",store);
 		SendClientMessage(playerid,COLOR_WHITE,xstring);
@@ -25032,7 +25017,7 @@ CMD:myfence(playerid,params[])
     GetPlayerPos(playerid,x,y,z);
     GetPlayerFacingAngle(playerid,ang);
 	GetXYInFrontOfPlayer(playerid,x,y,1);
- 	store = CreateDynamicObject(971,x,y,z-1,-90,0,ang,0,-1,-1,STREAMER_OBJECT_DD);
+ 	store = CreateDynamicObject(971,x,y,z-1,-90,0,ang,0,-1,-1);
  	Streamer_SetIntData(STREAMER_TYPE_OBJECT,store,E_STREAMER_EXTRA_ID,Players[playerid][userID]); // store who created dis shit!
 	format(xstring,sizeof(xstring),"Object {E0E494}%d{FFFFFF} Created (And Attached). Use /dmao To delete attached objects",store);
 	SendClientMessage(playerid,COLOR_YELLOW,xstring);
@@ -25051,7 +25036,7 @@ CMD:bridge(playerid,params[])
 	    GetPlayerPos(playerid,x,y,z);
 	    GetPlayerFacingAngle(playerid,ang);
 		GetXYInFrontOfPlayer(playerid,x,y,1);
-	    store = CreateDynamicObject(19588,x,y,z+2,0,0,ang,0,-1,-1,STREAMER_OBJECT_DD);
+	    store = CreateDynamicObject(19588,x,y,z+2,0,0,ang,0,-1,-1);
     	Streamer_SetIntData(STREAMER_TYPE_OBJECT,store,E_STREAMER_EXTRA_ID,Players[playerid][userID]); // store who created dis shit!
 		format(xstring,sizeof(xstring),"Object {E0E494}%d{FFFFFF} Created. Model ID: {E0E494}19588",store);
 		SendClientMessage(playerid,COLOR_YELLOW,xstring);
@@ -25066,7 +25051,7 @@ CMD:bridge(playerid,params[])
 	    GetPlayerPos(playerid,x,y,z);
 	    GetXYInFrontOfPlayer(playerid,x,y,0.5);
 	    GetPlayerPos(playerid,x,y,z);
-	    store = CreateDynamicObject(19588,x,y,z+2,0,0,0,0,-1,playerid,STREAMER_OBJECT_DD);
+	    store = CreateDynamicObject(19588,x,y,z+2,0,0,0,0,-1,playerid);
     	Streamer_SetIntData(STREAMER_TYPE_OBJECT,store,E_STREAMER_EXTRA_ID,Players[playerid][userID]); // store who created dis shit
 		format(xstring,sizeof(xstring),"Object {E0E494}%d{FFFFFF} Created. Model ID: {E0E494}19588",store);
 		SendClientMessage(playerid,COLOR_WHITE,xstring);
@@ -25085,7 +25070,7 @@ CMD:funbowl(playerid,params[])
 	    GetPlayerPos(playerid,x,y,z);
 	    GetPlayerFacingAngle(playerid,ang);
 		GetXYInFrontOfPlayer(playerid,x,y,1);
-	    store = CreateDynamicObject(18802,x,y+7,z-1,0,0,ang,0,-1,-1,STREAMER_OBJECT_DD);
+	    store = CreateDynamicObject(18802,x,y+7,z-1,0,0,ang,0,-1,-1);
     	Streamer_SetIntData(STREAMER_TYPE_OBJECT,store,E_STREAMER_EXTRA_ID,Players[playerid][userID]); // store who created dis shit!
 		format(xstring,sizeof(xstring),"Object {E0E494}%d{FFFFFF} Created. Model ID: {E0E494}18802",store);
 		SendClientMessage(playerid,COLOR_YELLOW,xstring);
@@ -25100,7 +25085,7 @@ CMD:funbowl(playerid,params[])
 	    GetPlayerPos(playerid,x,y,z);
 	    GetXYInFrontOfPlayer(playerid,x,y,0.5);
 	    GetPlayerPos(playerid,x,y,z);
-	    store = CreateDynamicObject(18802,x,y+7,z-1,0,0,0,0,-1,playerid,STREAMER_OBJECT_DD);
+	    store = CreateDynamicObject(18802,x,y+7,z-1,0,0,0,0,-1,playerid);
     	Streamer_SetIntData(STREAMER_TYPE_OBJECT,store,E_STREAMER_EXTRA_ID,Players[playerid][userID]); // store who created dis shit
 		format(xstring,sizeof(xstring),"Object {E0E494}%d{FFFFFF} Created. Model ID: {E0E494}18802",store);
 		SendClientMessage(playerid,COLOR_WHITE,xstring);
@@ -25119,7 +25104,7 @@ CMD:loop(playerid,params[])
 	    GetPlayerPos(playerid,x,y,z);
 	    GetPlayerFacingAngle(playerid,ang);
 		GetXYInFrontOfPlayer(playerid,x,y,1);
-	    store = CreateDynamicObject(18801,x,y+7,z-1,0,0,ang,0,-1,-1,STREAMER_OBJECT_DD);
+	    store = CreateDynamicObject(18801,x,y+7,z-1,0,0,ang,0,-1,-1);
     	Streamer_SetIntData(STREAMER_TYPE_OBJECT,store,E_STREAMER_EXTRA_ID,Players[playerid][userID]); // store who created dis shit!
 		format(xstring,sizeof(xstring),"Object {E0E494}%d{FFFFFF} Created. Model ID: {E0E494}18801",store);
 		SendClientMessage(playerid,COLOR_YELLOW,xstring);
@@ -25134,7 +25119,7 @@ CMD:loop(playerid,params[])
 	    GetPlayerPos(playerid,x,y,z);
 	    GetXYInFrontOfPlayer(playerid,x,y,0.5);
 	    GetPlayerPos(playerid,x,y,z);
-	    store = CreateDynamicObject(18801,x,y+7,z-1,0,0,0,0,-1,playerid,STREAMER_OBJECT_DD);
+	    store = CreateDynamicObject(18801,x,y+7,z-1,0,0,0,0,-1,playerid);
     	Streamer_SetIntData(STREAMER_TYPE_OBJECT,store,E_STREAMER_EXTRA_ID,Players[playerid][userID]); // store who created dis shit
 		format(xstring,sizeof(xstring),"Object {E0E494}%d{FFFFFF} Created. Model ID: {E0E494}18801",store);
 		SendClientMessage(playerid,COLOR_WHITE,xstring);
@@ -25150,7 +25135,7 @@ CMD:chicken(playerid,params[])
     new store;
     new Float:x,Float:y,Float:z;
     GetPlayerPos(playerid,x,y,z);
-    store = CreateDynamicObject(16776,x,y+4,z-1,0,0,0,0,-1,-1,STREAMER_OBJECT_DD);
+    store = CreateDynamicObject(16776,x,y+4,z-1,0,0,0,0,-1,-1);
    	Streamer_SetIntData(STREAMER_TYPE_OBJECT,store,E_STREAMER_EXTRA_ID,Players[playerid][userID]); // store who created dis shit!
 	format(xstring,sizeof(xstring),"Object {E0E494}%d{FFFFFF} Created. Model ID: {E0E494}16766",store);
 	SendClientMessage(playerid,COLOR_YELLOW,xstring);
@@ -25167,7 +25152,7 @@ CMD:barrier(playerid,params[])
 	    new Float:x,Float:y,Float:z;
 	    GetPlayerPos(playerid,x,y,z);
 	    GetXYInFrontOfPlayer(playerid,x,y,4.0);
-	    store = CreateDynamicObject(1422,x,y+5,z-2,0,0,0,0,GetPlayerVirtualWorld(playerid),-1,STREAMER_OBJECT_DD);
+	    store = CreateDynamicObject(1422,x,y+5,z-2,0,0,0,0,GetPlayerVirtualWorld(playerid),-1);
 	    Streamer_SetIntData(STREAMER_TYPE_OBJECT,store,E_STREAMER_EXTRA_ID,Players[playerid][userID]); // store who created dis shit!
 		format(xstring,sizeof(xstring),"Object {E0E494}%d{FFFFFF} Created. Model ID: {E0E494}1422",store);
 		SendClientMessage(playerid,COLOR_YELLOW,xstring);
@@ -25186,7 +25171,7 @@ CMD:palm(playerid,params[])
 	    new Float:x,Float:y,Float:z;
 	    GetPlayerPos(playerid,x,y,z);
 	    GetXYInFrontOfPlayer(playerid,x,y,4.0);
-	    store = CreateDynamicObject(620,x,y+5,z-2,0,0,0,0,GetPlayerVirtualWorld(playerid),-1,STREAMER_OBJECT_DD);
+	    store = CreateDynamicObject(620,x,y+5,z-2,0,0,0,0,GetPlayerVirtualWorld(playerid),-1);
 	    Streamer_SetIntData(STREAMER_TYPE_OBJECT,store,E_STREAMER_EXTRA_ID,Players[playerid][userID]); // store who created dis shit!
 		format(xstring,sizeof(xstring),"Object {E0E494}%d{FFFFFF} Created. Model ID: {E0E494}620",store);
 		SendClientMessage(playerid,COLOR_YELLOW,xstring);
@@ -25206,7 +25191,7 @@ CMD:tower(playerid,params[])
 	    new Float:x,Float:y,Float:z;
 	    GetPlayerPos(playerid,x,y,z);
 	    GetXYInFrontOfPlayer(playerid,x,y,4.0);
-	    store = CreateDynamicObject(3279,x,y+5,z-2,0,0,0,0,GetPlayerVirtualWorld(playerid),-1,STREAMER_OBJECT_DD);
+	    store = CreateDynamicObject(3279,x,y+5,z-2,0,0,0,0,GetPlayerVirtualWorld(playerid),-1);
 	    Streamer_SetIntData(STREAMER_TYPE_OBJECT,store,E_STREAMER_EXTRA_ID,Players[playerid][userID]); // store who created dis shit!
 		format(xstring,sizeof(xstring),"Object {E0E494}%d{FFFFFF} Created. Model ID: {E0E494}3279",store);
 		SendClientMessage(playerid,COLOR_YELLOW,xstring);
@@ -25225,7 +25210,7 @@ CMD:landmass(playerid,params[])
 	    new Float:x,Float:y,Float:z;
 	    GetPlayerPos(playerid,x,y,z);
 	    GetXYInFrontOfPlayer(playerid,x,y,4.0);
-	    store = CreateDynamicObject(11695,x,y+5,z-2,0,0,0,0,GetPlayerVirtualWorld(playerid),-1,STREAMER_OBJECT_DD);
+	    store = CreateDynamicObject(11695,x,y+5,z-2,0,0,0,0,GetPlayerVirtualWorld(playerid),-1);
 	    Streamer_SetIntData(STREAMER_TYPE_OBJECT,store,E_STREAMER_EXTRA_ID,Players[playerid][userID]); // store who created dis shit!
 		format(xstring,sizeof(xstring),"Object {E0E494}%d{FFFFFF} Created. Model ID: {E0E494}11695",store);
 		SendClientMessage(playerid,COLOR_YELLOW,xstring);
@@ -25245,7 +25230,7 @@ CMD:forsale(playerid,params[])
 	    new Float:x,Float:y,Float:z;
 	    GetPlayerPos(playerid,x,y,z);
 	    GetXYInFrontOfPlayer(playerid,x,y,4.0);
-	    store = CreateDynamicObject(19470,x,y+5,z-2,0,0,0,0,GetPlayerVirtualWorld(playerid),-1,STREAMER_OBJECT_DD);
+	    store = CreateDynamicObject(19470,x,y+5,z-2,0,0,0,0,GetPlayerVirtualWorld(playerid),-1);
 	    Streamer_SetIntData(STREAMER_TYPE_OBJECT,store,E_STREAMER_EXTRA_ID,Players[playerid][userID]); // store who created dis shit!
 		format(xstring,sizeof(xstring),"Object {E0E494}%d{FFFFFF} Created. Model ID: {E0E494}19470",store);
 		SendClientMessage(playerid,COLOR_YELLOW,xstring);
@@ -25263,7 +25248,7 @@ CMD:elevator(playerid,params[])
 	    new Float:x,Float:y,Float:z;
 	    GetPlayerPos(playerid,x,y,z);
 	    GetXYInFrontOfPlayer(playerid,x,y,4.0);
-	    store = CreateDynamicObject(18755,x,y+5,z-2,0,0,0,0,GetPlayerVirtualWorld(playerid),-1,STREAMER_OBJECT_DD);
+	    store = CreateDynamicObject(18755,x,y+5,z-2,0,0,0,0,GetPlayerVirtualWorld(playerid),-1);
 	    Streamer_SetIntData(STREAMER_TYPE_OBJECT,store,E_STREAMER_EXTRA_ID,Players[playerid][userID]); // store who created dis shit!
 		format(xstring,sizeof(xstring),"Object {E0E494}%d{FFFFFF} Created. Model ID: {E0E494}18755",store);
 		SendClientMessage(playerid,COLOR_YELLOW,xstring);
@@ -25282,7 +25267,7 @@ CMD:christmastree(playerid,params[])
 	    new Float:x,Float:y,Float:z;
 	    GetPlayerPos(playerid,x,y,z);
 	    GetXYInFrontOfPlayer(playerid,x,y,4.0);
-	    store = CreateDynamicObject(19076,x,y+5,z-2,0,0,0,0,GetPlayerVirtualWorld(playerid),-1,STREAMER_OBJECT_DD);
+	    store = CreateDynamicObject(19076,x,y+5,z-2,0,0,0,0,GetPlayerVirtualWorld(playerid),-1);
 	    Streamer_SetIntData(STREAMER_TYPE_OBJECT,store,E_STREAMER_EXTRA_ID,Players[playerid][userID]); // store who created dis shit!
 		format(xstring,sizeof(xstring),"Object {E0E494}%d{FFFFFF} Created. Model ID: {E0E494}19076",store);
 		SendClientMessage(playerid,COLOR_YELLOW,xstring);
@@ -25300,7 +25285,7 @@ CMD:house(playerid,params[])
 	    new Float:x,Float:y,Float:z;
 	    GetPlayerPos(playerid,x,y,z);
 	    GetXYInFrontOfPlayer(playerid,x,y,4.0);
-	    store = CreateDynamicObject(11490,x,y+5,z-2,0,0,0,0,GetPlayerVirtualWorld(playerid),-1,STREAMER_OBJECT_DD);
+	    store = CreateDynamicObject(11490,x,y+5,z-2,0,0,0,0,GetPlayerVirtualWorld(playerid),-1);
 	    Streamer_SetIntData(STREAMER_TYPE_OBJECT,store,E_STREAMER_EXTRA_ID,Players[playerid][userID]); // store who created dis shit!
 		format(xstring,sizeof(xstring),"Object {E0E494}%d{FFFFFF} Created. Model ID: {E0E494}11490",store);
 		SendClientMessage(playerid,COLOR_YELLOW,xstring);
@@ -25429,7 +25414,7 @@ CMD:lift2(playerid,params[])
 	    GetPlayerPos(playerid,x,y,z);
 	    GetXYInFrontOfPlayer(playerid,x,y,0.5);
 		GetPlayerFacingAngle(playerid,ang);
-	    store = CreateDynamicObject(18755,x,y,z-1,0,0,ang,0,-1,-1,STREAMER_OBJECT_DD);
+	    store = CreateDynamicObject(18755,x,y,z-1,0,0,ang,0,-1,-1);
      	Streamer_SetIntData(STREAMER_TYPE_OBJECT,store,E_STREAMER_EXTRA_ID,Players[playerid][userID]); // store who created dis shit!
 		format(xstring,sizeof(xstring),"Lift Object ID {E0E494}%d{FFFFFF} Created. Model ID: {E0E494}12950",store);
 		SendClientMessage(playerid,COLOR_WHITE,xstring);
@@ -25465,7 +25450,7 @@ CMD:lift(playerid,params[])
 	    GetPlayerPos(playerid,x,y,z);
 	    GetXYInFrontOfPlayer(playerid,x,y,0.5);
 		GetPlayerFacingAngle(playerid,ang);
-	    store = CreateDynamicObject(3115,x,y,z-1,0,0,ang,0,-1,-1,STREAMER_OBJECT_DD);
+	    store = CreateDynamicObject(3115,x,y,z-1,0,0,ang,0,-1,-1);
      	Streamer_SetIntData(STREAMER_TYPE_OBJECT,store,E_STREAMER_EXTRA_ID,Players[playerid][userID]); // store who created dis shit!
 		format(xstring,sizeof(xstring),"Lift Object ID {E0E494}%d{FFFFFF} Created. Model ID: {E0E494}12950",store);
 		SendClientMessage(playerid,COLOR_WHITE,xstring);
@@ -25923,19 +25908,7 @@ GetVIPTotalCreatedObjects(playerid)
 	return t;
 }
 
-DestroyDerbyObjects()
-{
-	new uid;
-	for(new a = 0; a <= CountDynamicObjects(); a++)
-	{
-		uid = Streamer_GetIntData(STREAMER_TYPE_OBJECT, a, E_STREAMER_EXTRA_ID);
-		if(uid == 500)
-		{
-				DestroyDynamicObject(a);
-		}
-	}
-	return 1;
-}
+
 
 CMD:gmlo(playerid,params[])
 {
@@ -26042,7 +26015,7 @@ CMD:vpo(playerid,params[])
 			{
 			    // Assigned to the player
 			    tpo++;
-				store = CreateDynamicObject(GetDynamicObjectModel(a),x,y,z,rx,ry,rz,GetPlayerVirtualWorld(playerid),-1,-1,STREAMER_OBJECT_DD);
+				store = CreateDynamicObject(GetDynamicObjectModel(a),x,y,z,rx,ry,rz,GetPlayerVirtualWorld(playerid),-1,-1);
  		 		Streamer_SetIntData(STREAMER_TYPE_OBJECT,store,E_STREAMER_EXTRA_ID,Players[playerid][userID]); // store who created dis shit!
 			}
 		}
@@ -26155,7 +26128,7 @@ CMD:do(playerid,params[])
 		new Float:x,Float:y,Float:z,Float:rx,Float:ry,Float:rz,rtr;
 	 	GetDynamicObjectPos(obj,x,y,z);
 	 	GetDynamicObjectRot(obj,rx,ry,rz);
-	 	rtr = CreateDynamicObject(GetDynamicObjectModel(obj),x+1,y,z,rx,ry,rz,0,-1,-1,STREAMER_OBJECT_DD);
+	 	rtr = CreateDynamicObject(GetDynamicObjectModel(obj),x+1,y,z,rx,ry,rz,0,-1,-1);
 	 	Streamer_SetIntData(STREAMER_TYPE_OBJECT,rtr,E_STREAMER_EXTRA_ID,Players[playerid][userID]); // store who created dis shit!
  		new model,txd[20],textname[20],macolor;
  		for(new a = 0; a <= 15; a++)
@@ -30378,7 +30351,7 @@ CMD:washplayer(playerid,params[])
 			SendMessageToAdminsEx(COLOR_AMSG,3,xstring);
 			new Float:x,Float:y,Float:z;
 			GetPlayerPos(playerid,x,y,z);
-	 	 	Players[playerid][Wash] = CreateDynamicObject(3515,x,y,z-4,0,0,0,0,-1,-1,STREAMER_OBJECT_DD);
+	 	 	Players[playerid][Wash] = CreateDynamicObject(3515,x,y,z-4,0,0,0,0,-1,-1);
 			Streamer_Update(playerid);
 			if(!IsPlayerNPC(id)) TogglePlayerControllable(playerid,false);
 			SetTimerEx("Unwash",5000,false,"d",playerid);
@@ -30391,7 +30364,7 @@ CMD:washplayer(playerid,params[])
 		SendClientMessage(id,COLOR_RED,xstring);
 		new Float:x,Float:y,Float:z;
 		GetPlayerPos(id,x,y,z);
-		Players[id][Wash] = CreateDynamicObject(3515,x,y,z-4,0,0,0,0,-1,-1,STREAMER_OBJECT_DD);
+		Players[id][Wash] = CreateDynamicObject(3515,x,y,z-4,0,0,0,0,-1,-1);
 		Streamer_Update(playerid);
 	 	Streamer_Update(id);
 		if(!IsPlayerNPC(id)) TogglePlayerControllable(id,false);
@@ -32687,18 +32660,7 @@ SaveRace(playerid)
 	format(xstring,sizeof xstring,"SELECT `raceID` FROM `race` where `racename` = '%s'",BName[playerid]);
 	mysql_query(SQL,xstring);
 	if(cache_num_rows() != 0) return SendClientMessage(playerid,COLOR_RED,"[||] Race Name Already Exist!");
-	/*
-	mysql_query(SQL,"SELECT `raceID` FROM `race` ORDER BY `race`.`raceID` DESC LIMIT 1");
-	if(cache_num_rows() == 0)
-	{
-	    print("race error 1");
-	    return 0;
-	}
-	if(cache_num_rows()!= 0)
-	{
-		cache_get_value_name_int(0,"raceID",tmp_rID);
-	}
-	*/
+	
 	format(xstring,sizeof xstring,"INSERT INTO `race` (`TotalCP`, `racename`,  `vehicleID`, `interior`,`CreatedBy`, `bombrace`,`rweather`) VALUES ('%d','%s','%d','%d','%p','%d','%d')",BTotalCPs[playerid],BName[playerid],BVehicleID[playerid],BInterior[playerid],playerid,bombrace,tmpw);
 	mysql_query(SQL,xstring);
 
@@ -32978,6 +32940,9 @@ public RaceCountDown()
 }
 GoGoRace()
 {
+	format(xstring,sizeof xstring,":race_car: Race '%s' has started with %d racers",R_Name,TotalRacers);
+	DCC_SendChannelMessage(DCGen,xstring);
+	
 //	printf("enters");
 	TotalRacers = 0;
 	foreach(new i : Player)
@@ -33342,7 +33307,7 @@ public OnPlayerEnterRaceCheckpoint(playerid)
 			format(query,sizeof(query),"* %p has finished the race at \'%d\' (%0.3f Seconds)", playerid,position,float(RaceTime)/1000.0);
 			SendClientMessageToAll(COLOR_GREY,query);
 	
-			format(string2, sizeof(string2), "**%p (ID:%d)** has finished the race at '%d' (%0.3f Seconds)", playerid,playerid,position,float(RaceTime)/1000.0);
+			format(string2, sizeof(string2), "**%p (ID:%d)** has finished the race in position %d (%0.3f Seconds)", playerid,playerid,position,float(RaceTime)/1000.0);
 			DCC_SendChannelMessage(DCGen,string2);
 			
 			
@@ -34990,7 +34955,7 @@ stock DB_StreamObjects(const setname[])
 		cache_get_value_name_float(a,"rY",ry);
 		cache_get_value_name_float(a,"rZ",rz);
 			
-		if(aModel != 0) CreateDynamicObject(aModel,x,y,z,rx,ry,rz,0,-1,-1);
+		if(aModel != 0) CreateDynamicObject(aModel,x,y,z,rx,ry,rz,0);
 	}
 	
 	format(xstring,sizeof xstring,"SELECT * FROM `objmaterials` WHERE `setID` = '%d'", setID);
@@ -35478,7 +35443,7 @@ stock LoadDerbyMap(mapname[])
 		// Actually Create the object!
 		if(aModel != 0)
 		{
-			an = CreateDynamicObject(aModel,x,y,z,rx,ry,rz,205,-1,-1,STREAMER_OBJECT_DD);
+			an = CreateDynamicObject(aModel,x,y,z,rx,ry,rz,205,-1,-1);
    			Streamer_SetIntData(STREAMER_TYPE_OBJECT,an,E_STREAMER_EXTRA_ID,500); // ID 500 for derby
 
 		}
@@ -36877,7 +36842,7 @@ forward DestroyVehicleEx(vehicleid);
 public DestroyVehicleEx(vehicleid)
 {
 	if(vehicleid > laststatic) return DestroyVehicle(vehicleid);
-	else if(vehicleid < firststatic) return SetVehicleToRespawn(vehicleid); // just respawn it
+	else if(vehicleid < firststatic) return SetVehicleToRespawn(vehicleid);
 	else return -1;
 }
 
@@ -36968,7 +36933,7 @@ public Float:GetPlayerZ(playerid)
 forward CreateAdminObject(playerid,modelid,Float:x,Float:y,Float:z,Float:rx,Float:ry,Float:rz);
 public CreateAdminObject(playerid,modelid,Float:x,Float:y,Float:z,Float:rx,Float:ry,Float:rz)
 {
-	new store = CreateDynamicObject(modelid,x+4,y,z,rx,ry,rz,GetPlayerVirtualWorld(playerid),-1,-1,STREAMER_OBJECT_DD);
+	new store = CreateDynamicObject(modelid,x+4,y,z,rx,ry,rz,GetPlayerVirtualWorld(playerid),-1,-1);
 	Streamer_SetIntData(STREAMER_TYPE_OBJECT,store,E_STREAMER_EXTRA_ID,Players[playerid][userID]); // store who created dis shit!
 	return 1;
 }
@@ -44118,91 +44083,91 @@ public BuildObjects()
 	CreateDynamicObject(5716,-5943.0000000,856.0999800,366.5000000,0.0000000,0.0000000,235.7500000); //object(manns01_lawn) (1)	
 	
 	//poolhouse /ph
-	CreateDynamicObject(3115, -684.70288085938, 402.22344970703, 0.62499994039536, 0.000000, 0.000000, 0.000000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3115, -663.97601318359, 402.18029785156, 0.62499994039536, 0.000000, 0.000000, 0.000000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3115, -642.88861083984, 403.21832275391, 0.59999996423721, 0.000000, 0.000000, 0.000000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3115, -621.84808349609, 402.39926147461, 0.59999996423721, 0.000000, 0.000000, 0.000000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3115, -621.65411376953, 383.49298095703, 0.67499989271164, 0.000000, 0.000000, 0.000000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3115, -621.619140625, 364.78952026367, 0.62499994039536, 0.000000, 0.000000, 0.000000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3115, -642.64422607422, 364.9157409668, 0.59999996423721, 0.000000, 0.000000, 0.000000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3115, -663.68157958984, 364.87884521484, 0.55000001192093, 0.000000, 0.000000, 0.000000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3115, -684.73400878906, 364.96374511719, 0.51974219083786, 0.000000, 0.000000, 0.000000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3115, -684.71044921875, 383.60052490234, 0.57499998807907, 0.000000, 0.000000, 0.000000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3115, -684.5791015625, 411.38598632813, 8.9249963760376, 90, 0.000000, 0.000000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3115, -663.4365234375, 411.39016723633, 8.9249963760376, 90, 0.000000, 0.000000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3115, -642.50408935547, 411.39447021484, 8.9249963760376, 90, 0.000000, 0.000000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3115, -621.46813964844, 411.41021728516, 8.9249963760376, 90, 0.000000, 0.000000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3115, -610.88598632813, 401.92361450195, 7.6281132698059, 0.000000, 270, 0.000000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3115, -611.4404296875, 383.29846191406, 7.7875552177429, 0.000000, 270, 0.000000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3115, -611.388671875, 364.65417480469, 7.7875552177429, 0.000000, 269.99450683594, 0.000000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3115, -621.77606201172, 355.3828125, 8.9249963760376, 270, 0.000000, 0.000000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3115, -642.78845214844, 355.30255126953, 8.9249963760376, 269.99450683594, 0.000000, 0.000000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3115, -663.85461425781, 355.2685546875, 8.9249963760376, 269.99450683594, 0.000000, 0.000000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3115, -684.89300537109, 355.21215820313, 8.9249963760376, 269.99450683594, 0.000000, 0.000000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3115, -695.47741699219, 364.62097167969, 7.7875552177429, 0.000000, 90, 0.000000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3115, -695.45080566406, 383.33456420898, 7.7875552177429, 0.000000, 90, 0.000000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3115, -695.39892578125, 402.0569152832, 7.7875552177429, 0.000000, 90, 0.000000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3115, -663.71264648438, 402.1494140625, 18.024976730347, 180, 0.000000, 0.000000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3115, -684.79217529297, 402.15612792969, 18.024976730347, 179.99450683594, 0.000000, 0.000000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3115, -685.06781005859, 383.90274047852, 18.024976730347, 179.99450683594, 0.000000, 0.000000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3115, -684.99176025391, 366.53082275391, 18.024976730347, 179.99450683594, 0.000000, 0.000000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3115, -664.39538574219, 365.17724609375, 18.024976730347, 179.99450683594, 0.000000, 0.000000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3115, -643.70025634766, 365.23583984375, 18.024976730347, 179.99450683594, 0.000000, 0.000000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3115, -622.27642822266, 365.08517456055, 18.024976730347, 179.99450683594, 0.000000, 0.000000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3115, -622.13214111328, 383.8581237793, 18.024976730347, 179.99450683594, 0.000000, 0.000000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3115, -621.97802734375, 402.10568237305, 18.024976730347, 179.99450683594, 0.000000, 0.000000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3115, -643.06799316406, 402.09378051758, 18.024976730347, 179.99450683594, 0.000000, 0.000000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(14537, -654.21759033203, 365.75091552734, 2.7090318202972, 0.000000, 0.000000, 17.864990234375,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18090, -693.83038330078, 382.68780517578, 3.349009513855, 0.000000, 0.000000, 180.39996337891,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(16151, -669.47387695313, 410.25653076172, 1.2791991233826, 0.000000, 0.000000, 89.325012207031,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1594, -689.47637939453, 380.65939331055, 1.3762063980103, 0.000000, 0.000000, 0.000000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1594, -690.65014648438, 384.72470092773, 1.3790726661682, 0.000000, 0.000000, 0.000000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1594, -686.98590087891, 386.64465332031, 1.370124578476, 0.000000, 0.000000, 0.000000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1594, -684.95855712891, 382.98721313477, 1.366215467453, 0.000000, 0.000000, 0.000000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1594, -687.04943847656, 378.32781982422, 1.3516401052475, 0.000000, 0.000000, 0.000000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(897, -623.19580078125, 388.68572998047, 0.89588499069214, 0.000000, 0.000000, 306.4049987793,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(897, -615.02844238281, 389.28912353516, 0.89588499069214, 0.000000, 7.9400024414063, 244.86853027344,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(897, -623.26129150391, 383.86044311523, 0.89588499069214, 0.000000, 7.9376220703125, 244.86328125,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(897, -622.53759765625, 377.82092285156, 0.89588499069214, 0.000000, 7.9376220703125, 203.17822265625,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(897, -614.79821777344, 381.64343261719, 0.89588499069214, 0.000000, 7.93212890625, 203.17565917969,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(897, -616.01647949219, 378.68218994141, 0.89588499069214, 0.000000, 7.93212890625, 256.77062988281,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(897, -613.19812011719, 384.19259643555, 5.3958849906921, 0.000000, 7.9266357421875, 256.76696777344,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(897, -618.29943847656, 387.39007568359, 5.3958849906921, 0.000000, 7.9266357421875, 292.49670410156,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(897, -616.47546386719, 381.15069580078, 5.3958849906921, 0.000000, 7.921142578125, 238.89978027344,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(897, -614.53601074219, 384.32107543945, 9.6458854675293, 344.11999511719, 55.5556640625, 270.65759277344,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3865, -624.82397460938, 384.74697875977, 7.1272521018982, 0.000000, 0.000000, 270.67504882813,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3865, -618.11505126953, 384.78060913086, 7.1272521018982, 0.000000, 0.000000, 270.67016601563,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(9831, -630.81585693359, 384.96325683594, 3.9678597450256, 0.000000, 0.000000, 95.280151367188,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(896, -619.60278320313, 385.13549804688, 4.3182144165039, 0.000000, 0.000000, 314.34497070313,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(11495, -673.775390625, 382.97439575195, 0.77499979734421, 0.000000, 0.000000, 179.54998779297,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(11495, -663.59912109375, 393.04724121094, 0.79999977350235, 0.000000, 0.000000, 90.224548339844,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(11495, -641.67395019531, 393.15121459961, 0.77499979734421, 0.000000, 0.000000, 90.2197265625,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(11495, -631.52502441406, 383.07348632813, 0.82499974966049, 0.000000, 359.5, 359.15972900391,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(11495, -641.94116210938, 373.49606323242, 0.84999972581863, 0.000000, 359.49462890625, 269.10021972656,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(11495, -663.68255615234, 373.74838256836, 0.79999977350235, 0.000000, 359.48913574219, 269.59912109375,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3472, -630.48455810547, 393.88897705078, 0.43582761287689, 0.000000, 0.000000, 0.000000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3472, -653.23876953125, 393.72311401367, 0.43582761287689, 0.000000, 0.000000, 0.000000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3472, -674.30859375, 393.86636352539, 0.43582761287689, 0.000000, 0.000000, 0.000000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3472, -674.49371337891, 373.09136962891, 0.43582761287689, 0.000000, 0.000000, 0.000000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3472, -653.28930664063, 372.76208496094, 0.43582761287689, 0.000000, 0.000000, 0.000000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3472, -631.03741455078, 372.73205566406, 0.43582761287689, 0.000000, 0.000000, 0.000000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(2780, -662.50793457031, 384.22595214844, -7.5, 0.000000, 0.000000, 0.000000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(2780, -637.86486816406, 383.8740234375, -8.5, 0.000000, 0.000000, 0.000000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3505, -627.38446044922, 380.6865234375, -1.160263299942, 0.000000, 0.000000, 0.000000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(638, -675.26043701172, 377.84777832031, 0.90797090530396, 0.000000, 0.000000, 0.000000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(638, -675.09765625, 389.33319091797, 0.90797090530396, 0.000000, 0.000000, 0.000000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1255, -665.31756591797, 396.87432861328, 1.5504364967346, 0.000000, 0.000000, 324.26995849609,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1255, -660.14727783203, 397.56362915039, 1.5238745212555, 0.000000, 0.000000, 324.26696777344,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1255, -653.72418212891, 397.45324707031, 1.5241711139679, 0.000000, 0.000000, 324.26696777344,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1255, -646.38732910156, 397.89886474609, 1.722527384758, 0.000000, 0.000000, 324.26696777344,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1255, -637.7529296875, 398.09487915039, 1.7220007181168, 0.000000, 0.000000, 324.26696777344,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(14651, -628.32971191406, 402.99432373047, 3.2203845977783, 0.000000, 0.000000, 57.565002441406,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(12950, -689.86090087891, 356.61294555664, 15.031223297119, 0.000000, 0.000000, 91.045013427734,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(12950, -683.59454345703, 356.76763916016, 10.231216430664, 0.000000, 0.000000, 91.043701171875,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(12950, -677.38940429688, 356.80780029297, 5.4312252998352, 0.000000, 0.000000, 91.043701171875,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(12950, -671.20428466797, 356.89672851563, 0.68122529983521, 0.000000, 0.000000, 91.043701171875,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(11496, -699.72259521484, 362.74835205078, 18.125009536743, 0.000000, 0.000000, 0.000000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(4874, -699.40747070313, 321.5078125, 21.859535217285, 0.000000, 0.000000, 89.045013427734,0,-1,-1,STREAMER_OBJECT_DD);
+	CreateDynamicObject(3115, -684.70288085938, 402.22344970703, 0.62499994039536, 0.000000, 0.000000, 0.000000,0,-1,-1);
+	CreateDynamicObject(3115, -663.97601318359, 402.18029785156, 0.62499994039536, 0.000000, 0.000000, 0.000000,0,-1,-1);
+	CreateDynamicObject(3115, -642.88861083984, 403.21832275391, 0.59999996423721, 0.000000, 0.000000, 0.000000,0,-1,-1);
+	CreateDynamicObject(3115, -621.84808349609, 402.39926147461, 0.59999996423721, 0.000000, 0.000000, 0.000000,0,-1,-1);
+	CreateDynamicObject(3115, -621.65411376953, 383.49298095703, 0.67499989271164, 0.000000, 0.000000, 0.000000,0,-1,-1);
+	CreateDynamicObject(3115, -621.619140625, 364.78952026367, 0.62499994039536, 0.000000, 0.000000, 0.000000,0,-1,-1);
+	CreateDynamicObject(3115, -642.64422607422, 364.9157409668, 0.59999996423721, 0.000000, 0.000000, 0.000000,0,-1,-1);
+	CreateDynamicObject(3115, -663.68157958984, 364.87884521484, 0.55000001192093, 0.000000, 0.000000, 0.000000,0,-1,-1);
+	CreateDynamicObject(3115, -684.73400878906, 364.96374511719, 0.51974219083786, 0.000000, 0.000000, 0.000000,0,-1,-1);
+	CreateDynamicObject(3115, -684.71044921875, 383.60052490234, 0.57499998807907, 0.000000, 0.000000, 0.000000,0,-1,-1);
+	CreateDynamicObject(3115, -684.5791015625, 411.38598632813, 8.9249963760376, 90, 0.000000, 0.000000,0,-1,-1);
+	CreateDynamicObject(3115, -663.4365234375, 411.39016723633, 8.9249963760376, 90, 0.000000, 0.000000,0,-1,-1);
+	CreateDynamicObject(3115, -642.50408935547, 411.39447021484, 8.9249963760376, 90, 0.000000, 0.000000,0,-1,-1);
+	CreateDynamicObject(3115, -621.46813964844, 411.41021728516, 8.9249963760376, 90, 0.000000, 0.000000,0,-1,-1);
+	CreateDynamicObject(3115, -610.88598632813, 401.92361450195, 7.6281132698059, 0.000000, 270, 0.000000,0,-1,-1);
+	CreateDynamicObject(3115, -611.4404296875, 383.29846191406, 7.7875552177429, 0.000000, 270, 0.000000,0,-1,-1);
+	CreateDynamicObject(3115, -611.388671875, 364.65417480469, 7.7875552177429, 0.000000, 269.99450683594, 0.000000,0,-1,-1);
+	CreateDynamicObject(3115, -621.77606201172, 355.3828125, 8.9249963760376, 270, 0.000000, 0.000000,0,-1,-1);
+	CreateDynamicObject(3115, -642.78845214844, 355.30255126953, 8.9249963760376, 269.99450683594, 0.000000, 0.000000,0,-1,-1);
+	CreateDynamicObject(3115, -663.85461425781, 355.2685546875, 8.9249963760376, 269.99450683594, 0.000000, 0.000000,0,-1,-1);
+	CreateDynamicObject(3115, -684.89300537109, 355.21215820313, 8.9249963760376, 269.99450683594, 0.000000, 0.000000,0,-1,-1);
+	CreateDynamicObject(3115, -695.47741699219, 364.62097167969, 7.7875552177429, 0.000000, 90, 0.000000,0,-1,-1);
+	CreateDynamicObject(3115, -695.45080566406, 383.33456420898, 7.7875552177429, 0.000000, 90, 0.000000,0,-1,-1);
+	CreateDynamicObject(3115, -695.39892578125, 402.0569152832, 7.7875552177429, 0.000000, 90, 0.000000,0,-1,-1);
+	CreateDynamicObject(3115, -663.71264648438, 402.1494140625, 18.024976730347, 180, 0.000000, 0.000000,0,-1,-1);
+	CreateDynamicObject(3115, -684.79217529297, 402.15612792969, 18.024976730347, 179.99450683594, 0.000000, 0.000000,0,-1,-1);
+	CreateDynamicObject(3115, -685.06781005859, 383.90274047852, 18.024976730347, 179.99450683594, 0.000000, 0.000000,0,-1,-1);
+	CreateDynamicObject(3115, -684.99176025391, 366.53082275391, 18.024976730347, 179.99450683594, 0.000000, 0.000000,0,-1,-1);
+	CreateDynamicObject(3115, -664.39538574219, 365.17724609375, 18.024976730347, 179.99450683594, 0.000000, 0.000000,0,-1,-1);
+	CreateDynamicObject(3115, -643.70025634766, 365.23583984375, 18.024976730347, 179.99450683594, 0.000000, 0.000000,0,-1,-1);
+	CreateDynamicObject(3115, -622.27642822266, 365.08517456055, 18.024976730347, 179.99450683594, 0.000000, 0.000000,0,-1,-1);
+	CreateDynamicObject(3115, -622.13214111328, 383.8581237793, 18.024976730347, 179.99450683594, 0.000000, 0.000000,0,-1,-1);
+	CreateDynamicObject(3115, -621.97802734375, 402.10568237305, 18.024976730347, 179.99450683594, 0.000000, 0.000000,0,-1,-1);
+	CreateDynamicObject(3115, -643.06799316406, 402.09378051758, 18.024976730347, 179.99450683594, 0.000000, 0.000000,0,-1,-1);
+	CreateDynamicObject(14537, -654.21759033203, 365.75091552734, 2.7090318202972, 0.000000, 0.000000, 17.864990234375,0,-1,-1);
+	CreateDynamicObject(18090, -693.83038330078, 382.68780517578, 3.349009513855, 0.000000, 0.000000, 180.39996337891,0,-1,-1);
+	CreateDynamicObject(16151, -669.47387695313, 410.25653076172, 1.2791991233826, 0.000000, 0.000000, 89.325012207031,0,-1,-1);
+	CreateDynamicObject(1594, -689.47637939453, 380.65939331055, 1.3762063980103, 0.000000, 0.000000, 0.000000,0,-1,-1);
+	CreateDynamicObject(1594, -690.65014648438, 384.72470092773, 1.3790726661682, 0.000000, 0.000000, 0.000000,0,-1,-1);
+	CreateDynamicObject(1594, -686.98590087891, 386.64465332031, 1.370124578476, 0.000000, 0.000000, 0.000000,0,-1,-1);
+	CreateDynamicObject(1594, -684.95855712891, 382.98721313477, 1.366215467453, 0.000000, 0.000000, 0.000000,0,-1,-1);
+	CreateDynamicObject(1594, -687.04943847656, 378.32781982422, 1.3516401052475, 0.000000, 0.000000, 0.000000,0,-1,-1);
+	CreateDynamicObject(897, -623.19580078125, 388.68572998047, 0.89588499069214, 0.000000, 0.000000, 306.4049987793,0,-1,-1);
+	CreateDynamicObject(897, -615.02844238281, 389.28912353516, 0.89588499069214, 0.000000, 7.9400024414063, 244.86853027344,0,-1,-1);
+	CreateDynamicObject(897, -623.26129150391, 383.86044311523, 0.89588499069214, 0.000000, 7.9376220703125, 244.86328125,0,-1,-1);
+	CreateDynamicObject(897, -622.53759765625, 377.82092285156, 0.89588499069214, 0.000000, 7.9376220703125, 203.17822265625,0,-1,-1);
+	CreateDynamicObject(897, -614.79821777344, 381.64343261719, 0.89588499069214, 0.000000, 7.93212890625, 203.17565917969,0,-1,-1);
+	CreateDynamicObject(897, -616.01647949219, 378.68218994141, 0.89588499069214, 0.000000, 7.93212890625, 256.77062988281,0,-1,-1);
+	CreateDynamicObject(897, -613.19812011719, 384.19259643555, 5.3958849906921, 0.000000, 7.9266357421875, 256.76696777344,0,-1,-1);
+	CreateDynamicObject(897, -618.29943847656, 387.39007568359, 5.3958849906921, 0.000000, 7.9266357421875, 292.49670410156,0,-1,-1);
+	CreateDynamicObject(897, -616.47546386719, 381.15069580078, 5.3958849906921, 0.000000, 7.921142578125, 238.89978027344,0,-1,-1);
+	CreateDynamicObject(897, -614.53601074219, 384.32107543945, 9.6458854675293, 344.11999511719, 55.5556640625, 270.65759277344,0,-1,-1);
+	CreateDynamicObject(3865, -624.82397460938, 384.74697875977, 7.1272521018982, 0.000000, 0.000000, 270.67504882813,0,-1,-1);
+	CreateDynamicObject(3865, -618.11505126953, 384.78060913086, 7.1272521018982, 0.000000, 0.000000, 270.67016601563,0,-1,-1);
+	CreateDynamicObject(9831, -630.81585693359, 384.96325683594, 3.9678597450256, 0.000000, 0.000000, 95.280151367188,0,-1,-1);
+	CreateDynamicObject(896, -619.60278320313, 385.13549804688, 4.3182144165039, 0.000000, 0.000000, 314.34497070313,0,-1,-1);
+	CreateDynamicObject(11495, -673.775390625, 382.97439575195, 0.77499979734421, 0.000000, 0.000000, 179.54998779297,0,-1,-1);
+	CreateDynamicObject(11495, -663.59912109375, 393.04724121094, 0.79999977350235, 0.000000, 0.000000, 90.224548339844,0,-1,-1);
+	CreateDynamicObject(11495, -641.67395019531, 393.15121459961, 0.77499979734421, 0.000000, 0.000000, 90.2197265625,0,-1,-1);
+	CreateDynamicObject(11495, -631.52502441406, 383.07348632813, 0.82499974966049, 0.000000, 359.5, 359.15972900391,0,-1,-1);
+	CreateDynamicObject(11495, -641.94116210938, 373.49606323242, 0.84999972581863, 0.000000, 359.49462890625, 269.10021972656,0,-1,-1);
+	CreateDynamicObject(11495, -663.68255615234, 373.74838256836, 0.79999977350235, 0.000000, 359.48913574219, 269.59912109375,0,-1,-1);
+	CreateDynamicObject(3472, -630.48455810547, 393.88897705078, 0.43582761287689, 0.000000, 0.000000, 0.000000,0,-1,-1);
+	CreateDynamicObject(3472, -653.23876953125, 393.72311401367, 0.43582761287689, 0.000000, 0.000000, 0.000000,0,-1,-1);
+	CreateDynamicObject(3472, -674.30859375, 393.86636352539, 0.43582761287689, 0.000000, 0.000000, 0.000000,0,-1,-1);
+	CreateDynamicObject(3472, -674.49371337891, 373.09136962891, 0.43582761287689, 0.000000, 0.000000, 0.000000,0,-1,-1);
+	CreateDynamicObject(3472, -653.28930664063, 372.76208496094, 0.43582761287689, 0.000000, 0.000000, 0.000000,0,-1,-1);
+	CreateDynamicObject(3472, -631.03741455078, 372.73205566406, 0.43582761287689, 0.000000, 0.000000, 0.000000,0,-1,-1);
+	CreateDynamicObject(2780, -662.50793457031, 384.22595214844, -7.5, 0.000000, 0.000000, 0.000000,0,-1,-1);
+	CreateDynamicObject(2780, -637.86486816406, 383.8740234375, -8.5, 0.000000, 0.000000, 0.000000,0,-1,-1);
+	CreateDynamicObject(3505, -627.38446044922, 380.6865234375, -1.160263299942, 0.000000, 0.000000, 0.000000,0,-1,-1);
+	CreateDynamicObject(638, -675.26043701172, 377.84777832031, 0.90797090530396, 0.000000, 0.000000, 0.000000,0,-1,-1);
+	CreateDynamicObject(638, -675.09765625, 389.33319091797, 0.90797090530396, 0.000000, 0.000000, 0.000000,0,-1,-1);
+	CreateDynamicObject(1255, -665.31756591797, 396.87432861328, 1.5504364967346, 0.000000, 0.000000, 324.26995849609,0,-1,-1);
+	CreateDynamicObject(1255, -660.14727783203, 397.56362915039, 1.5238745212555, 0.000000, 0.000000, 324.26696777344,0,-1,-1);
+	CreateDynamicObject(1255, -653.72418212891, 397.45324707031, 1.5241711139679, 0.000000, 0.000000, 324.26696777344,0,-1,-1);
+	CreateDynamicObject(1255, -646.38732910156, 397.89886474609, 1.722527384758, 0.000000, 0.000000, 324.26696777344,0,-1,-1);
+	CreateDynamicObject(1255, -637.7529296875, 398.09487915039, 1.7220007181168, 0.000000, 0.000000, 324.26696777344,0,-1,-1);
+	CreateDynamicObject(14651, -628.32971191406, 402.99432373047, 3.2203845977783, 0.000000, 0.000000, 57.565002441406,0,-1,-1);
+	CreateDynamicObject(12950, -689.86090087891, 356.61294555664, 15.031223297119, 0.000000, 0.000000, 91.045013427734,0,-1,-1);
+	CreateDynamicObject(12950, -683.59454345703, 356.76763916016, 10.231216430664, 0.000000, 0.000000, 91.043701171875,0,-1,-1);
+	CreateDynamicObject(12950, -677.38940429688, 356.80780029297, 5.4312252998352, 0.000000, 0.000000, 91.043701171875,0,-1,-1);
+	CreateDynamicObject(12950, -671.20428466797, 356.89672851563, 0.68122529983521, 0.000000, 0.000000, 91.043701171875,0,-1,-1);
+	CreateDynamicObject(11496, -699.72259521484, 362.74835205078, 18.125009536743, 0.000000, 0.000000, 0.000000,0,-1,-1);
+	CreateDynamicObject(4874, -699.40747070313, 321.5078125, 21.859535217285, 0.000000, 0.000000, 89.045013427734,0,-1,-1);
 	
 // cow fences?
 	CreateDynamicObject(19315, -2129.457275, -832.577636, 31.513423, 0.000000, 0.000000, -88.099998);
@@ -44342,348 +44307,348 @@ public BuildObjects()
 
 
 	// dnr island
-	CreateDynamicObject(17135, 3190.00000, -1477.00000, -34.70000,   0.00000, 0.00000, 111.99800,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(17140, 3296.39990, -1532.40002, -0.30000,   356.29199, 22.04900, 241.50101,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(17140, 3249.00000, -1677.30005, -0.30000,   356.28699, 22.04400, 159.49600,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(17135, 3298.19995, -1415.90002, -34.70000,   0.00000, 0.00000, 69.99800,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(17135, 3306.69995, -1370.09998, -34.70000,   0.00000, 0.00000, 179.99400,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(17135, 3379.19995, -1728.00000, -34.70000,   0.00000, 0.00000, 359.99399,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(17135, 3316.50000, -1731.59998, -34.70000,   0.00000, 0.00000, 345.98901,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(17135, 3370.39990, -1677.59998, -34.70000,   0.00000, 0.00000, 71.98700,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(17135, 3342.89990, -1638.40002, -34.70000,   0.00000, 0.00000, 71.98200,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(17135, 3184.29980, -1456.00000, -34.70000,   0.00000, 0.00000, 205.99400,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(13120, 3276.29980, -1776.79980, -7.00000,   0.00000, 349.99701, 37.99600,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(17140, 3408.20020, -1501.09961, -0.30000,   356.28699, 22.04400, 241.49600,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(17135, 3429.19995, -1341.09998, -34.70000,   0.00000, 0.00000, 169.98900,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(17135, 3469.50000, -1370.09998, -34.70000,   0.00000, 0.00000, 107.98600,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(17135, 3534.50000, -1342.90002, -34.70000,   0.00000, 0.00000, 159.98500,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(17135, 3314.60010, -1420.59998, -34.70000,   0.00000, 0.00000, 69.99400,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(4271, 3494.39990, -1559.09998, 3.40000,   2.00000, 0.00000, 344.00000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(17135, 3567.39990, -1391.90002, -34.70000,   0.00000, 0.00000, 301.98300,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(6295, 3158.00000, -1530.90002, 79.20000,   348.00699, 357.95499, 99.57500,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(17135, 3609.30005, -1380.40002, -34.70000,   0.00000, 0.00000, 285.98099,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(17135, 3522.00000, -1646.80005, -34.70000,   0.00000, 0.00000, 285.98099,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(17135, 3428.50000, -1635.09998, -34.70000,   0.00000, 0.00000, 285.98001,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(17135, 3613.89990, -1630.00000, -55.10000,   0.00000, 0.00000, 17.97900,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(17135, 3667.39990, -1499.40002, -57.30000,   0.00000, 0.00000, 17.97900,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(11495, 3439.50000, -1438.30005, 0.00000,   0.00000, 0.00000, 72.00000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(11495, 3439.00000, -1439.90002, 0.00000,   0.00000, 0.00000, 251.99899,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(11495, 3481.30005, -1483.30005, 0.20000,   0.00000, 0.00000, 339.99899,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(11495, 3479.80005, -1482.69995, 0.20000,   0.00000, 0.00000, 159.99400,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(8493, 3671.69995, -1643.09998, 15.50000,   0.00000, 0.00000, 310.00000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(8493, 3689.80005, -1584.50000, 15.50000,   0.00000, 0.00000, 169.99600,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(9159, 3671.60010, -1643.19995, 15.40000,   0.00000, 0.00000, 310.00000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(9159, 3689.80005, -1584.40002, 15.40000,   0.00000, 0.00000, 169.99600,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(2064, 3678.60010, -1634.09998, 5.60000,   0.00000, 0.00000, 172.00000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(2064, 3681.30005, -1634.19995, 5.60000,   0.00000, 0.00000, 171.99600,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(2064, 3686.39990, -1596.40002, 5.60000,   0.00000, 0.00000, 339.99600,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(2064, 3689.39990, -1596.50000, 5.60000,   0.00000, 0.00000, 3.99400,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3583, 3551.60010, -1572.90002, 9.10000,   0.00000, 12.00000, 272.00000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(4288, 3431.10010, -1927.19995, -12.50000,   0.00000, 0.00000, 98.00000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(13120, 3221.80005, -1808.50000, -7.00000,   0.00000, 349.99701, 97.99600,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(13120, 3214.39990, -1838.00000, -7.00000,   0.00000, 349.99701, 97.99300,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(13120, 3617.00000, -1793.09998, -7.00000,   0.00000, 349.99701, 287.99301,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(13120, 3631.50000, -1873.19995, -7.00000,   0.00000, 349.99701, 275.98999,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3590, 3453.79980, -1745.40039, 7.20000,   0.00000, 0.00000, 182.00000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1641, 3444.50000, -1866.59998, 4.50000,   0.00000, 0.00000, 0.00000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1641, 3449.00000, -1864.40002, 4.50000,   0.00000, 0.00000, 0.00000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1641, 3454.80005, -1864.30005, 4.50000,   0.00000, 0.00000, 0.00000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1641, 3433.10010, -1864.40002, 4.50000,   0.00000, 0.00000, 0.00000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1641, 3417.80005, -1871.90002, 4.50000,   0.00000, 0.00000, 0.00000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1641, 3457.50000, -1852.50000, 4.50000,   0.00000, 0.00000, 16.00000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1641, 3458.10010, -1854.40002, 4.50000,   0.00000, 0.00000, 15.99600,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1641, 3458.69995, -1856.40002, 4.50000,   0.00000, 0.00000, 15.99600,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1641, 3459.30005, -1858.40002, 4.50000,   0.00000, 0.00000, 15.99600,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1641, 3460.00000, -1860.50000, 4.50000,   0.00000, 0.00000, 15.99600,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1641, 3458.80005, -1851.19995, 4.50000,   0.00000, 0.00000, 113.99600,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1641, 3460.69995, -1850.59998, 4.50000,   0.00000, 0.00000, 101.99400,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1641, 3462.60010, -1850.90002, 4.50000,   0.00000, 0.00000, 73.99200,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1641, 3463.80005, -1852.19995, 4.50000,   0.00000, 0.00000, 15.98700,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1641, 3463.60010, -1854.09998, 4.50000,   0.00000, 0.00000, 335.98499,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1641, 3462.39990, -1855.50000, 4.50000,   0.00000, 0.00000, 309.98401,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1641, 3460.69995, -1856.59998, 4.50000,   0.00000, 0.00000, 293.97900,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1641, 3460.30005, -1857.50000, 4.50000,   0.00000, 0.00000, 71.97800,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1641, 3462.00000, -1858.30005, 4.50000,   0.00000, 0.00000, 61.97700,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1641, 3463.80005, -1859.09998, 4.50000,   0.00000, 0.00000, 61.97400,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1642, 3467.69995, -1858.40002, 4.50000,   0.00000, 0.00000, 324.00000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1642, 3468.80005, -1856.90002, 4.50000,   0.00000, 0.00000, 323.99799,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1642, 3469.89990, -1855.40002, 4.50000,   0.00000, 0.00000, 323.99799,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1642, 3471.10010, -1853.80005, 4.50000,   0.00000, 0.00000, 323.99799,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1642, 3467.50000, -1853.69995, 4.50000,   0.00000, 0.00000, 29.99800,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1642, 3468.60010, -1855.59998, 4.50000,   0.00000, 0.00000, 29.99300,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1642, 3469.50000, -1857.40002, 4.50000,   0.00000, 0.00000, 29.99300,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1642, 3470.30005, -1858.80005, 4.50000,   0.00000, 0.00000, 29.99300,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1642, 3475.50000, -1858.59998, 4.50000,   0.00000, 0.00000, 15.99300,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1642, 3478.60010, -1857.59998, 4.50000,   0.00000, 0.00000, 15.99100,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1642, 3483.50000, -1856.50000, 4.50000,   0.00000, 0.00000, 15.99100,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1642, 3488.60010, -1856.09998, 4.50000,   0.00000, 0.00000, 15.99100,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(9237, 3629.10010, -1855.30005, 38.20000,   0.00000, 4.00000, 0.00000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1609, 3417.80005, -1871.69995, 4.80000,   25.93200, 184.44901, 6.05100,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1641, 3419.89990, -1871.69995, 4.50000,   0.00000, 0.00000, 0.00000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1609, 3419.80005, -1871.50000, 4.80000,   0.00000, 0.00000, 0.04800,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(321, 3417.89990, -1872.69995, 4.70000,   0.00000, 0.00000, 208.00000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1609, 3424.80005, -1871.19995, 4.80000,   0.00000, 0.00000, 34.04400,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1609, 3428.30005, -1866.50000, 4.80000,   0.00000, 0.00000, 76.04100,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1609, 3424.10010, -1867.00000, 4.80000,   0.00000, 0.00000, 10.03600,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1607, 3444.89990, -1925.69995, 0.00000,   25.93200, 355.55099, 97.94900,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1607, 3437.60010, -1921.80005, 2.00000,   358.00101, 355.99701, 95.85500,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1607, 3428.00000, -1932.80005, 1.30000,   340.04599, 355.74200, 94.53500,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1607, 3419.69995, -1958.09998, 1.30000,   29.91200, 355.37701, 98.29800,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1637, 3383.60010, -1876.40002, 5.80000,   0.00000, 0.00000, 0.00000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1637, 3398.69995, -1871.59998, 5.80000,   0.00000, 0.00000, 70.00000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1637, 3415.30005, -1867.30005, 5.80000,   0.00000, 0.00000, 69.99900,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18259, 3489.40039, -1462.79980, 1.60000,   0.00000, 0.00000, 67.86000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18259, 3626.39990, -1764.59998, 29.60000,   9.94500, 6.09200, 24.10400,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(7071, 3509.50000, -1674.50000, 45.10000,   0.00000, 0.00000, 0.00000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(4288, 3433.30005, -1921.40002, -12.50000,   0.00000, 0.00000, 97.99800,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(7071, 3509.50000, -1674.50000, 37.80000,   0.00000, 0.00000, 0.00000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(7071, 3509.50000, -1674.50000, 25.80000,   0.00000, 0.00000, 0.00000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(7071, 3509.50000, -1674.50000, 18.80000,   0.00000, 0.00000, 0.00000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(7071, 3509.50000, -1674.50000, 12.00000,   0.00000, 0.00000, 0.00000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3115, 3459.19995, -1705.30005, 45.10000,   0.00000, 0.00000, 0.00000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3115, 3480.10010, -1705.19995, 45.10000,   0.00000, 0.00000, 0.00000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3115, 3500.89990, -1705.00000, 45.10000,   0.00000, 0.00000, 0.00000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3115, 3520.30005, -1705.00000, 45.10000,   0.00000, 0.00000, 0.00000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3115, 3520.30005, -1704.90002, 42.60000,   0.00000, 0.00000, 0.00000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3115, 3541.10010, -1705.09998, 45.10000,   0.00000, 0.00000, 0.00000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3115, 3561.89990, -1704.69995, 45.10000,   0.00000, 0.00000, 0.00000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3115, 3568.39990, -1705.00000, 45.10000,   0.00000, 0.00000, 0.00000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(17135, 3477.80005, -1635.50000, -34.70000,   0.00000, 0.00000, 285.98001,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(17135, 3397.50000, -1630.00000, -34.70000,   0.00000, 0.00000, 285.98001,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18368, 3605.60010, -1702.19995, 42.00000,   0.00000, 0.00000, 302.00000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1598, 3516.50000, -1847.59998, 4.60000,   0.00000, 0.00000, 0.00000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3437, 3457.80005, -1715.30005, 33.30000,   0.00000, 0.00000, 0.00000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3437, 3457.80005, -1715.30005, 23.70000,   0.00000, 0.00000, 0.00000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3437, 3462.80005, -1715.30005, 37.30000,   0.00000, 94.00000, 0.00000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3437, 3464.60010, -1715.40002, 33.00000,   0.00000, 219.99899, 0.00000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3437, 3462.89990, -1715.40002, 24.80000,   0.00000, 317.99600, 0.00000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3437, 3472.39990, -1715.40002, 24.80000,   0.00000, 0.00000, 0.00000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3437, 3472.39990, -1715.40002, 33.30000,   0.00000, 0.00000, 0.00000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3437, 3476.89990, -1715.40002, 37.30000,   0.00000, 90.00000, 0.00000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3437, 3476.89990, -1715.40002, 27.40000,   0.00000, 90.00000, 0.00000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3437, 3476.89990, -1715.40002, 20.50000,   0.00000, 90.00000, 0.00000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3437, 3487.30005, -1715.40002, 25.50000,   0.00000, 346.00000, 0.00000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3437, 3485.80005, -1715.40002, 31.30000,   0.00000, 345.99799, 0.00000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3437, 3490.30005, -1715.40002, 25.50000,   0.00000, 15.99800, 0.00000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3437, 3492.00000, -1715.40002, 31.50000,   0.00000, 15.99600, 0.00000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3437, 3497.50000, -1715.40002, 31.50000,   0.00000, 0.00000, 0.00000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3437, 3497.50000, -1715.40002, 26.50000,   0.00000, 0.00000, 0.00000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3437, 3502.19995, -1715.40002, 21.50000,   0.00000, 272.00000, 0.00000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3437, 3502.19995, -1715.40002, 36.50000,   0.00000, 272.00000, 0.00000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3437, 3507.00000, -1715.40002, 31.00000,   0.00000, 0.00000, 0.00000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3437, 3507.00000, -1715.40002, 27.30000,   0.00000, 0.00000, 0.00000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3437, 3511.50000, -1715.40002, 31.50000,   0.00000, 0.00000, 0.00000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3437, 3511.50000, -1715.40002, 26.30000,   0.00000, 0.00000, 0.00000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3437, 3515.50000, -1715.40002, 21.80000,   0.00000, 272.00000, 0.00000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3437, 3522.89990, -1715.09998, 31.60000,   0.00000, 0.00000, 0.00000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3437, 3522.89990, -1715.09998, 26.60000,   0.00000, 0.00000, 0.00000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3437, 3527.39990, -1715.00000, 23.10000,   0.00000, 270.00000, 0.00000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3437, 3531.80005, -1715.09998, 28.40000,   0.00000, 0.00000, 0.00000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3437, 3531.80005, -1715.09998, 31.60000,   0.00000, 0.00000, 0.00000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3437, 3536.60010, -1715.19995, 31.60000,   0.00000, 0.00000, 0.00000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3437, 3536.60010, -1715.19995, 28.10000,   0.00000, 0.00000, 0.00000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3437, 3536.60010, -1715.19995, 35.10000,   0.00000, 0.00000, 0.00000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3437, 3536.60010, -1715.19995, 37.80000,   0.00000, 0.00000, 0.00000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3437, 3536.60010, -1715.19995, 43.50000,   0.00000, 270.00000, 0.00000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3437, 3541.10010, -1715.30005, 27.30000,   0.00000, 0.00000, 0.00000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3437, 3546.39990, -1715.19995, 27.30000,   0.00000, 0.00000, 0.00000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3437, 3551.10010, -1715.09998, 31.80000,   0.00000, 90.00000, 0.00000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3437, 3551.10010, -1715.09998, 22.70000,   0.00000, 90.00000, 0.00000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3437, 3555.80005, -1715.19995, 26.50000,   0.00000, 0.00000, 0.00000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3437, 3561.30005, -1715.30005, 26.50000,   0.00000, 0.00000, 0.00000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3437, 3561.30005, -1715.30005, 32.80000,   0.00000, 0.00000, 0.00000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3437, 3564.80005, -1715.19995, 32.80000,   1.57600, 141.98300, 359.23199,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3437, 3568.80005, -1715.19995, 33.30000,   0.00000, 8.00000, 359.23099,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3437, 3569.80005, -1715.30005, 40.30000,   0.00000, 7.99800, 359.22501,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3437, 3512.60010, -1715.50000, 12.50000,   0.00000, 41.99600, 0.00000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3437, 3512.39990, -1715.50000, 12.50000,   0.00000, 319.99500, 0.00000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3533, 3459.10010, -1715.30005, 8.70000,   0.00000, 0.00000, 0.00000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3533, 3466.80005, -1715.40002, 6.60000,   0.00000, 0.00000, 0.00000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3533, 3471.00000, -1715.50000, 11.10000,   0.00000, 270.00000, 0.00000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3533, 3475.00000, -1715.30005, 6.90000,   0.00000, 0.00000, 0.00000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3533, 3470.39990, -1715.59998, 4.90000,   0.00000, 88.00000, 0.00000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3533, 3462.30005, -1715.19995, 10.10000,   0.00000, 312.00000, 0.00000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3533, 3477.19995, -1715.30005, 11.70000,   0.00000, 0.00000, 0.00000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3533, 3485.30005, -1715.40002, 4.10000,   0.00000, 0.00000, 0.00000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3533, 3480.89990, -1715.30005, 8.40000,   0.00000, 88.00000, 0.00000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3533, 3519.69995, -1715.19995, 8.40000,   0.00000, 0.00000, 0.00000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3533, 3523.19995, -1715.80005, 11.60000,   0.00000, 298.00000, 0.00000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3533, 3523.69995, -1715.80005, 8.60000,   0.00000, 245.99899, 0.00000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3533, 3522.69995, -1715.30005, 5.40000,   0.00000, 131.99500, 0.00000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3533, 3530.00000, -1715.19995, 7.70000,   0.00000, 12.00000, 0.00000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3533, 3532.10010, -1715.19995, 7.70000,   0.00000, 345.99701, 0.00000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3533, 3535.50000, -1715.09998, 7.70000,   0.00000, 330.00000, 0.00000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3533, 3538.39990, -1715.09998, 7.70000,   0.00000, 17.99600, 0.00000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3533, 3542.19995, -1715.30005, 7.70000,   0.00000, 0.00000, 0.00000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3533, 3544.69995, -1715.40002, 12.20000,   0.00000, 84.00000, 0.00000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3533, 3544.69995, -1715.40002, 8.90000,   0.00000, 83.99600, 0.00000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3533, 3544.69995, -1715.40002, 5.60000,   0.00000, 83.99600, 0.00000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3533, 3551.69995, -1715.30005, 8.10000,   0.00000, 0.00000, 0.00000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3533, 3554.39990, -1715.40002, 8.10000,   0.00000, 330.00000, 0.00000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3533, 3555.39990, -1715.50000, 8.10000,   0.00000, 9.99600, 0.00000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3533, 3461.00000, -1715.30005, 5.40000,   0.00000, 55.99500, 0.00000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3533, 3481.00000, -1715.50000, 4.90000,   0.00000, 87.99500, 0.00000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3533, 3480.60010, -1715.30005, 15.80000,   0.00000, 87.99500, 0.00000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3533, 3487.50000, -1715.19995, 6.90000,   0.00000, 0.00000, 0.00000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3533, 3492.10010, -1715.00000, 9.00000,   0.00000, 270.00000, 0.00000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3533, 3495.50000, -1715.30005, 8.30000,   0.00000, 0.00000, 0.00000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3533, 3498.00000, -1715.30005, 8.30000,   0.00000, 0.00000, 0.00000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3533, 3499.89990, -1715.19995, 10.40000,   0.00000, 36.00000, 0.00000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3533, 3500.89990, -1715.19995, 5.10000,   0.00000, 321.99701, 0.00000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3533, 3503.39990, -1715.30005, 8.40000,   0.00000, 10.00000, 0.00000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3533, 3505.69995, -1715.30005, 8.40000,   0.00000, 345.99799, 0.00000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(16151, 3630.39990, -1771.59998, 28.30000,   354.17899, 14.07400, 297.45700,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(2575, 3623.50000, -1761.50000, 30.80000,   11.93300, 6.13300, 28.72700,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(7073, 3446.50000, -1725.40002, 26.20000,   0.00000, 10.00000, 316.00000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(13667, 3448.69995, -1726.50000, 38.80000,   0.00000, 8.00000, 324.00000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(354, 3448.89990, -1725.40002, 47.20000,   0.00000, 0.00000, 0.00000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(2236, 3623.00000, -1763.30005, 30.40000,   7.92200, 351.92200, 117.12100,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(2296, 3621.60010, -1764.59998, 30.40000,   1.98100, 351.99500, 116.27800,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1764, 3623.10010, -1761.69995, 30.40000,   0.00000, 8.00000, 298.00000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(2903, 3465.30005, -1346.19995, 69.80000,   0.00000, 0.00000, 0.00000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(2903, 3477.50000, -1342.59998, 63.60000,   0.00000, 0.00000, 0.00000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(2903, 3477.50000, -1342.59998, 77.40000,   0.00000, 0.00000, 0.00000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(2903, 3455.60010, -1353.69995, 59.60000,   0.00000, 0.00000, 0.00000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(2903, 3455.60010, -1353.69995, 86.70000,   0.00000, 0.00000, 0.00000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(2903, 3466.10010, -1348.40002, 96.50000,   0.00000, 0.00000, 0.00000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(2903, 3490.30005, -1336.19995, 68.50000,   0.00000, 0.00000, 0.00000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(2903, 3478.39990, -1342.19995, 93.10000,   0.00000, 0.00000, 0.00000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(2903, 3488.30005, -1337.19995, 85.30000,   0.00000, 0.00000, 0.00000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(2903, 3495.10010, -1326.19995, 50.80000,   0.00000, 0.00000, 0.00000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(2903, 3440.89990, -1316.09998, 63.30000,   0.00000, 0.00000, 0.00000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(17140, 3096.10010, -1781.50000, -0.30000,   356.28699, 22.03900, 91.49400,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(17140, 3008.10010, -1872.59998, -0.30000,   356.28699, 22.03300, 117.48900,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(17135, 3167.80005, -1935.59998, -34.70000,   0.00000, 0.00000, 67.98900,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(17135, 3122.10010, -1992.50000, -34.70000,   0.00000, 0.00000, 141.98900,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(17135, 3201.89990, -1964.40002, -34.70000,   0.00000, 0.00000, 141.98700,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(17135, 3212.80005, -1939.80005, -34.70000,   0.00000, 0.00000, 141.98700,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(11495, 3480.39990, -1480.90002, 0.20000,   0.00000, 0.00000, 159.98801,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3115, 3459.69995, -1445.80005, 0.00000,   0.00000, 0.00000, 342.00000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1799, 3486.19995, -1462.40002, 1.70000,   0.00000, 0.00000, 70.00000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(11495, 3471.60059, -1460.50000, 0.70000,   3.99900, 0.00000, 234.20700,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3115, 3465.30005, -1428.69995, 0.40000,   0.00000, 0.00000, 341.99899,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3115, 3465.30005, -1428.69995, 0.90000,   0.00000, 0.00000, 341.99899,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3115, 3465.30005, -1428.69995, 1.60000,   0.00000, 0.00000, 341.99899,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3115, 3465.30005, -1428.69995, 2.10000,   0.00000, 0.00000, 341.99899,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3115, 3465.30005, -1428.69995, 2.60000,   0.00000, 0.00000, 341.99899,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3115, 3462.69995, -1429.69995, 0.00000,   0.00000, 0.00000, 341.99899,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3115, 3465.30005, -1428.69995, 1.40000,   0.00000, 0.00000, 341.99899,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3361, 3454.60010, -1424.50000, 0.80000,   0.00000, 0.00000, 252.00000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(14391, 3463.69995, -1432.59998, 3.90000,   0.00000, 0.00000, 70.00000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(2232, 3465.50000, -1434.30005, 3.50000,   0.00000, 0.00000, 0.00000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(2232, 3465.00000, -1434.09998, 3.50000,   0.00000, 0.00000, 338.00000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(2232, 3464.50000, -1433.90002, 3.50000,   0.00000, 0.00000, 338.00000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(2232, 3464.00000, -1433.69995, 3.50000,   0.00000, 0.00000, 338.00000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(2232, 3463.50000, -1433.50000, 3.50000,   0.00000, 0.00000, 338.00000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(2232, 3463.00000, -1433.30005, 3.50000,   0.00000, 0.00000, 338.00000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(2232, 3462.39990, -1433.09998, 3.50000,   0.00000, 0.00000, 338.00000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(2232, 3461.89990, -1432.90002, 3.50000,   0.00000, 0.00000, 338.00000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(2232, 3461.30005, -1432.69995, 3.50000,   0.00000, 0.00000, 338.00000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(2232, 3460.89990, -1432.40002, 3.50000,   0.00000, 0.00000, 322.00000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3437, 3458.00000, -1436.19995, 1.40000,   0.00000, 90.00000, 342.00000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3437, 3466.89990, -1439.09998, 1.40000,   0.00000, 90.00000, 341.99899,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3437, 3474.19995, -1435.50000, 1.30000,   0.00000, 90.00000, 71.99900,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3437, 3475.50000, -1431.50000, 1.30000,   0.00000, 90.00000, 71.99900,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3437, 3454.39990, -1429.40002, 1.30000,   0.00000, 90.00000, 71.99900,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3437, 3472.39990, -1439.40002, 1.90000,   0.00000, 0.00000, 77.99900,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3437, 3453.30005, -1433.09998, 2.60000,   0.00000, 0.00000, 69.99700,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3437, 3459.69995, -1426.50000, 2.50000,   0.00000, 0.00000, 155.99699,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3437, 3464.50000, -1428.50000, 2.90000,   0.00000, 0.00000, 157.99500,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3437, 3468.80005, -1430.09998, 2.60000,   0.00000, 0.00000, 157.99400,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3437, 3470.69995, -1434.50000, 6.90000,   0.00000, 86.00000, 105.99700,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3437, 3457.19995, -1430.19995, 7.20000,   0.00000, 89.99500, 217.99400,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3437, 3464.39990, -1428.30005, 7.20000,   0.00000, 89.99500, 157.99100,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(16151, 3497.19995, -1465.30005, 2.00000,   0.00000, 0.00000, 340.00000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3115, 3461.00000, -1434.50000, 0.00000,   0.00000, 0.00000, 341.99899,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(2296, 3490.00000, -1458.30005, 1.70000,   0.00000, 0.00000, 340.00000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3115, 3465.30005, -1428.69995, 8.10000,   0.00000, 0.00000, 341.99899,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(2190, 3630.10010, -1770.90002, 29.30000,   0.00000, 4.00000, 210.00000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(2224, 3485.10010, -1458.19995, 1.70000,   0.00000, 0.00000, 0.00000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(345, 3472.30005, -1440.50000, 7.20000,   0.00000, 0.00000, 0.00000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(345, 3472.30005, -1440.50000, 0.90000,   0.00000, 0.00000, 0.00000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(345, 3454.00000, -1433.69995, 0.90000,   0.00000, 0.00000, 0.00000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(345, 3453.80005, -1433.19995, 7.80000,   0.00000, 0.00000, 0.00000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(8394, 3362.39990, -1794.40002, 14.80000,   0.00000, 0.00000, 0.00000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(17140, 3005.60010, -1972.40002, -0.30000,   356.28699, 22.02800, 133.48801,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(17135, 3191.39990, -1972.50000, -34.70000,   0.00000, 0.00000, 185.98700,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(17135, 3154.30005, -1997.90002, -34.70000,   0.00000, 0.00000, 185.98199,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(12857, 2873.80005, -1856.90002, 11.60000,   10.00000, 0.00000, 264.00000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(12857, 2913.39990, -1861.09998, 17.00000,   5.99800, 0.00000, 263.99600,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(12857, 2953.50000, -1865.09998, 18.60000,   359.99301, 0.00000, 263.98999,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(12857, 2990.69995, -1868.59998, 18.60000,   359.98901, 0.00000, 263.98999,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1706, 3490.50000, -1461.30005, 1.70000,   0.00000, 0.00000, 160.00000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(17135, 3136.80005, -1556.80005, -34.70000,   0.00000, 0.00000, 53.99400,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(13120, 3095.50000, -1716.30005, -20.40000,   0.00000, 349.99701, 53.99600,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(13120, 3140.39990, -1846.19995, -5.00000,   0.00000, 349.99701, 98.77200,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(671, 3267.80005, -1668.09998, 29.10000,   0.00000, 0.00000, 0.00000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(671, 3258.30005, -1658.00000, 28.90000,   0.00000, 0.00000, 0.00000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(13120, 3358.10010, -1700.09998, -12.00000,   0.00000, 349.99701, 37.99600,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(13120, 3330.89990, -1627.09998, -12.00000,   0.00000, 349.99701, 95.99600,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(11495, 3471.60059, -1460.50000, 0.70000,   3.99900, 0.00000, 58.20700,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1598, 3524.00000, -1832.90002, 4.60000,   0.00000, 0.00000, 0.00000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(13120, 3169.30005, -1702.19995, -7.00000,   0.00000, 349.99701, 137.99600,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(12822, 2304.60010, 8.70000, 33.20000,   0.00000, 0.00000, 0.00000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(6300, 3623.30005, -1980.50000, -7.90000,   0.00000, 0.00000, 4.00000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(671, 3249.00000, -1649.90002, 28.40000,   0.00000, 0.00000, 0.00000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(671, 3257.10010, -1646.80005, 28.90000,   0.00000, 0.00000, 0.00000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(671, 3232.60010, -1644.69995, 26.60000,   0.00000, 0.00000, 0.00000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(711, 3499.30005, -1536.00000, 18.60000,   0.00000, 0.00000, 0.00000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(711, 3497.10010, -1560.80005, 12.10000,   0.00000, 0.00000, 0.00000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(711, 3516.39990, -1546.09998, 14.10000,   0.00000, 0.00000, 0.00000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3508, 3480.80005, -1487.80005, 0.00000,   0.00000, 0.00000, 0.00000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3508, 3477.30005, -1486.40002, 0.00000,   0.00000, 0.00000, 0.00000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3508, 3433.50000, -1435.00000, -0.30000,   0.00000, 0.00000, 0.00000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3508, 3432.80005, -1439.59998, -0.30000,   0.00000, 0.00000, 0.00000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1632, 3600.50000, -1500.19995, 1.50000,   8.00000, 0.00000, 258.00000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1632, 3599.69995, -1504.00000, 1.50000,   7.99800, 0.00000, 257.99899,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1632, 3606.00000, -1505.40002, 5.90000,   15.99800, 0.00000, 257.99899,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1632, 3606.80005, -1501.50000, 5.90000,   15.99600, 0.00000, 257.99399,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(17135, 3684.39990, -1421.59998, -79.90000,   0.00000, 0.00000, 217.97900,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(711, 3523.30005, -1556.69995, 10.40000,   0.00000, 0.00000, 0.00000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(711, 3551.39990, -1550.50000, 13.40000,   0.00000, 0.00000, 0.00000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(711, 3565.39990, -1580.09998, 8.10000,   0.00000, 0.00000, 0.00000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(711, 3568.19995, -1590.69995, 6.60000,   0.00000, 0.00000, 0.00000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(711, 3587.60010, -1579.50000, 7.30000,   0.00000, 0.00000, 0.00000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(6300, 3625.00000, -2004.69995, -7.90000,   0.00000, 0.00000, 3.99900,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(19854, 3625.17188, -2020.02698, 0.11620,   0.00000, 0.00000, -180.88000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(19855, 3625.14111, -2020.00464, 0.12320,   0.00000, 0.00000, -180.88000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1491, 3625.10425, -2009.53918, 0.83399,   0.00000, 0.00000, 0.00000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1491, 3613.64990, -2024.60999, 0.83545,   0.00000, 0.00000, 0.00000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1491, 3619.65430, -2009.46240, 0.83235,   0.00000, 0.00000, 0.00000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(19550, 3676.56714, -1980.62183, 0.14960,   0.00000, 0.00000, 0.00000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(19550, 3677.48755, -1881.38770, 0.14986,   0.00000, 0.00000, 0.00000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(19668, 3711.32690, -1987.73645, 33.93150,   0.00000, 0.00000, 0.00000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(19668, 3709.95532, -1998.77148, 34.05301,   0.00000, 0.00000, 0.00000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(19668, 3708.73657, -2009.77087, 34.04052,   0.00000, 0.00000, 0.00000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(19668, 3711.51367, -1976.71204, 33.91106,   0.00000, 0.00000, 0.00000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(19550, 3799.90454, -1980.44958, 0.15530,   0.00000, 0.00000, 0.00000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(19550, 3799.83667, -1856.77258, 0.14960,   0.00000, 0.00000, 0.00000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(13120, 3826.76782, -1750.95691, -22.60294,   0.00000, 0.00000, 43.85997,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(13120, 3865.50171, -1820.08606, -26.02025,   0.00000, 0.00000, 0.00000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(19966, 2851.29199, -1848.82532, 9.89338,   0.00000, 0.00000, -91.32000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(19129, 3460.21509, -1443.55457, 0.24090,   0.00000, 0.00000, -18.18000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(11737, 3469.01807, -1458.76184, 1.14464,   0.00000, 0.00000, -300.47980,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(19840, 3286.26196, -1935.56287, 2.99534,   0.00000, 0.00000, 74.93999,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(19840, 3282.47949, -1926.05115, 3.97213,   0.00000, 0.00000, 108.06001,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(19634, 3796.45703, -1887.34082, 10.30768,   0.00000, 0.00000, 0.00000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(19609, 3469.52246, -1437.82471, 2.88467,   0.00000, 0.00000, 21.84000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(19609, 3456.74292, -1433.21228, 2.88119,   0.00000, 0.00000, -25.92000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18809, 3334.64307, -1917.63245, 7.94881,   -1.14000, -89.75998, 96.60001,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18809, 3340.76880, -1965.84741, 8.03219,   -43.85999, -90.06004, 97.73999,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18811, 3347.20801, -2014.37976, 8.88546,   -7.32000, -87.84000, 97.74000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18826, 3351.51221, -2047.87842, 25.49622,   0.00000, -0.54000, 96.86001,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18809, 3340.76880, -1965.84741, 8.03219,   -43.85999, -90.06004, 97.73999,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18809, 3346.84692, -2013.15906, 41.43951,   -43.86000, -90.06000, 97.74000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18809, 3340.06763, -1963.70032, 41.43950,   -43.86000, -90.06000, 97.74000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18826, 3319.42236, -1931.42737, 44.28273,   80.00000, 0.00000, -80.00000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18826, 3306.97168, -1954.63965, 31.18778,   0.00000, 0.00000, 96.18005,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18809, 3303.04053, -1919.41833, 15.33936,   -0.84000, -89.76000, 96.60000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(16151, 3613.28467, -2019.01404, 1.18000,   0.00000, 0.00000, 180.00000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(19787, 3617.32129, -2024.49854, 1.84230,   0.00000, 0.00000, -180.00000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(2315, 3617.06494, -2023.01306, 0.84181,   0.00000, 0.00000, 0.00000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(19332, 3527.26367, -1726.22925, 50.59012,   0.00000, 0.00000, 0.00000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(19336, 3548.35083, -1739.85767, 66.46120,   0.00000, 0.00000, 0.00000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(11686, 3628.17407, -2023.96655, 0.84252,   0.00000, 0.00000, 0.00000,0,-1,-1,STREAMER_OBJECT_DD);
+	CreateDynamicObject(17135, 3190.00000, -1477.00000, -34.70000,   0.00000, 0.00000, 111.99800,0,-1,-1);
+	CreateDynamicObject(17140, 3296.39990, -1532.40002, -0.30000,   356.29199, 22.04900, 241.50101,0,-1,-1);
+	CreateDynamicObject(17140, 3249.00000, -1677.30005, -0.30000,   356.28699, 22.04400, 159.49600,0,-1,-1);
+	CreateDynamicObject(17135, 3298.19995, -1415.90002, -34.70000,   0.00000, 0.00000, 69.99800,0,-1,-1);
+	CreateDynamicObject(17135, 3306.69995, -1370.09998, -34.70000,   0.00000, 0.00000, 179.99400,0,-1,-1);
+	CreateDynamicObject(17135, 3379.19995, -1728.00000, -34.70000,   0.00000, 0.00000, 359.99399,0,-1,-1);
+	CreateDynamicObject(17135, 3316.50000, -1731.59998, -34.70000,   0.00000, 0.00000, 345.98901,0,-1,-1);
+	CreateDynamicObject(17135, 3370.39990, -1677.59998, -34.70000,   0.00000, 0.00000, 71.98700,0,-1,-1);
+	CreateDynamicObject(17135, 3342.89990, -1638.40002, -34.70000,   0.00000, 0.00000, 71.98200,0,-1,-1);
+	CreateDynamicObject(17135, 3184.29980, -1456.00000, -34.70000,   0.00000, 0.00000, 205.99400,0,-1,-1);
+	CreateDynamicObject(13120, 3276.29980, -1776.79980, -7.00000,   0.00000, 349.99701, 37.99600,0,-1,-1);
+	CreateDynamicObject(17140, 3408.20020, -1501.09961, -0.30000,   356.28699, 22.04400, 241.49600,0,-1,-1);
+	CreateDynamicObject(17135, 3429.19995, -1341.09998, -34.70000,   0.00000, 0.00000, 169.98900,0,-1,-1);
+	CreateDynamicObject(17135, 3469.50000, -1370.09998, -34.70000,   0.00000, 0.00000, 107.98600,0,-1,-1);
+	CreateDynamicObject(17135, 3534.50000, -1342.90002, -34.70000,   0.00000, 0.00000, 159.98500,0,-1,-1);
+	CreateDynamicObject(17135, 3314.60010, -1420.59998, -34.70000,   0.00000, 0.00000, 69.99400,0,-1,-1);
+	CreateDynamicObject(4271, 3494.39990, -1559.09998, 3.40000,   2.00000, 0.00000, 344.00000,0,-1,-1);
+	CreateDynamicObject(17135, 3567.39990, -1391.90002, -34.70000,   0.00000, 0.00000, 301.98300,0,-1,-1);
+	CreateDynamicObject(6295, 3158.00000, -1530.90002, 79.20000,   348.00699, 357.95499, 99.57500,0,-1,-1);
+	CreateDynamicObject(17135, 3609.30005, -1380.40002, -34.70000,   0.00000, 0.00000, 285.98099,0,-1,-1);
+	CreateDynamicObject(17135, 3522.00000, -1646.80005, -34.70000,   0.00000, 0.00000, 285.98099,0,-1,-1);
+	CreateDynamicObject(17135, 3428.50000, -1635.09998, -34.70000,   0.00000, 0.00000, 285.98001,0,-1,-1);
+	CreateDynamicObject(17135, 3613.89990, -1630.00000, -55.10000,   0.00000, 0.00000, 17.97900,0,-1,-1);
+	CreateDynamicObject(17135, 3667.39990, -1499.40002, -57.30000,   0.00000, 0.00000, 17.97900,0,-1,-1);
+	CreateDynamicObject(11495, 3439.50000, -1438.30005, 0.00000,   0.00000, 0.00000, 72.00000,0,-1,-1);
+	CreateDynamicObject(11495, 3439.00000, -1439.90002, 0.00000,   0.00000, 0.00000, 251.99899,0,-1,-1);
+	CreateDynamicObject(11495, 3481.30005, -1483.30005, 0.20000,   0.00000, 0.00000, 339.99899,0,-1,-1);
+	CreateDynamicObject(11495, 3479.80005, -1482.69995, 0.20000,   0.00000, 0.00000, 159.99400,0,-1,-1);
+	CreateDynamicObject(8493, 3671.69995, -1643.09998, 15.50000,   0.00000, 0.00000, 310.00000,0,-1,-1);
+	CreateDynamicObject(8493, 3689.80005, -1584.50000, 15.50000,   0.00000, 0.00000, 169.99600,0,-1,-1);
+	CreateDynamicObject(9159, 3671.60010, -1643.19995, 15.40000,   0.00000, 0.00000, 310.00000,0,-1,-1);
+	CreateDynamicObject(9159, 3689.80005, -1584.40002, 15.40000,   0.00000, 0.00000, 169.99600,0,-1,-1);
+	CreateDynamicObject(2064, 3678.60010, -1634.09998, 5.60000,   0.00000, 0.00000, 172.00000,0,-1,-1);
+	CreateDynamicObject(2064, 3681.30005, -1634.19995, 5.60000,   0.00000, 0.00000, 171.99600,0,-1,-1);
+	CreateDynamicObject(2064, 3686.39990, -1596.40002, 5.60000,   0.00000, 0.00000, 339.99600,0,-1,-1);
+	CreateDynamicObject(2064, 3689.39990, -1596.50000, 5.60000,   0.00000, 0.00000, 3.99400,0,-1,-1);
+	CreateDynamicObject(3583, 3551.60010, -1572.90002, 9.10000,   0.00000, 12.00000, 272.00000,0,-1,-1);
+	CreateDynamicObject(4288, 3431.10010, -1927.19995, -12.50000,   0.00000, 0.00000, 98.00000,0,-1,-1);
+	CreateDynamicObject(13120, 3221.80005, -1808.50000, -7.00000,   0.00000, 349.99701, 97.99600,0,-1,-1);
+	CreateDynamicObject(13120, 3214.39990, -1838.00000, -7.00000,   0.00000, 349.99701, 97.99300,0,-1,-1);
+	CreateDynamicObject(13120, 3617.00000, -1793.09998, -7.00000,   0.00000, 349.99701, 287.99301,0,-1,-1);
+	CreateDynamicObject(13120, 3631.50000, -1873.19995, -7.00000,   0.00000, 349.99701, 275.98999,0,-1,-1);
+	CreateDynamicObject(3590, 3453.79980, -1745.40039, 7.20000,   0.00000, 0.00000, 182.00000,0,-1,-1);
+	CreateDynamicObject(1641, 3444.50000, -1866.59998, 4.50000,   0.00000, 0.00000, 0.00000,0,-1,-1);
+	CreateDynamicObject(1641, 3449.00000, -1864.40002, 4.50000,   0.00000, 0.00000, 0.00000,0,-1,-1);
+	CreateDynamicObject(1641, 3454.80005, -1864.30005, 4.50000,   0.00000, 0.00000, 0.00000,0,-1,-1);
+	CreateDynamicObject(1641, 3433.10010, -1864.40002, 4.50000,   0.00000, 0.00000, 0.00000,0,-1,-1);
+	CreateDynamicObject(1641, 3417.80005, -1871.90002, 4.50000,   0.00000, 0.00000, 0.00000,0,-1,-1);
+	CreateDynamicObject(1641, 3457.50000, -1852.50000, 4.50000,   0.00000, 0.00000, 16.00000,0,-1,-1);
+	CreateDynamicObject(1641, 3458.10010, -1854.40002, 4.50000,   0.00000, 0.00000, 15.99600,0,-1,-1);
+	CreateDynamicObject(1641, 3458.69995, -1856.40002, 4.50000,   0.00000, 0.00000, 15.99600,0,-1,-1);
+	CreateDynamicObject(1641, 3459.30005, -1858.40002, 4.50000,   0.00000, 0.00000, 15.99600,0,-1,-1);
+	CreateDynamicObject(1641, 3460.00000, -1860.50000, 4.50000,   0.00000, 0.00000, 15.99600,0,-1,-1);
+	CreateDynamicObject(1641, 3458.80005, -1851.19995, 4.50000,   0.00000, 0.00000, 113.99600,0,-1,-1);
+	CreateDynamicObject(1641, 3460.69995, -1850.59998, 4.50000,   0.00000, 0.00000, 101.99400,0,-1,-1);
+	CreateDynamicObject(1641, 3462.60010, -1850.90002, 4.50000,   0.00000, 0.00000, 73.99200,0,-1,-1);
+	CreateDynamicObject(1641, 3463.80005, -1852.19995, 4.50000,   0.00000, 0.00000, 15.98700,0,-1,-1);
+	CreateDynamicObject(1641, 3463.60010, -1854.09998, 4.50000,   0.00000, 0.00000, 335.98499,0,-1,-1);
+	CreateDynamicObject(1641, 3462.39990, -1855.50000, 4.50000,   0.00000, 0.00000, 309.98401,0,-1,-1);
+	CreateDynamicObject(1641, 3460.69995, -1856.59998, 4.50000,   0.00000, 0.00000, 293.97900,0,-1,-1);
+	CreateDynamicObject(1641, 3460.30005, -1857.50000, 4.50000,   0.00000, 0.00000, 71.97800,0,-1,-1);
+	CreateDynamicObject(1641, 3462.00000, -1858.30005, 4.50000,   0.00000, 0.00000, 61.97700,0,-1,-1);
+	CreateDynamicObject(1641, 3463.80005, -1859.09998, 4.50000,   0.00000, 0.00000, 61.97400,0,-1,-1);
+	CreateDynamicObject(1642, 3467.69995, -1858.40002, 4.50000,   0.00000, 0.00000, 324.00000,0,-1,-1);
+	CreateDynamicObject(1642, 3468.80005, -1856.90002, 4.50000,   0.00000, 0.00000, 323.99799,0,-1,-1);
+	CreateDynamicObject(1642, 3469.89990, -1855.40002, 4.50000,   0.00000, 0.00000, 323.99799,0,-1,-1);
+	CreateDynamicObject(1642, 3471.10010, -1853.80005, 4.50000,   0.00000, 0.00000, 323.99799,0,-1,-1);
+	CreateDynamicObject(1642, 3467.50000, -1853.69995, 4.50000,   0.00000, 0.00000, 29.99800,0,-1,-1);
+	CreateDynamicObject(1642, 3468.60010, -1855.59998, 4.50000,   0.00000, 0.00000, 29.99300,0,-1,-1);
+	CreateDynamicObject(1642, 3469.50000, -1857.40002, 4.50000,   0.00000, 0.00000, 29.99300,0,-1,-1);
+	CreateDynamicObject(1642, 3470.30005, -1858.80005, 4.50000,   0.00000, 0.00000, 29.99300,0,-1,-1);
+	CreateDynamicObject(1642, 3475.50000, -1858.59998, 4.50000,   0.00000, 0.00000, 15.99300,0,-1,-1);
+	CreateDynamicObject(1642, 3478.60010, -1857.59998, 4.50000,   0.00000, 0.00000, 15.99100,0,-1,-1);
+	CreateDynamicObject(1642, 3483.50000, -1856.50000, 4.50000,   0.00000, 0.00000, 15.99100,0,-1,-1);
+	CreateDynamicObject(1642, 3488.60010, -1856.09998, 4.50000,   0.00000, 0.00000, 15.99100,0,-1,-1);
+	CreateDynamicObject(9237, 3629.10010, -1855.30005, 38.20000,   0.00000, 4.00000, 0.00000,0,-1,-1);
+	CreateDynamicObject(1609, 3417.80005, -1871.69995, 4.80000,   25.93200, 184.44901, 6.05100,0,-1,-1);
+	CreateDynamicObject(1641, 3419.89990, -1871.69995, 4.50000,   0.00000, 0.00000, 0.00000,0,-1,-1);
+	CreateDynamicObject(1609, 3419.80005, -1871.50000, 4.80000,   0.00000, 0.00000, 0.04800,0,-1,-1);
+	CreateDynamicObject(321, 3417.89990, -1872.69995, 4.70000,   0.00000, 0.00000, 208.00000,0,-1,-1);
+	CreateDynamicObject(1609, 3424.80005, -1871.19995, 4.80000,   0.00000, 0.00000, 34.04400,0,-1,-1);
+	CreateDynamicObject(1609, 3428.30005, -1866.50000, 4.80000,   0.00000, 0.00000, 76.04100,0,-1,-1);
+	CreateDynamicObject(1609, 3424.10010, -1867.00000, 4.80000,   0.00000, 0.00000, 10.03600,0,-1,-1);
+	CreateDynamicObject(1607, 3444.89990, -1925.69995, 0.00000,   25.93200, 355.55099, 97.94900,0,-1,-1);
+	CreateDynamicObject(1607, 3437.60010, -1921.80005, 2.00000,   358.00101, 355.99701, 95.85500,0,-1,-1);
+	CreateDynamicObject(1607, 3428.00000, -1932.80005, 1.30000,   340.04599, 355.74200, 94.53500,0,-1,-1);
+	CreateDynamicObject(1607, 3419.69995, -1958.09998, 1.30000,   29.91200, 355.37701, 98.29800,0,-1,-1);
+	CreateDynamicObject(1637, 3383.60010, -1876.40002, 5.80000,   0.00000, 0.00000, 0.00000,0,-1,-1);
+	CreateDynamicObject(1637, 3398.69995, -1871.59998, 5.80000,   0.00000, 0.00000, 70.00000,0,-1,-1);
+	CreateDynamicObject(1637, 3415.30005, -1867.30005, 5.80000,   0.00000, 0.00000, 69.99900,0,-1,-1);
+	CreateDynamicObject(18259, 3489.40039, -1462.79980, 1.60000,   0.00000, 0.00000, 67.86000,0,-1,-1);
+	CreateDynamicObject(18259, 3626.39990, -1764.59998, 29.60000,   9.94500, 6.09200, 24.10400,0,-1,-1);
+	CreateDynamicObject(7071, 3509.50000, -1674.50000, 45.10000,   0.00000, 0.00000, 0.00000,0,-1,-1);
+	CreateDynamicObject(4288, 3433.30005, -1921.40002, -12.50000,   0.00000, 0.00000, 97.99800,0,-1,-1);
+	CreateDynamicObject(7071, 3509.50000, -1674.50000, 37.80000,   0.00000, 0.00000, 0.00000,0,-1,-1);
+	CreateDynamicObject(7071, 3509.50000, -1674.50000, 25.80000,   0.00000, 0.00000, 0.00000,0,-1,-1);
+	CreateDynamicObject(7071, 3509.50000, -1674.50000, 18.80000,   0.00000, 0.00000, 0.00000,0,-1,-1);
+	CreateDynamicObject(7071, 3509.50000, -1674.50000, 12.00000,   0.00000, 0.00000, 0.00000,0,-1,-1);
+	CreateDynamicObject(3115, 3459.19995, -1705.30005, 45.10000,   0.00000, 0.00000, 0.00000,0,-1,-1);
+	CreateDynamicObject(3115, 3480.10010, -1705.19995, 45.10000,   0.00000, 0.00000, 0.00000,0,-1,-1);
+	CreateDynamicObject(3115, 3500.89990, -1705.00000, 45.10000,   0.00000, 0.00000, 0.00000,0,-1,-1);
+	CreateDynamicObject(3115, 3520.30005, -1705.00000, 45.10000,   0.00000, 0.00000, 0.00000,0,-1,-1);
+	CreateDynamicObject(3115, 3520.30005, -1704.90002, 42.60000,   0.00000, 0.00000, 0.00000,0,-1,-1);
+	CreateDynamicObject(3115, 3541.10010, -1705.09998, 45.10000,   0.00000, 0.00000, 0.00000,0,-1,-1);
+	CreateDynamicObject(3115, 3561.89990, -1704.69995, 45.10000,   0.00000, 0.00000, 0.00000,0,-1,-1);
+	CreateDynamicObject(3115, 3568.39990, -1705.00000, 45.10000,   0.00000, 0.00000, 0.00000,0,-1,-1);
+	CreateDynamicObject(17135, 3477.80005, -1635.50000, -34.70000,   0.00000, 0.00000, 285.98001,0,-1,-1);
+	CreateDynamicObject(17135, 3397.50000, -1630.00000, -34.70000,   0.00000, 0.00000, 285.98001,0,-1,-1);
+	CreateDynamicObject(18368, 3605.60010, -1702.19995, 42.00000,   0.00000, 0.00000, 302.00000,0,-1,-1);
+	CreateDynamicObject(1598, 3516.50000, -1847.59998, 4.60000,   0.00000, 0.00000, 0.00000,0,-1,-1);
+	CreateDynamicObject(3437, 3457.80005, -1715.30005, 33.30000,   0.00000, 0.00000, 0.00000,0,-1,-1);
+	CreateDynamicObject(3437, 3457.80005, -1715.30005, 23.70000,   0.00000, 0.00000, 0.00000,0,-1,-1);
+	CreateDynamicObject(3437, 3462.80005, -1715.30005, 37.30000,   0.00000, 94.00000, 0.00000,0,-1,-1);
+	CreateDynamicObject(3437, 3464.60010, -1715.40002, 33.00000,   0.00000, 219.99899, 0.00000,0,-1,-1);
+	CreateDynamicObject(3437, 3462.89990, -1715.40002, 24.80000,   0.00000, 317.99600, 0.00000,0,-1,-1);
+	CreateDynamicObject(3437, 3472.39990, -1715.40002, 24.80000,   0.00000, 0.00000, 0.00000,0,-1,-1);
+	CreateDynamicObject(3437, 3472.39990, -1715.40002, 33.30000,   0.00000, 0.00000, 0.00000,0,-1,-1);
+	CreateDynamicObject(3437, 3476.89990, -1715.40002, 37.30000,   0.00000, 90.00000, 0.00000,0,-1,-1);
+	CreateDynamicObject(3437, 3476.89990, -1715.40002, 27.40000,   0.00000, 90.00000, 0.00000,0,-1,-1);
+	CreateDynamicObject(3437, 3476.89990, -1715.40002, 20.50000,   0.00000, 90.00000, 0.00000,0,-1,-1);
+	CreateDynamicObject(3437, 3487.30005, -1715.40002, 25.50000,   0.00000, 346.00000, 0.00000,0,-1,-1);
+	CreateDynamicObject(3437, 3485.80005, -1715.40002, 31.30000,   0.00000, 345.99799, 0.00000,0,-1,-1);
+	CreateDynamicObject(3437, 3490.30005, -1715.40002, 25.50000,   0.00000, 15.99800, 0.00000,0,-1,-1);
+	CreateDynamicObject(3437, 3492.00000, -1715.40002, 31.50000,   0.00000, 15.99600, 0.00000,0,-1,-1);
+	CreateDynamicObject(3437, 3497.50000, -1715.40002, 31.50000,   0.00000, 0.00000, 0.00000,0,-1,-1);
+	CreateDynamicObject(3437, 3497.50000, -1715.40002, 26.50000,   0.00000, 0.00000, 0.00000,0,-1,-1);
+	CreateDynamicObject(3437, 3502.19995, -1715.40002, 21.50000,   0.00000, 272.00000, 0.00000,0,-1,-1);
+	CreateDynamicObject(3437, 3502.19995, -1715.40002, 36.50000,   0.00000, 272.00000, 0.00000,0,-1,-1);
+	CreateDynamicObject(3437, 3507.00000, -1715.40002, 31.00000,   0.00000, 0.00000, 0.00000,0,-1,-1);
+	CreateDynamicObject(3437, 3507.00000, -1715.40002, 27.30000,   0.00000, 0.00000, 0.00000,0,-1,-1);
+	CreateDynamicObject(3437, 3511.50000, -1715.40002, 31.50000,   0.00000, 0.00000, 0.00000,0,-1,-1);
+	CreateDynamicObject(3437, 3511.50000, -1715.40002, 26.30000,   0.00000, 0.00000, 0.00000,0,-1,-1);
+	CreateDynamicObject(3437, 3515.50000, -1715.40002, 21.80000,   0.00000, 272.00000, 0.00000,0,-1,-1);
+	CreateDynamicObject(3437, 3522.89990, -1715.09998, 31.60000,   0.00000, 0.00000, 0.00000,0,-1,-1);
+	CreateDynamicObject(3437, 3522.89990, -1715.09998, 26.60000,   0.00000, 0.00000, 0.00000,0,-1,-1);
+	CreateDynamicObject(3437, 3527.39990, -1715.00000, 23.10000,   0.00000, 270.00000, 0.00000,0,-1,-1);
+	CreateDynamicObject(3437, 3531.80005, -1715.09998, 28.40000,   0.00000, 0.00000, 0.00000,0,-1,-1);
+	CreateDynamicObject(3437, 3531.80005, -1715.09998, 31.60000,   0.00000, 0.00000, 0.00000,0,-1,-1);
+	CreateDynamicObject(3437, 3536.60010, -1715.19995, 31.60000,   0.00000, 0.00000, 0.00000,0,-1,-1);
+	CreateDynamicObject(3437, 3536.60010, -1715.19995, 28.10000,   0.00000, 0.00000, 0.00000,0,-1,-1);
+	CreateDynamicObject(3437, 3536.60010, -1715.19995, 35.10000,   0.00000, 0.00000, 0.00000,0,-1,-1);
+	CreateDynamicObject(3437, 3536.60010, -1715.19995, 37.80000,   0.00000, 0.00000, 0.00000,0,-1,-1);
+	CreateDynamicObject(3437, 3536.60010, -1715.19995, 43.50000,   0.00000, 270.00000, 0.00000,0,-1,-1);
+	CreateDynamicObject(3437, 3541.10010, -1715.30005, 27.30000,   0.00000, 0.00000, 0.00000,0,-1,-1);
+	CreateDynamicObject(3437, 3546.39990, -1715.19995, 27.30000,   0.00000, 0.00000, 0.00000,0,-1,-1);
+	CreateDynamicObject(3437, 3551.10010, -1715.09998, 31.80000,   0.00000, 90.00000, 0.00000,0,-1,-1);
+	CreateDynamicObject(3437, 3551.10010, -1715.09998, 22.70000,   0.00000, 90.00000, 0.00000,0,-1,-1);
+	CreateDynamicObject(3437, 3555.80005, -1715.19995, 26.50000,   0.00000, 0.00000, 0.00000,0,-1,-1);
+	CreateDynamicObject(3437, 3561.30005, -1715.30005, 26.50000,   0.00000, 0.00000, 0.00000,0,-1,-1);
+	CreateDynamicObject(3437, 3561.30005, -1715.30005, 32.80000,   0.00000, 0.00000, 0.00000,0,-1,-1);
+	CreateDynamicObject(3437, 3564.80005, -1715.19995, 32.80000,   1.57600, 141.98300, 359.23199,0,-1,-1);
+	CreateDynamicObject(3437, 3568.80005, -1715.19995, 33.30000,   0.00000, 8.00000, 359.23099,0,-1,-1);
+	CreateDynamicObject(3437, 3569.80005, -1715.30005, 40.30000,   0.00000, 7.99800, 359.22501,0,-1,-1);
+	CreateDynamicObject(3437, 3512.60010, -1715.50000, 12.50000,   0.00000, 41.99600, 0.00000,0,-1,-1);
+	CreateDynamicObject(3437, 3512.39990, -1715.50000, 12.50000,   0.00000, 319.99500, 0.00000,0,-1,-1);
+	CreateDynamicObject(3533, 3459.10010, -1715.30005, 8.70000,   0.00000, 0.00000, 0.00000,0,-1,-1);
+	CreateDynamicObject(3533, 3466.80005, -1715.40002, 6.60000,   0.00000, 0.00000, 0.00000,0,-1,-1);
+	CreateDynamicObject(3533, 3471.00000, -1715.50000, 11.10000,   0.00000, 270.00000, 0.00000,0,-1,-1);
+	CreateDynamicObject(3533, 3475.00000, -1715.30005, 6.90000,   0.00000, 0.00000, 0.00000,0,-1,-1);
+	CreateDynamicObject(3533, 3470.39990, -1715.59998, 4.90000,   0.00000, 88.00000, 0.00000,0,-1,-1);
+	CreateDynamicObject(3533, 3462.30005, -1715.19995, 10.10000,   0.00000, 312.00000, 0.00000,0,-1,-1);
+	CreateDynamicObject(3533, 3477.19995, -1715.30005, 11.70000,   0.00000, 0.00000, 0.00000,0,-1,-1);
+	CreateDynamicObject(3533, 3485.30005, -1715.40002, 4.10000,   0.00000, 0.00000, 0.00000,0,-1,-1);
+	CreateDynamicObject(3533, 3480.89990, -1715.30005, 8.40000,   0.00000, 88.00000, 0.00000,0,-1,-1);
+	CreateDynamicObject(3533, 3519.69995, -1715.19995, 8.40000,   0.00000, 0.00000, 0.00000,0,-1,-1);
+	CreateDynamicObject(3533, 3523.19995, -1715.80005, 11.60000,   0.00000, 298.00000, 0.00000,0,-1,-1);
+	CreateDynamicObject(3533, 3523.69995, -1715.80005, 8.60000,   0.00000, 245.99899, 0.00000,0,-1,-1);
+	CreateDynamicObject(3533, 3522.69995, -1715.30005, 5.40000,   0.00000, 131.99500, 0.00000,0,-1,-1);
+	CreateDynamicObject(3533, 3530.00000, -1715.19995, 7.70000,   0.00000, 12.00000, 0.00000,0,-1,-1);
+	CreateDynamicObject(3533, 3532.10010, -1715.19995, 7.70000,   0.00000, 345.99701, 0.00000,0,-1,-1);
+	CreateDynamicObject(3533, 3535.50000, -1715.09998, 7.70000,   0.00000, 330.00000, 0.00000,0,-1,-1);
+	CreateDynamicObject(3533, 3538.39990, -1715.09998, 7.70000,   0.00000, 17.99600, 0.00000,0,-1,-1);
+	CreateDynamicObject(3533, 3542.19995, -1715.30005, 7.70000,   0.00000, 0.00000, 0.00000,0,-1,-1);
+	CreateDynamicObject(3533, 3544.69995, -1715.40002, 12.20000,   0.00000, 84.00000, 0.00000,0,-1,-1);
+	CreateDynamicObject(3533, 3544.69995, -1715.40002, 8.90000,   0.00000, 83.99600, 0.00000,0,-1,-1);
+	CreateDynamicObject(3533, 3544.69995, -1715.40002, 5.60000,   0.00000, 83.99600, 0.00000,0,-1,-1);
+	CreateDynamicObject(3533, 3551.69995, -1715.30005, 8.10000,   0.00000, 0.00000, 0.00000,0,-1,-1);
+	CreateDynamicObject(3533, 3554.39990, -1715.40002, 8.10000,   0.00000, 330.00000, 0.00000,0,-1,-1);
+	CreateDynamicObject(3533, 3555.39990, -1715.50000, 8.10000,   0.00000, 9.99600, 0.00000,0,-1,-1);
+	CreateDynamicObject(3533, 3461.00000, -1715.30005, 5.40000,   0.00000, 55.99500, 0.00000,0,-1,-1);
+	CreateDynamicObject(3533, 3481.00000, -1715.50000, 4.90000,   0.00000, 87.99500, 0.00000,0,-1,-1);
+	CreateDynamicObject(3533, 3480.60010, -1715.30005, 15.80000,   0.00000, 87.99500, 0.00000,0,-1,-1);
+	CreateDynamicObject(3533, 3487.50000, -1715.19995, 6.90000,   0.00000, 0.00000, 0.00000,0,-1,-1);
+	CreateDynamicObject(3533, 3492.10010, -1715.00000, 9.00000,   0.00000, 270.00000, 0.00000,0,-1,-1);
+	CreateDynamicObject(3533, 3495.50000, -1715.30005, 8.30000,   0.00000, 0.00000, 0.00000,0,-1,-1);
+	CreateDynamicObject(3533, 3498.00000, -1715.30005, 8.30000,   0.00000, 0.00000, 0.00000,0,-1,-1);
+	CreateDynamicObject(3533, 3499.89990, -1715.19995, 10.40000,   0.00000, 36.00000, 0.00000,0,-1,-1);
+	CreateDynamicObject(3533, 3500.89990, -1715.19995, 5.10000,   0.00000, 321.99701, 0.00000,0,-1,-1);
+	CreateDynamicObject(3533, 3503.39990, -1715.30005, 8.40000,   0.00000, 10.00000, 0.00000,0,-1,-1);
+	CreateDynamicObject(3533, 3505.69995, -1715.30005, 8.40000,   0.00000, 345.99799, 0.00000,0,-1,-1);
+	CreateDynamicObject(16151, 3630.39990, -1771.59998, 28.30000,   354.17899, 14.07400, 297.45700,0,-1,-1);
+	CreateDynamicObject(2575, 3623.50000, -1761.50000, 30.80000,   11.93300, 6.13300, 28.72700,0,-1,-1);
+	CreateDynamicObject(7073, 3446.50000, -1725.40002, 26.20000,   0.00000, 10.00000, 316.00000,0,-1,-1);
+	CreateDynamicObject(13667, 3448.69995, -1726.50000, 38.80000,   0.00000, 8.00000, 324.00000,0,-1,-1);
+	CreateDynamicObject(354, 3448.89990, -1725.40002, 47.20000,   0.00000, 0.00000, 0.00000,0,-1,-1);
+	CreateDynamicObject(2236, 3623.00000, -1763.30005, 30.40000,   7.92200, 351.92200, 117.12100,0,-1,-1);
+	CreateDynamicObject(2296, 3621.60010, -1764.59998, 30.40000,   1.98100, 351.99500, 116.27800,0,-1,-1);
+	CreateDynamicObject(1764, 3623.10010, -1761.69995, 30.40000,   0.00000, 8.00000, 298.00000,0,-1,-1);
+	CreateDynamicObject(2903, 3465.30005, -1346.19995, 69.80000,   0.00000, 0.00000, 0.00000,0,-1,-1);
+	CreateDynamicObject(2903, 3477.50000, -1342.59998, 63.60000,   0.00000, 0.00000, 0.00000,0,-1,-1);
+	CreateDynamicObject(2903, 3477.50000, -1342.59998, 77.40000,   0.00000, 0.00000, 0.00000,0,-1,-1);
+	CreateDynamicObject(2903, 3455.60010, -1353.69995, 59.60000,   0.00000, 0.00000, 0.00000,0,-1,-1);
+	CreateDynamicObject(2903, 3455.60010, -1353.69995, 86.70000,   0.00000, 0.00000, 0.00000,0,-1,-1);
+	CreateDynamicObject(2903, 3466.10010, -1348.40002, 96.50000,   0.00000, 0.00000, 0.00000,0,-1,-1);
+	CreateDynamicObject(2903, 3490.30005, -1336.19995, 68.50000,   0.00000, 0.00000, 0.00000,0,-1,-1);
+	CreateDynamicObject(2903, 3478.39990, -1342.19995, 93.10000,   0.00000, 0.00000, 0.00000,0,-1,-1);
+	CreateDynamicObject(2903, 3488.30005, -1337.19995, 85.30000,   0.00000, 0.00000, 0.00000,0,-1,-1);
+	CreateDynamicObject(2903, 3495.10010, -1326.19995, 50.80000,   0.00000, 0.00000, 0.00000,0,-1,-1);
+	CreateDynamicObject(2903, 3440.89990, -1316.09998, 63.30000,   0.00000, 0.00000, 0.00000,0,-1,-1);
+	CreateDynamicObject(17140, 3096.10010, -1781.50000, -0.30000,   356.28699, 22.03900, 91.49400,0,-1,-1);
+	CreateDynamicObject(17140, 3008.10010, -1872.59998, -0.30000,   356.28699, 22.03300, 117.48900,0,-1,-1);
+	CreateDynamicObject(17135, 3167.80005, -1935.59998, -34.70000,   0.00000, 0.00000, 67.98900,0,-1,-1);
+	CreateDynamicObject(17135, 3122.10010, -1992.50000, -34.70000,   0.00000, 0.00000, 141.98900,0,-1,-1);
+	CreateDynamicObject(17135, 3201.89990, -1964.40002, -34.70000,   0.00000, 0.00000, 141.98700,0,-1,-1);
+	CreateDynamicObject(17135, 3212.80005, -1939.80005, -34.70000,   0.00000, 0.00000, 141.98700,0,-1,-1);
+	CreateDynamicObject(11495, 3480.39990, -1480.90002, 0.20000,   0.00000, 0.00000, 159.98801,0,-1,-1);
+	CreateDynamicObject(3115, 3459.69995, -1445.80005, 0.00000,   0.00000, 0.00000, 342.00000,0,-1,-1);
+	CreateDynamicObject(1799, 3486.19995, -1462.40002, 1.70000,   0.00000, 0.00000, 70.00000,0,-1,-1);
+	CreateDynamicObject(11495, 3471.60059, -1460.50000, 0.70000,   3.99900, 0.00000, 234.20700,0,-1,-1);
+	CreateDynamicObject(3115, 3465.30005, -1428.69995, 0.40000,   0.00000, 0.00000, 341.99899,0,-1,-1);
+	CreateDynamicObject(3115, 3465.30005, -1428.69995, 0.90000,   0.00000, 0.00000, 341.99899,0,-1,-1);
+	CreateDynamicObject(3115, 3465.30005, -1428.69995, 1.60000,   0.00000, 0.00000, 341.99899,0,-1,-1);
+	CreateDynamicObject(3115, 3465.30005, -1428.69995, 2.10000,   0.00000, 0.00000, 341.99899,0,-1,-1);
+	CreateDynamicObject(3115, 3465.30005, -1428.69995, 2.60000,   0.00000, 0.00000, 341.99899,0,-1,-1);
+	CreateDynamicObject(3115, 3462.69995, -1429.69995, 0.00000,   0.00000, 0.00000, 341.99899,0,-1,-1);
+	CreateDynamicObject(3115, 3465.30005, -1428.69995, 1.40000,   0.00000, 0.00000, 341.99899,0,-1,-1);
+	CreateDynamicObject(3361, 3454.60010, -1424.50000, 0.80000,   0.00000, 0.00000, 252.00000,0,-1,-1);
+	CreateDynamicObject(14391, 3463.69995, -1432.59998, 3.90000,   0.00000, 0.00000, 70.00000,0,-1,-1);
+	CreateDynamicObject(2232, 3465.50000, -1434.30005, 3.50000,   0.00000, 0.00000, 0.00000,0,-1,-1);
+	CreateDynamicObject(2232, 3465.00000, -1434.09998, 3.50000,   0.00000, 0.00000, 338.00000,0,-1,-1);
+	CreateDynamicObject(2232, 3464.50000, -1433.90002, 3.50000,   0.00000, 0.00000, 338.00000,0,-1,-1);
+	CreateDynamicObject(2232, 3464.00000, -1433.69995, 3.50000,   0.00000, 0.00000, 338.00000,0,-1,-1);
+	CreateDynamicObject(2232, 3463.50000, -1433.50000, 3.50000,   0.00000, 0.00000, 338.00000,0,-1,-1);
+	CreateDynamicObject(2232, 3463.00000, -1433.30005, 3.50000,   0.00000, 0.00000, 338.00000,0,-1,-1);
+	CreateDynamicObject(2232, 3462.39990, -1433.09998, 3.50000,   0.00000, 0.00000, 338.00000,0,-1,-1);
+	CreateDynamicObject(2232, 3461.89990, -1432.90002, 3.50000,   0.00000, 0.00000, 338.00000,0,-1,-1);
+	CreateDynamicObject(2232, 3461.30005, -1432.69995, 3.50000,   0.00000, 0.00000, 338.00000,0,-1,-1);
+	CreateDynamicObject(2232, 3460.89990, -1432.40002, 3.50000,   0.00000, 0.00000, 322.00000,0,-1,-1);
+	CreateDynamicObject(3437, 3458.00000, -1436.19995, 1.40000,   0.00000, 90.00000, 342.00000,0,-1,-1);
+	CreateDynamicObject(3437, 3466.89990, -1439.09998, 1.40000,   0.00000, 90.00000, 341.99899,0,-1,-1);
+	CreateDynamicObject(3437, 3474.19995, -1435.50000, 1.30000,   0.00000, 90.00000, 71.99900,0,-1,-1);
+	CreateDynamicObject(3437, 3475.50000, -1431.50000, 1.30000,   0.00000, 90.00000, 71.99900,0,-1,-1);
+	CreateDynamicObject(3437, 3454.39990, -1429.40002, 1.30000,   0.00000, 90.00000, 71.99900,0,-1,-1);
+	CreateDynamicObject(3437, 3472.39990, -1439.40002, 1.90000,   0.00000, 0.00000, 77.99900,0,-1,-1);
+	CreateDynamicObject(3437, 3453.30005, -1433.09998, 2.60000,   0.00000, 0.00000, 69.99700,0,-1,-1);
+	CreateDynamicObject(3437, 3459.69995, -1426.50000, 2.50000,   0.00000, 0.00000, 155.99699,0,-1,-1);
+	CreateDynamicObject(3437, 3464.50000, -1428.50000, 2.90000,   0.00000, 0.00000, 157.99500,0,-1,-1);
+	CreateDynamicObject(3437, 3468.80005, -1430.09998, 2.60000,   0.00000, 0.00000, 157.99400,0,-1,-1);
+	CreateDynamicObject(3437, 3470.69995, -1434.50000, 6.90000,   0.00000, 86.00000, 105.99700,0,-1,-1);
+	CreateDynamicObject(3437, 3457.19995, -1430.19995, 7.20000,   0.00000, 89.99500, 217.99400,0,-1,-1);
+	CreateDynamicObject(3437, 3464.39990, -1428.30005, 7.20000,   0.00000, 89.99500, 157.99100,0,-1,-1);
+	CreateDynamicObject(16151, 3497.19995, -1465.30005, 2.00000,   0.00000, 0.00000, 340.00000,0,-1,-1);
+	CreateDynamicObject(3115, 3461.00000, -1434.50000, 0.00000,   0.00000, 0.00000, 341.99899,0,-1,-1);
+	CreateDynamicObject(2296, 3490.00000, -1458.30005, 1.70000,   0.00000, 0.00000, 340.00000,0,-1,-1);
+	CreateDynamicObject(3115, 3465.30005, -1428.69995, 8.10000,   0.00000, 0.00000, 341.99899,0,-1,-1);
+	CreateDynamicObject(2190, 3630.10010, -1770.90002, 29.30000,   0.00000, 4.00000, 210.00000,0,-1,-1);
+	CreateDynamicObject(2224, 3485.10010, -1458.19995, 1.70000,   0.00000, 0.00000, 0.00000,0,-1,-1);
+	CreateDynamicObject(345, 3472.30005, -1440.50000, 7.20000,   0.00000, 0.00000, 0.00000,0,-1,-1);
+	CreateDynamicObject(345, 3472.30005, -1440.50000, 0.90000,   0.00000, 0.00000, 0.00000,0,-1,-1);
+	CreateDynamicObject(345, 3454.00000, -1433.69995, 0.90000,   0.00000, 0.00000, 0.00000,0,-1,-1);
+	CreateDynamicObject(345, 3453.80005, -1433.19995, 7.80000,   0.00000, 0.00000, 0.00000,0,-1,-1);
+	CreateDynamicObject(8394, 3362.39990, -1794.40002, 14.80000,   0.00000, 0.00000, 0.00000,0,-1,-1);
+	CreateDynamicObject(17140, 3005.60010, -1972.40002, -0.30000,   356.28699, 22.02800, 133.48801,0,-1,-1);
+	CreateDynamicObject(17135, 3191.39990, -1972.50000, -34.70000,   0.00000, 0.00000, 185.98700,0,-1,-1);
+	CreateDynamicObject(17135, 3154.30005, -1997.90002, -34.70000,   0.00000, 0.00000, 185.98199,0,-1,-1);
+	CreateDynamicObject(12857, 2873.80005, -1856.90002, 11.60000,   10.00000, 0.00000, 264.00000,0,-1,-1);
+	CreateDynamicObject(12857, 2913.39990, -1861.09998, 17.00000,   5.99800, 0.00000, 263.99600,0,-1,-1);
+	CreateDynamicObject(12857, 2953.50000, -1865.09998, 18.60000,   359.99301, 0.00000, 263.98999,0,-1,-1);
+	CreateDynamicObject(12857, 2990.69995, -1868.59998, 18.60000,   359.98901, 0.00000, 263.98999,0,-1,-1);
+	CreateDynamicObject(1706, 3490.50000, -1461.30005, 1.70000,   0.00000, 0.00000, 160.00000,0,-1,-1);
+	CreateDynamicObject(17135, 3136.80005, -1556.80005, -34.70000,   0.00000, 0.00000, 53.99400,0,-1,-1);
+	CreateDynamicObject(13120, 3095.50000, -1716.30005, -20.40000,   0.00000, 349.99701, 53.99600,0,-1,-1);
+	CreateDynamicObject(13120, 3140.39990, -1846.19995, -5.00000,   0.00000, 349.99701, 98.77200,0,-1,-1);
+	CreateDynamicObject(671, 3267.80005, -1668.09998, 29.10000,   0.00000, 0.00000, 0.00000,0,-1,-1);
+	CreateDynamicObject(671, 3258.30005, -1658.00000, 28.90000,   0.00000, 0.00000, 0.00000,0,-1,-1);
+	CreateDynamicObject(13120, 3358.10010, -1700.09998, -12.00000,   0.00000, 349.99701, 37.99600,0,-1,-1);
+	CreateDynamicObject(13120, 3330.89990, -1627.09998, -12.00000,   0.00000, 349.99701, 95.99600,0,-1,-1);
+	CreateDynamicObject(11495, 3471.60059, -1460.50000, 0.70000,   3.99900, 0.00000, 58.20700,0,-1,-1);
+	CreateDynamicObject(1598, 3524.00000, -1832.90002, 4.60000,   0.00000, 0.00000, 0.00000,0,-1,-1);
+	CreateDynamicObject(13120, 3169.30005, -1702.19995, -7.00000,   0.00000, 349.99701, 137.99600,0,-1,-1);
+	CreateDynamicObject(12822, 2304.60010, 8.70000, 33.20000,   0.00000, 0.00000, 0.00000,0,-1,-1);
+	CreateDynamicObject(6300, 3623.30005, -1980.50000, -7.90000,   0.00000, 0.00000, 4.00000,0,-1,-1);
+	CreateDynamicObject(671, 3249.00000, -1649.90002, 28.40000,   0.00000, 0.00000, 0.00000,0,-1,-1);
+	CreateDynamicObject(671, 3257.10010, -1646.80005, 28.90000,   0.00000, 0.00000, 0.00000,0,-1,-1);
+	CreateDynamicObject(671, 3232.60010, -1644.69995, 26.60000,   0.00000, 0.00000, 0.00000,0,-1,-1);
+	CreateDynamicObject(711, 3499.30005, -1536.00000, 18.60000,   0.00000, 0.00000, 0.00000,0,-1,-1);
+	CreateDynamicObject(711, 3497.10010, -1560.80005, 12.10000,   0.00000, 0.00000, 0.00000,0,-1,-1);
+	CreateDynamicObject(711, 3516.39990, -1546.09998, 14.10000,   0.00000, 0.00000, 0.00000,0,-1,-1);
+	CreateDynamicObject(3508, 3480.80005, -1487.80005, 0.00000,   0.00000, 0.00000, 0.00000,0,-1,-1);
+	CreateDynamicObject(3508, 3477.30005, -1486.40002, 0.00000,   0.00000, 0.00000, 0.00000,0,-1,-1);
+	CreateDynamicObject(3508, 3433.50000, -1435.00000, -0.30000,   0.00000, 0.00000, 0.00000,0,-1,-1);
+	CreateDynamicObject(3508, 3432.80005, -1439.59998, -0.30000,   0.00000, 0.00000, 0.00000,0,-1,-1);
+	CreateDynamicObject(1632, 3600.50000, -1500.19995, 1.50000,   8.00000, 0.00000, 258.00000,0,-1,-1);
+	CreateDynamicObject(1632, 3599.69995, -1504.00000, 1.50000,   7.99800, 0.00000, 257.99899,0,-1,-1);
+	CreateDynamicObject(1632, 3606.00000, -1505.40002, 5.90000,   15.99800, 0.00000, 257.99899,0,-1,-1);
+	CreateDynamicObject(1632, 3606.80005, -1501.50000, 5.90000,   15.99600, 0.00000, 257.99399,0,-1,-1);
+	CreateDynamicObject(17135, 3684.39990, -1421.59998, -79.90000,   0.00000, 0.00000, 217.97900,0,-1,-1);
+	CreateDynamicObject(711, 3523.30005, -1556.69995, 10.40000,   0.00000, 0.00000, 0.00000,0,-1,-1);
+	CreateDynamicObject(711, 3551.39990, -1550.50000, 13.40000,   0.00000, 0.00000, 0.00000,0,-1,-1);
+	CreateDynamicObject(711, 3565.39990, -1580.09998, 8.10000,   0.00000, 0.00000, 0.00000,0,-1,-1);
+	CreateDynamicObject(711, 3568.19995, -1590.69995, 6.60000,   0.00000, 0.00000, 0.00000,0,-1,-1);
+	CreateDynamicObject(711, 3587.60010, -1579.50000, 7.30000,   0.00000, 0.00000, 0.00000,0,-1,-1);
+	CreateDynamicObject(6300, 3625.00000, -2004.69995, -7.90000,   0.00000, 0.00000, 3.99900,0,-1,-1);
+	CreateDynamicObject(19854, 3625.17188, -2020.02698, 0.11620,   0.00000, 0.00000, -180.88000,0,-1,-1);
+	CreateDynamicObject(19855, 3625.14111, -2020.00464, 0.12320,   0.00000, 0.00000, -180.88000,0,-1,-1);
+	CreateDynamicObject(1491, 3625.10425, -2009.53918, 0.83399,   0.00000, 0.00000, 0.00000,0,-1,-1);
+	CreateDynamicObject(1491, 3613.64990, -2024.60999, 0.83545,   0.00000, 0.00000, 0.00000,0,-1,-1);
+	CreateDynamicObject(1491, 3619.65430, -2009.46240, 0.83235,   0.00000, 0.00000, 0.00000,0,-1,-1);
+	CreateDynamicObject(19550, 3676.56714, -1980.62183, 0.14960,   0.00000, 0.00000, 0.00000,0,-1,-1);
+	CreateDynamicObject(19550, 3677.48755, -1881.38770, 0.14986,   0.00000, 0.00000, 0.00000,0,-1,-1);
+	CreateDynamicObject(19668, 3711.32690, -1987.73645, 33.93150,   0.00000, 0.00000, 0.00000,0,-1,-1);
+	CreateDynamicObject(19668, 3709.95532, -1998.77148, 34.05301,   0.00000, 0.00000, 0.00000,0,-1,-1);
+	CreateDynamicObject(19668, 3708.73657, -2009.77087, 34.04052,   0.00000, 0.00000, 0.00000,0,-1,-1);
+	CreateDynamicObject(19668, 3711.51367, -1976.71204, 33.91106,   0.00000, 0.00000, 0.00000,0,-1,-1);
+	CreateDynamicObject(19550, 3799.90454, -1980.44958, 0.15530,   0.00000, 0.00000, 0.00000,0,-1,-1);
+	CreateDynamicObject(19550, 3799.83667, -1856.77258, 0.14960,   0.00000, 0.00000, 0.00000,0,-1,-1);
+	CreateDynamicObject(13120, 3826.76782, -1750.95691, -22.60294,   0.00000, 0.00000, 43.85997,0,-1,-1);
+	CreateDynamicObject(13120, 3865.50171, -1820.08606, -26.02025,   0.00000, 0.00000, 0.00000,0,-1,-1);
+	CreateDynamicObject(19966, 2851.29199, -1848.82532, 9.89338,   0.00000, 0.00000, -91.32000,0,-1,-1);
+	CreateDynamicObject(19129, 3460.21509, -1443.55457, 0.24090,   0.00000, 0.00000, -18.18000,0,-1,-1);
+	CreateDynamicObject(11737, 3469.01807, -1458.76184, 1.14464,   0.00000, 0.00000, -300.47980,0,-1,-1);
+	CreateDynamicObject(19840, 3286.26196, -1935.56287, 2.99534,   0.00000, 0.00000, 74.93999,0,-1,-1);
+	CreateDynamicObject(19840, 3282.47949, -1926.05115, 3.97213,   0.00000, 0.00000, 108.06001,0,-1,-1);
+	CreateDynamicObject(19634, 3796.45703, -1887.34082, 10.30768,   0.00000, 0.00000, 0.00000,0,-1,-1);
+	CreateDynamicObject(19609, 3469.52246, -1437.82471, 2.88467,   0.00000, 0.00000, 21.84000,0,-1,-1);
+	CreateDynamicObject(19609, 3456.74292, -1433.21228, 2.88119,   0.00000, 0.00000, -25.92000,0,-1,-1);
+	CreateDynamicObject(18809, 3334.64307, -1917.63245, 7.94881,   -1.14000, -89.75998, 96.60001,0,-1,-1);
+	CreateDynamicObject(18809, 3340.76880, -1965.84741, 8.03219,   -43.85999, -90.06004, 97.73999,0,-1,-1);
+	CreateDynamicObject(18811, 3347.20801, -2014.37976, 8.88546,   -7.32000, -87.84000, 97.74000,0,-1,-1);
+	CreateDynamicObject(18826, 3351.51221, -2047.87842, 25.49622,   0.00000, -0.54000, 96.86001,0,-1,-1);
+	CreateDynamicObject(18809, 3340.76880, -1965.84741, 8.03219,   -43.85999, -90.06004, 97.73999,0,-1,-1);
+	CreateDynamicObject(18809, 3346.84692, -2013.15906, 41.43951,   -43.86000, -90.06000, 97.74000,0,-1,-1);
+	CreateDynamicObject(18809, 3340.06763, -1963.70032, 41.43950,   -43.86000, -90.06000, 97.74000,0,-1,-1);
+	CreateDynamicObject(18826, 3319.42236, -1931.42737, 44.28273,   80.00000, 0.00000, -80.00000,0,-1,-1);
+	CreateDynamicObject(18826, 3306.97168, -1954.63965, 31.18778,   0.00000, 0.00000, 96.18005,0,-1,-1);
+	CreateDynamicObject(18809, 3303.04053, -1919.41833, 15.33936,   -0.84000, -89.76000, 96.60000,0,-1,-1);
+	CreateDynamicObject(16151, 3613.28467, -2019.01404, 1.18000,   0.00000, 0.00000, 180.00000,0,-1,-1);
+	CreateDynamicObject(19787, 3617.32129, -2024.49854, 1.84230,   0.00000, 0.00000, -180.00000,0,-1,-1);
+	CreateDynamicObject(2315, 3617.06494, -2023.01306, 0.84181,   0.00000, 0.00000, 0.00000,0,-1,-1);
+	CreateDynamicObject(19332, 3527.26367, -1726.22925, 50.59012,   0.00000, 0.00000, 0.00000,0,-1,-1);
+	CreateDynamicObject(19336, 3548.35083, -1739.85767, 66.46120,   0.00000, 0.00000, 0.00000,0,-1,-1);
+	CreateDynamicObject(11686, 3628.17407, -2023.96655, 0.84252,   0.00000, 0.00000, 0.00000,0,-1,-1);
 	// SDROP RAVEN
     CreateObject(18450,-1123.0999800,-439.3200100,63.5000000,1.9020000,341.9890000,332.6140000); //object(cs_roadbridge04) (1)
     CreateObject(18450,-1086.0996100,-459.0390600,87.6634400,0.0000000,319.9990000,331.9960000); //object(cs_roadbridge04) (2)
@@ -44743,633 +44708,633 @@ public BuildObjects()
     CreateObject(1655,-1165.9000200,-412.6000100,53.0000000,5.9950000,357.9890000,61.2310000); //object(waterjumpx2) (5)
     CreateObject(1655,-1169.4000200,-418.8999900,52.7560000,5.9930000,357.9840000,61.2270000); //object(waterjumpx2) (6)
 	// mad dog mansion blocks
-	CreateDynamicObject(975,1304.330810,-783.558105,1084.007812,0.000000,0.000000,0.000000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(975,1264.530517,-783.668457,1092.586914,0.000000,0.000000,0.000000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(975,1263.981689,-783.676879,1095.083618,0.000000,0.000000,0.000000,0,-1,-1,STREAMER_OBJECT_DD);
+	CreateDynamicObject(975,1304.330810,-783.558105,1084.007812,0.000000,0.000000,0.000000,0,-1,-1);
+	CreateDynamicObject(975,1264.530517,-783.668457,1092.586914,0.000000,0.000000,0.000000,0,-1,-1);
+	CreateDynamicObject(975,1263.981689,-783.676879,1095.083618,0.000000,0.000000,0.000000,0,-1,-1);
 	// newcity1
-    CreateDynamicObject(4142,2358.7072750,-5264.4897460,1.9136760,0.0000000,0.0000000,0.0000000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(10631,2419.4250480,-5313.2880850,6.0133600,0.0000000,0.0000000,0.0000000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(13295,2382.8706050,-5319.3461910,8.4853630,0.0000000,0.0000000,0.0000000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(19313,2361.2380370,-5325.5410150,2.8797430,0.0000000,0.0000000,-88.5999980,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(19313,2368.4936520,-5332.4760740,2.8197410,0.0000000,0.0000000,0.0000000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(19313,2382.9338370,-5332.4760740,2.8197410,0.0000000,0.0000000,0.0000000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(19321,2392.5075680,-5330.5937500,3.3097410,0.0000000,0.0000000,-89.5000300,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(19321,2392.6196280,-5330.8154290,6.2497420,0.0000000,0.0000000,-89.5000300,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(19313,2407.9155270,-5326.2905270,3.1902370,0.0000000,0.0000000,88.5999830,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(10766,2440.1503900,-5257.3237300,0.1133610,0.0000000,0.0000000,88.8999710,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(7981,2362.4111320,-5274.1474600,7.0271090,0.0000000,0.0000000,0.0000000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1682,2367.0180660,-5271.9589840,18.0270970,0.0000000,0.0000000,0.0000000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(10767,2560.9243160,-5258.2451170,-12.5613400,0.0000000,0.0000000,-45.2000120,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(4233,2473.0327140,-5294.5029290,2.0133640,0.0000000,0.0000000,0.0000000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(5716,2455.0058590,-5321.9106440,15.4092960,0.0000000,0.0000000,-179.1999660,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(9241,2373.9311520,-5253.2851560,4.1898670,0.0000000,0.0000000,0.0000000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(6404,2296.0231930,-5269.7954100,8.7433510,0.0000000,0.0000000,91.6000210,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(10606,2339.9963370,-5329.1049800,10.6833590,0.0000000,0.0000000,0.0000000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1226,2361.2670890,-5300.2236320,5.6833620,0.0000000,0.0000000,-84.2999950,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1226,2449.3535150,-5301.8945310,5.8193030,0.0000000,0.0000000,-83.4000010,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1257,2452.7883300,-5301.5732420,3.2792990,0.0000000,0.0000000,-87.3999860,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1216,2448.4184570,-5302.8466790,2.6447260,0.0000000,-0.2000000,177.5999750,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1315,2322.1374510,-5286.1821280,4.9933600,0.0000000,0.0000000,0.0000000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1315,2327.2653800,-5290.7250970,4.9933600,0.0000000,0.0000000,89.5999980,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(767,2330.7185050,-5287.2827140,1.9774240,0.0000000,0.0000000,0.0000000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(19313,2313.1564940,-5303.9516600,2.8411920,0.0000000,0.0000000,0.0000000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(19313,2304.9777830,-5298.6484370,2.6511900,0.0000000,0.0000000,-50.4999920,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(11469,2302.4868160,-5243.1318350,2.0433640,0.0000000,0.0000000,0.0000000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(6235,2318.9792480,-5231.7475580,17.8033650,0.0000000,0.0000000,0.0000000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(4142,2349.2570800,-5176.8164060,1.9633640,0.0000000,0.0000000,-90.5999600,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1231,2326.7734370,-5221.1391600,2.9630510,0.0000000,0.0000000,0.0000000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1231,2327.2932120,-5198.8081050,2.9630510,0.0000000,0.0000000,0.0000000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1231,2310.6237790,-5198.8081050,2.9630510,0.0000000,0.0000000,0.0000000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1231,2309.7619620,-5221.2441400,2.9630510,0.0000000,0.0000000,0.0000000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(16767,2292.7897940,-5147.3168940,7.8530440,0.0000000,0.0000000,0.0000000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(19313,2309.5944820,-5133.2944330,2.8885500,0.0000000,0.0000000,-89.4000090,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(5004,2470.5866690,-5204.2724600,1.8098720,0.0000000,0.0000000,-1.3999990,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(16771,2393.4746090,-5205.2651360,8.5764790,0.0000000,0.0000000,179.5000000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1683,2396.1213370,-5215.5693350,8.0440270,0.7999960,0.0000000,-91.9000160,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(10193,2337.0434570,-5111.5458980,36.8171500,0.0000000,0.0000000,0.0000000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1226,2325.5632320,-5268.8769530,5.5633620,0.0000000,0.0000000,0.0000000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1226,2342.0444330,-5144.1362300,5.6030440,0.0000000,0.0000000,-79.0999750,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(19313,2329.5563960,-5155.1196280,5.1771130,0.0000000,0.0000000,-90.9000320,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(19313,2336.7006830,-5148.2446280,5.0030540,0.0000000,0.0000000,0.0000000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(19313,2350.7202140,-5148.2446280,5.0030540,0.0000000,0.0000000,0.0000000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(19313,2364.7907710,-5148.2446280,5.0030540,0.0000000,0.0000000,0.0000000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(19313,2378.7216790,-5148.2446280,5.0030540,0.0000000,0.0000000,0.0000000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(615,2335.4494620,-5144.3842770,1.5830520,0.0000000,0.0000000,0.0000000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1315,2323.4062500,-5144.8710930,5.2030520,0.0000000,0.0000000,0.0000000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1315,2327.1240230,-5139.7524410,5.2030520,0.0000000,0.0000000,-80.7000040,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18235,2370.0642080,-5119.9389640,1.9930520,0.0000000,0.0000000,-3.2999980,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1258,2350.1213370,-5130.7207030,2.7230510,0.0000000,0.0000000,0.0000000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1226,2361.5952140,-5131.1420890,5.6830530,0.0000000,0.0000000,77.1999960,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(4857,2378.5207510,-5121.5932610,4.2071120,0.0000000,0.0000000,-92.3000100,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(19313,2334.7468260,-5284.1503900,3.0364890,0.0000000,0.0000000,0.0000000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(19313,2348.6562500,-5284.0800780,3.0364890,0.0000000,0.0000000,0.0000000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(19313,2362.6259760,-5284.0800780,3.0364890,0.0000000,0.0000000,0.0000000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(19313,2376.7060540,-5284.0800780,3.0364890,0.0000000,0.0000000,0.0000000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(19313,2390.7243650,-5284.0800780,3.0364890,0.0000000,0.0000000,0.0000000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(19313,2429.1262200,-5284.0800780,3.0364890,0.0000000,0.0000000,0.0000000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(19313,2415.1352530,-5284.0800780,3.0364890,0.0000000,0.0000000,0.0000000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(19313,2443.1462400,-5284.0800780,3.0364890,0.0000000,0.0000000,0.0000000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(19313,2457.0861810,-5284.0800780,3.0364890,0.0000000,0.0000000,0.0000000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3881,2405.2839350,-5280.9741210,3.7264890,0.0000000,0.0000000,0.0000000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(2793,2404.9055170,-5284.1118160,5.1164870,0.0000000,0.0000000,0.0000000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(19313,2471.1364740,-5284.0800780,3.0364890,0.0000000,0.0000000,0.0000000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(19313,2485.1760250,-5284.0800780,3.0364890,0.0000000,0.0000000,0.0000000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(19313,2499.1362300,-5284.0800780,3.0364890,0.0000000,0.0000000,0.0000000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(19313,2513.1159660,-5284.0800780,3.0364890,0.0000000,0.0000000,0.0000000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(19313,2527.0063470,-5284.0800780,3.0364890,0.0000000,0.0000000,0.0000000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(19313,2541.1064450,-5284.0800780,3.0364890,0.0000000,0.0000000,0.0000000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(19313,2555.1164550,-5284.0800780,3.0364890,0.0000000,0.0000000,0.0000000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(4567,2595.4101560,-5295.5683590,1.8364900,0.0000000,0.0000000,0.0000000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(19313,2569.0869140,-5284.0800780,3.0364890,0.0000000,0.0000000,0.0000000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(19313,2583.0476070,-5284.0800780,3.0364890,0.0000000,0.0000000,0.0000000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(19313,2597.0270990,-5284.0800780,3.0364890,0.0000000,0.0000000,0.0000000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(19313,2610.9770500,-5284.0800780,3.0364890,0.0000000,0.0000000,0.0000000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(19313,2625.0270990,-5284.0800780,3.0364890,0.0000000,0.0000000,0.0000000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(19313,2638.4782710,-5284.0800780,3.0364890,0.0000000,0.0000000,0.0000000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(19313,2644.8452140,-5276.9785150,3.0558450,0.0000000,0.0000000,-85.9000010,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(19313,2644.8586420,-5262.9033200,3.0558450,0.0000000,0.0000000,-95.2000040,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(19313,2645.5827630,-5248.8793940,3.0558450,0.0000000,0.0000000,-90.9000320,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(19313,2645.7319330,-5236.8232420,3.0558450,0.0000000,0.0000000,-90.9000320,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(8038,2471.4636230,-5207.2509760,21.8442360,0.0000000,0.0000000,-92.8000410,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1683,2533.7744140,-5188.8837890,7.9642410,0.0000000,0.0000000,-87.9999920,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3665,2560.3884270,-5215.0297850,3.0442450,0.0000000,0.0000000,-2.0999970,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(19313,2638.7602530,-5229.9106440,3.0701360,0.0000000,0.0000000,0.0000000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(19313,2624.8212890,-5229.9106440,3.0701360,0.0000000,0.0000000,0.0000000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(19313,2610.8503410,-5229.9106440,3.0701360,0.0000000,0.0000000,0.0000000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(19313,2598.2478020,-5229.9106440,3.0701360,0.0000000,0.0000000,0.0000000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(19313,2590.7314450,-5222.8237300,3.0442450,0.0000000,0.0000000,-91.1999890,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(19313,2591.8911130,-5208.9594720,3.0442450,0.0000000,0.0000000,-98.7999640,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(19313,2595.3757320,-5195.3959960,3.0342450,0.0000000,0.0000000,-109.5999600,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(19313,2600.1162100,-5182.3203120,3.0342450,0.0000000,0.0000000,-109.5999600,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(19313,2605.8054190,-5169.4492180,3.0342450,0.0000000,0.0000000,-118.7999490,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(19313,2602.6777340,-5161.3872070,3.0442450,0.0000000,0.0000000,-14.2000090,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(19313,2589.2717280,-5157.7421870,3.0442450,0.0000000,0.0000000,-14.2000090,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(19313,2575.4975580,-5155.4121090,3.0442450,0.0000000,0.0000000,-4.9000100,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(19313,2561.6416010,-5154.1406250,3.0442450,0.0000000,0.0000000,-4.9000100,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(19313,2547.6472160,-5152.8564450,3.0442450,0.0000000,0.0000000,-4.9000100,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(19313,2533.6423330,-5151.5717770,3.0442450,0.0000000,0.0000000,-4.9000100,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(19313,2519.8469230,-5150.3066400,3.0442450,0.0000000,0.0000000,-4.9000100,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(19313,2505.9077140,-5150.6831050,3.0442450,0.0000000,0.0000000,8.1999890,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(19313,2491.9626460,-5152.8383780,3.0442450,0.0000000,0.0000000,8.1999890,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(19313,2478.1945800,-5154.9653320,3.0442450,0.0000000,0.0000000,8.1999890,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(19313,2464.3178710,-5157.1079100,3.0442450,0.0000000,0.0000000,8.1999890,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(19313,2450.4812010,-5159.2465820,3.0442450,0.0000000,0.0000000,8.1999890,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(19313,2436.8027340,-5161.3627920,3.0442450,0.0000000,0.0000000,8.1999890,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(19313,2422.8359370,-5163.5195310,3.0442450,0.0000000,0.0000000,8.1999890,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(19313,2423.8359370,-5163.5195310,3.0442450,0.0000000,0.0000000,8.1999890,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(19313,2409.5095210,-5161.5170890,3.0442450,0.0000000,0.0000000,-26.6000110,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(19313,2397.1296380,-5155.3403320,3.0442450,0.0000000,0.0000000,-26.6000110,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(19313,2392.1740720,-5151.7348630,3.0442450,0.0000000,0.0000000,-29.6000190,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(19313,2328.0588370,-5277.0371090,3.0364890,0.0000000,0.0000000,88.6000130,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(19313,2328.4694820,-5263.0581050,3.0364890,0.0000000,0.0000000,88.6000130,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(19313,2328.9692380,-5249.1186520,3.0364890,0.0000000,0.0000000,88.6000130,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(19313,2329.1293940,-5237.5922850,3.0364890,0.0000000,0.0000000,88.6000130,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(16012,2505.7075190,-5312.7617180,1.8342460,0.0000000,0.0000000,0.0000000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(8417,2504.7731930,-5306.3222650,1.7542480,0.0000000,0.0000000,0.0000000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(19313,2524.0844720,-5312.1298820,0.4242460,0.0000000,0.0000000,-82.8000030,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1231,2526.2783200,-5301.6596670,4.3942480,0.0000000,0.0000000,0.0000000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(5191,2719.2351070,-5294.9321280,-4.1644430,0.0000000,0.0000000,-90.2999800,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(8411,2684.8574210,-5265.0253900,-5.5025730,0.0000000,0.0000000,0.0000000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(8411,2747.3149410,-5265.0253900,-5.5025730,0.0000000,0.0000000,0.0000000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(8411,2565.1662590,-5324.3374020,-6.4125770,0.0000000,0.0000000,0.0000000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(8411,2627.7338860,-5324.3374020,-6.4025750,0.0000000,0.0000000,0.0000000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(8411,2690.1223140,-5324.3374020,-6.4625740,0.0000000,0.0000000,0.0000000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(8411,2752.3212890,-5324.3374020,-6.4625740,0.0000000,0.0000000,0.0000000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1223,2667.0895990,-5300.5371090,1.7224290,0.0000000,0.0000000,93.5000000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1223,2685.2619620,-5300.5029290,1.7224290,0.0000000,0.0000000,93.5000000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1223,2704.8847650,-5300.6206050,1.7224290,0.0000000,0.0000000,93.5000000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(5431,2829.9790030,-5343.1723630,2.4777920,0.8000040,0.1999990,-90.5000070,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(12924,2801.6606440,-5314.4287100,1.8428410,0.0000000,0.0000000,178.9000090,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(19313,2779.5341790,-5331.6005850,1.4982910,0.0000000,0.0000000,0.0000000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(11008,2843.1682120,-5340.4755850,9.4480650,0.0000000,0.0000000,175.1000060,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(9310,2828.7719720,-5309.9262690,7.6368160,0.0000000,0.0000000,177.7999720,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(19313,2821.7060540,-5305.9667960,3.1893630,0.0000000,0.0000000,-3.1999990,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(898,2847.6591790,-5320.3715820,4.3121800,0.0000000,0.0000000,0.0000000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(898,2840.0690910,-5314.0830070,4.3121800,0.0000000,0.0000000,0.0000000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(5773,2811.5559080,-5262.6933590,-0.9009420,0.0000000,0.0000000,0.0000000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1226,2818.7392570,-5289.2734370,5.7538890,0.0000000,0.0000000,63.0999980,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(16067,2858.9172360,-5282.4750970,2.4988360,0.0000000,0.0000000,-3.9999990,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(7037,2832.9396970,-5279.0756830,7.3060640,0.0000000,0.0000000,86.9000010,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(19313,2849.0825190,-5282.8608390,2.1105770,0.0000000,0.0000000,0.0000000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(5189,2887.0725090,-5298.4355460,8.3826520,0.0000000,0.0000000,0.0000000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(19313,2869.4506830,-5283.5561520,4.1518600,0.0000000,0.0000000,-2.0000000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(823,2878.4768060,-5321.5424800,3.5037410,0.0000000,0.0000000,0.0000000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(823,2875.8967280,-5315.3930660,3.9837410,0.0000000,0.0000000,0.0000000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(880,2873.5732420,-5321.8569330,3.8819730,0.0000000,0.0000000,0.0000000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(880,2874.5732420,-5317.1494140,3.8819730,0.0000000,0.0000000,0.0000000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3863,2865.4050290,-5299.2416990,3.8816280,0.0000000,0.0000000,0.0000000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1226,2863.4758300,-5301.4428710,6.3988140,0.0000000,0.0000000,0.0000000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(5763,2868.1918940,-5358.4033200,2.2964300,0.0000000,0.0000000,83.0000070,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(823,2875.1364740,-5321.5424800,3.5037410,0.0000000,0.0000000,0.0000000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1226,2855.1831050,-5362.1577140,6.2645950,0.0000000,0.0000000,173.8000180,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(6875,2837.5395500,-5382.2910150,1.9426740,0.0000000,0.0000000,-9.3999970,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(19313,2851.3679190,-5390.7348630,3.9443940,0.0000000,0.0000000,0.0000000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(19313,2859.6582030,-5390.7348630,3.9443940,0.0000000,0.0000000,0.0000000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(11469,2393.6838370,-5121.8813470,2.1371150,0.0000000,0.0000000,-89.8999930,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(4152,2454.5168450,-5139.4057610,2.0030510,0.0000000,0.0000000,-91.7000350,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(8710,2455.4228510,-5106.0761710,2.1089890,0.0000000,0.0000000,-1.3999990,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(10193,2511.8923330,-5115.5307610,36.7389750,0.0000000,0.0000000,0.0000000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1226,2486.5468750,-5133.7392570,5.6449270,-0.1999990,-0.0999990,102.5999830,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(5333,2582.1437980,-5144.6694330,10.3051490,0.0000000,0.0000000,176.8000330,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(5147,2786.3063960,-5156.6342770,11.3279580,0.0000000,0.0000000,-3.5000000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(5491,2946.3559570,-5165.7177730,1.6136000,0.0000000,0.0000000,-3.0999980,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(13132,2872.7209470,-5175.7626950,4.8254730,0.0000000,0.0000000,-90.4999920,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(12941,2881.0292960,-5139.4394530,1.5594670,0.0000000,0.0000000,-1.8000000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1226,2883.4362790,-5158.0947260,5.2497650,0.0000000,0.0000000,88.9999920,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(4564,2927.9790030,-5137.3496090,100.9326090,0.0000000,0.0000000,86.6000360,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(6159,2907.1049800,-5180.9394530,8.0173460,0.0000000,0.0000000,176.6999510,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1226,2930.9165030,-5170.8100580,5.1583180,0.0000000,0.0000000,-85.8000030,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(8566,2951.3593750,-5195.2675780,9.3607560,0.0000000,0.0000000,86.0999220,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(10606,2985.5688470,-5200.9868160,10.4932880,0.0000000,0.0000000,-3.8000000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1226,2990.2763670,-5173.3178710,5.1532850,0.0000000,0.0000000,-89.5000000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(5189,2973.6813960,-5147.4282220,6.8069190,0.0000000,0.0000000,86.2999490,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(10193,3015.7519530,-5144.3681640,36.2978130,0.0000000,0.0000000,-3.3999990,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(4857,3011.2709960,-5185.2641600,3.9373490,0.0000000,0.0000000,90.0000000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3986,3031.2509760,-5208.7202140,12.2832840,0.0000000,0.0000000,88.0999830,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(19313,3035.6499020,-5167.2807610,2.7073500,0.0000000,0.0000000,83.5999830,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(19313,3035.1069330,-5172.8618160,2.7073500,0.0000000,0.0000000,83.5999830,0,-1,-1,STREAMER_OBJECT_DD);
+    CreateDynamicObject(4142,2358.7072750,-5264.4897460,1.9136760,0.0000000,0.0000000,0.0000000,0,-1,-1);
+	CreateDynamicObject(10631,2419.4250480,-5313.2880850,6.0133600,0.0000000,0.0000000,0.0000000,0,-1,-1);
+	CreateDynamicObject(13295,2382.8706050,-5319.3461910,8.4853630,0.0000000,0.0000000,0.0000000,0,-1,-1);
+	CreateDynamicObject(19313,2361.2380370,-5325.5410150,2.8797430,0.0000000,0.0000000,-88.5999980,0,-1,-1);
+	CreateDynamicObject(19313,2368.4936520,-5332.4760740,2.8197410,0.0000000,0.0000000,0.0000000,0,-1,-1);
+	CreateDynamicObject(19313,2382.9338370,-5332.4760740,2.8197410,0.0000000,0.0000000,0.0000000,0,-1,-1);
+	CreateDynamicObject(19321,2392.5075680,-5330.5937500,3.3097410,0.0000000,0.0000000,-89.5000300,0,-1,-1);
+	CreateDynamicObject(19321,2392.6196280,-5330.8154290,6.2497420,0.0000000,0.0000000,-89.5000300,0,-1,-1);
+	CreateDynamicObject(19313,2407.9155270,-5326.2905270,3.1902370,0.0000000,0.0000000,88.5999830,0,-1,-1);
+	CreateDynamicObject(10766,2440.1503900,-5257.3237300,0.1133610,0.0000000,0.0000000,88.8999710,0,-1,-1);
+	CreateDynamicObject(7981,2362.4111320,-5274.1474600,7.0271090,0.0000000,0.0000000,0.0000000,0,-1,-1);
+	CreateDynamicObject(1682,2367.0180660,-5271.9589840,18.0270970,0.0000000,0.0000000,0.0000000,0,-1,-1);
+	CreateDynamicObject(10767,2560.9243160,-5258.2451170,-12.5613400,0.0000000,0.0000000,-45.2000120,0,-1,-1);
+	CreateDynamicObject(4233,2473.0327140,-5294.5029290,2.0133640,0.0000000,0.0000000,0.0000000,0,-1,-1);
+	CreateDynamicObject(5716,2455.0058590,-5321.9106440,15.4092960,0.0000000,0.0000000,-179.1999660,0,-1,-1);
+	CreateDynamicObject(9241,2373.9311520,-5253.2851560,4.1898670,0.0000000,0.0000000,0.0000000,0,-1,-1);
+	CreateDynamicObject(6404,2296.0231930,-5269.7954100,8.7433510,0.0000000,0.0000000,91.6000210,0,-1,-1);
+	CreateDynamicObject(10606,2339.9963370,-5329.1049800,10.6833590,0.0000000,0.0000000,0.0000000,0,-1,-1);
+	CreateDynamicObject(1226,2361.2670890,-5300.2236320,5.6833620,0.0000000,0.0000000,-84.2999950,0,-1,-1);
+	CreateDynamicObject(1226,2449.3535150,-5301.8945310,5.8193030,0.0000000,0.0000000,-83.4000010,0,-1,-1);
+	CreateDynamicObject(1257,2452.7883300,-5301.5732420,3.2792990,0.0000000,0.0000000,-87.3999860,0,-1,-1);
+	CreateDynamicObject(1216,2448.4184570,-5302.8466790,2.6447260,0.0000000,-0.2000000,177.5999750,0,-1,-1);
+	CreateDynamicObject(1315,2322.1374510,-5286.1821280,4.9933600,0.0000000,0.0000000,0.0000000,0,-1,-1);
+	CreateDynamicObject(1315,2327.2653800,-5290.7250970,4.9933600,0.0000000,0.0000000,89.5999980,0,-1,-1);
+	CreateDynamicObject(767,2330.7185050,-5287.2827140,1.9774240,0.0000000,0.0000000,0.0000000,0,-1,-1);
+	CreateDynamicObject(19313,2313.1564940,-5303.9516600,2.8411920,0.0000000,0.0000000,0.0000000,0,-1,-1);
+	CreateDynamicObject(19313,2304.9777830,-5298.6484370,2.6511900,0.0000000,0.0000000,-50.4999920,0,-1,-1);
+	CreateDynamicObject(11469,2302.4868160,-5243.1318350,2.0433640,0.0000000,0.0000000,0.0000000,0,-1,-1);
+	CreateDynamicObject(6235,2318.9792480,-5231.7475580,17.8033650,0.0000000,0.0000000,0.0000000,0,-1,-1);
+	CreateDynamicObject(4142,2349.2570800,-5176.8164060,1.9633640,0.0000000,0.0000000,-90.5999600,0,-1,-1);
+	CreateDynamicObject(1231,2326.7734370,-5221.1391600,2.9630510,0.0000000,0.0000000,0.0000000,0,-1,-1);
+	CreateDynamicObject(1231,2327.2932120,-5198.8081050,2.9630510,0.0000000,0.0000000,0.0000000,0,-1,-1);
+	CreateDynamicObject(1231,2310.6237790,-5198.8081050,2.9630510,0.0000000,0.0000000,0.0000000,0,-1,-1);
+	CreateDynamicObject(1231,2309.7619620,-5221.2441400,2.9630510,0.0000000,0.0000000,0.0000000,0,-1,-1);
+	CreateDynamicObject(16767,2292.7897940,-5147.3168940,7.8530440,0.0000000,0.0000000,0.0000000,0,-1,-1);
+	CreateDynamicObject(19313,2309.5944820,-5133.2944330,2.8885500,0.0000000,0.0000000,-89.4000090,0,-1,-1);
+	CreateDynamicObject(5004,2470.5866690,-5204.2724600,1.8098720,0.0000000,0.0000000,-1.3999990,0,-1,-1);
+	CreateDynamicObject(16771,2393.4746090,-5205.2651360,8.5764790,0.0000000,0.0000000,179.5000000,0,-1,-1);
+	CreateDynamicObject(1683,2396.1213370,-5215.5693350,8.0440270,0.7999960,0.0000000,-91.9000160,0,-1,-1);
+	CreateDynamicObject(10193,2337.0434570,-5111.5458980,36.8171500,0.0000000,0.0000000,0.0000000,0,-1,-1);
+	CreateDynamicObject(1226,2325.5632320,-5268.8769530,5.5633620,0.0000000,0.0000000,0.0000000,0,-1,-1);
+	CreateDynamicObject(1226,2342.0444330,-5144.1362300,5.6030440,0.0000000,0.0000000,-79.0999750,0,-1,-1);
+	CreateDynamicObject(19313,2329.5563960,-5155.1196280,5.1771130,0.0000000,0.0000000,-90.9000320,0,-1,-1);
+	CreateDynamicObject(19313,2336.7006830,-5148.2446280,5.0030540,0.0000000,0.0000000,0.0000000,0,-1,-1);
+	CreateDynamicObject(19313,2350.7202140,-5148.2446280,5.0030540,0.0000000,0.0000000,0.0000000,0,-1,-1);
+	CreateDynamicObject(19313,2364.7907710,-5148.2446280,5.0030540,0.0000000,0.0000000,0.0000000,0,-1,-1);
+	CreateDynamicObject(19313,2378.7216790,-5148.2446280,5.0030540,0.0000000,0.0000000,0.0000000,0,-1,-1);
+	CreateDynamicObject(615,2335.4494620,-5144.3842770,1.5830520,0.0000000,0.0000000,0.0000000,0,-1,-1);
+	CreateDynamicObject(1315,2323.4062500,-5144.8710930,5.2030520,0.0000000,0.0000000,0.0000000,0,-1,-1);
+	CreateDynamicObject(1315,2327.1240230,-5139.7524410,5.2030520,0.0000000,0.0000000,-80.7000040,0,-1,-1);
+	CreateDynamicObject(18235,2370.0642080,-5119.9389640,1.9930520,0.0000000,0.0000000,-3.2999980,0,-1,-1);
+	CreateDynamicObject(1258,2350.1213370,-5130.7207030,2.7230510,0.0000000,0.0000000,0.0000000,0,-1,-1);
+	CreateDynamicObject(1226,2361.5952140,-5131.1420890,5.6830530,0.0000000,0.0000000,77.1999960,0,-1,-1);
+	CreateDynamicObject(4857,2378.5207510,-5121.5932610,4.2071120,0.0000000,0.0000000,-92.3000100,0,-1,-1);
+	CreateDynamicObject(19313,2334.7468260,-5284.1503900,3.0364890,0.0000000,0.0000000,0.0000000,0,-1,-1);
+	CreateDynamicObject(19313,2348.6562500,-5284.0800780,3.0364890,0.0000000,0.0000000,0.0000000,0,-1,-1);
+	CreateDynamicObject(19313,2362.6259760,-5284.0800780,3.0364890,0.0000000,0.0000000,0.0000000,0,-1,-1);
+	CreateDynamicObject(19313,2376.7060540,-5284.0800780,3.0364890,0.0000000,0.0000000,0.0000000,0,-1,-1);
+	CreateDynamicObject(19313,2390.7243650,-5284.0800780,3.0364890,0.0000000,0.0000000,0.0000000,0,-1,-1);
+	CreateDynamicObject(19313,2429.1262200,-5284.0800780,3.0364890,0.0000000,0.0000000,0.0000000,0,-1,-1);
+	CreateDynamicObject(19313,2415.1352530,-5284.0800780,3.0364890,0.0000000,0.0000000,0.0000000,0,-1,-1);
+	CreateDynamicObject(19313,2443.1462400,-5284.0800780,3.0364890,0.0000000,0.0000000,0.0000000,0,-1,-1);
+	CreateDynamicObject(19313,2457.0861810,-5284.0800780,3.0364890,0.0000000,0.0000000,0.0000000,0,-1,-1);
+	CreateDynamicObject(3881,2405.2839350,-5280.9741210,3.7264890,0.0000000,0.0000000,0.0000000,0,-1,-1);
+	CreateDynamicObject(2793,2404.9055170,-5284.1118160,5.1164870,0.0000000,0.0000000,0.0000000,0,-1,-1);
+	CreateDynamicObject(19313,2471.1364740,-5284.0800780,3.0364890,0.0000000,0.0000000,0.0000000,0,-1,-1);
+	CreateDynamicObject(19313,2485.1760250,-5284.0800780,3.0364890,0.0000000,0.0000000,0.0000000,0,-1,-1);
+	CreateDynamicObject(19313,2499.1362300,-5284.0800780,3.0364890,0.0000000,0.0000000,0.0000000,0,-1,-1);
+	CreateDynamicObject(19313,2513.1159660,-5284.0800780,3.0364890,0.0000000,0.0000000,0.0000000,0,-1,-1);
+	CreateDynamicObject(19313,2527.0063470,-5284.0800780,3.0364890,0.0000000,0.0000000,0.0000000,0,-1,-1);
+	CreateDynamicObject(19313,2541.1064450,-5284.0800780,3.0364890,0.0000000,0.0000000,0.0000000,0,-1,-1);
+	CreateDynamicObject(19313,2555.1164550,-5284.0800780,3.0364890,0.0000000,0.0000000,0.0000000,0,-1,-1);
+	CreateDynamicObject(4567,2595.4101560,-5295.5683590,1.8364900,0.0000000,0.0000000,0.0000000,0,-1,-1);
+	CreateDynamicObject(19313,2569.0869140,-5284.0800780,3.0364890,0.0000000,0.0000000,0.0000000,0,-1,-1);
+	CreateDynamicObject(19313,2583.0476070,-5284.0800780,3.0364890,0.0000000,0.0000000,0.0000000,0,-1,-1);
+	CreateDynamicObject(19313,2597.0270990,-5284.0800780,3.0364890,0.0000000,0.0000000,0.0000000,0,-1,-1);
+	CreateDynamicObject(19313,2610.9770500,-5284.0800780,3.0364890,0.0000000,0.0000000,0.0000000,0,-1,-1);
+	CreateDynamicObject(19313,2625.0270990,-5284.0800780,3.0364890,0.0000000,0.0000000,0.0000000,0,-1,-1);
+	CreateDynamicObject(19313,2638.4782710,-5284.0800780,3.0364890,0.0000000,0.0000000,0.0000000,0,-1,-1);
+	CreateDynamicObject(19313,2644.8452140,-5276.9785150,3.0558450,0.0000000,0.0000000,-85.9000010,0,-1,-1);
+	CreateDynamicObject(19313,2644.8586420,-5262.9033200,3.0558450,0.0000000,0.0000000,-95.2000040,0,-1,-1);
+	CreateDynamicObject(19313,2645.5827630,-5248.8793940,3.0558450,0.0000000,0.0000000,-90.9000320,0,-1,-1);
+	CreateDynamicObject(19313,2645.7319330,-5236.8232420,3.0558450,0.0000000,0.0000000,-90.9000320,0,-1,-1);
+	CreateDynamicObject(8038,2471.4636230,-5207.2509760,21.8442360,0.0000000,0.0000000,-92.8000410,0,-1,-1);
+	CreateDynamicObject(1683,2533.7744140,-5188.8837890,7.9642410,0.0000000,0.0000000,-87.9999920,0,-1,-1);
+	CreateDynamicObject(3665,2560.3884270,-5215.0297850,3.0442450,0.0000000,0.0000000,-2.0999970,0,-1,-1);
+	CreateDynamicObject(19313,2638.7602530,-5229.9106440,3.0701360,0.0000000,0.0000000,0.0000000,0,-1,-1);
+	CreateDynamicObject(19313,2624.8212890,-5229.9106440,3.0701360,0.0000000,0.0000000,0.0000000,0,-1,-1);
+	CreateDynamicObject(19313,2610.8503410,-5229.9106440,3.0701360,0.0000000,0.0000000,0.0000000,0,-1,-1);
+	CreateDynamicObject(19313,2598.2478020,-5229.9106440,3.0701360,0.0000000,0.0000000,0.0000000,0,-1,-1);
+	CreateDynamicObject(19313,2590.7314450,-5222.8237300,3.0442450,0.0000000,0.0000000,-91.1999890,0,-1,-1);
+	CreateDynamicObject(19313,2591.8911130,-5208.9594720,3.0442450,0.0000000,0.0000000,-98.7999640,0,-1,-1);
+	CreateDynamicObject(19313,2595.3757320,-5195.3959960,3.0342450,0.0000000,0.0000000,-109.5999600,0,-1,-1);
+	CreateDynamicObject(19313,2600.1162100,-5182.3203120,3.0342450,0.0000000,0.0000000,-109.5999600,0,-1,-1);
+	CreateDynamicObject(19313,2605.8054190,-5169.4492180,3.0342450,0.0000000,0.0000000,-118.7999490,0,-1,-1);
+	CreateDynamicObject(19313,2602.6777340,-5161.3872070,3.0442450,0.0000000,0.0000000,-14.2000090,0,-1,-1);
+	CreateDynamicObject(19313,2589.2717280,-5157.7421870,3.0442450,0.0000000,0.0000000,-14.2000090,0,-1,-1);
+	CreateDynamicObject(19313,2575.4975580,-5155.4121090,3.0442450,0.0000000,0.0000000,-4.9000100,0,-1,-1);
+	CreateDynamicObject(19313,2561.6416010,-5154.1406250,3.0442450,0.0000000,0.0000000,-4.9000100,0,-1,-1);
+	CreateDynamicObject(19313,2547.6472160,-5152.8564450,3.0442450,0.0000000,0.0000000,-4.9000100,0,-1,-1);
+	CreateDynamicObject(19313,2533.6423330,-5151.5717770,3.0442450,0.0000000,0.0000000,-4.9000100,0,-1,-1);
+	CreateDynamicObject(19313,2519.8469230,-5150.3066400,3.0442450,0.0000000,0.0000000,-4.9000100,0,-1,-1);
+	CreateDynamicObject(19313,2505.9077140,-5150.6831050,3.0442450,0.0000000,0.0000000,8.1999890,0,-1,-1);
+	CreateDynamicObject(19313,2491.9626460,-5152.8383780,3.0442450,0.0000000,0.0000000,8.1999890,0,-1,-1);
+	CreateDynamicObject(19313,2478.1945800,-5154.9653320,3.0442450,0.0000000,0.0000000,8.1999890,0,-1,-1);
+	CreateDynamicObject(19313,2464.3178710,-5157.1079100,3.0442450,0.0000000,0.0000000,8.1999890,0,-1,-1);
+	CreateDynamicObject(19313,2450.4812010,-5159.2465820,3.0442450,0.0000000,0.0000000,8.1999890,0,-1,-1);
+	CreateDynamicObject(19313,2436.8027340,-5161.3627920,3.0442450,0.0000000,0.0000000,8.1999890,0,-1,-1);
+	CreateDynamicObject(19313,2422.8359370,-5163.5195310,3.0442450,0.0000000,0.0000000,8.1999890,0,-1,-1);
+	CreateDynamicObject(19313,2423.8359370,-5163.5195310,3.0442450,0.0000000,0.0000000,8.1999890,0,-1,-1);
+	CreateDynamicObject(19313,2409.5095210,-5161.5170890,3.0442450,0.0000000,0.0000000,-26.6000110,0,-1,-1);
+	CreateDynamicObject(19313,2397.1296380,-5155.3403320,3.0442450,0.0000000,0.0000000,-26.6000110,0,-1,-1);
+	CreateDynamicObject(19313,2392.1740720,-5151.7348630,3.0442450,0.0000000,0.0000000,-29.6000190,0,-1,-1);
+	CreateDynamicObject(19313,2328.0588370,-5277.0371090,3.0364890,0.0000000,0.0000000,88.6000130,0,-1,-1);
+	CreateDynamicObject(19313,2328.4694820,-5263.0581050,3.0364890,0.0000000,0.0000000,88.6000130,0,-1,-1);
+	CreateDynamicObject(19313,2328.9692380,-5249.1186520,3.0364890,0.0000000,0.0000000,88.6000130,0,-1,-1);
+	CreateDynamicObject(19313,2329.1293940,-5237.5922850,3.0364890,0.0000000,0.0000000,88.6000130,0,-1,-1);
+	CreateDynamicObject(16012,2505.7075190,-5312.7617180,1.8342460,0.0000000,0.0000000,0.0000000,0,-1,-1);
+	CreateDynamicObject(8417,2504.7731930,-5306.3222650,1.7542480,0.0000000,0.0000000,0.0000000,0,-1,-1);
+	CreateDynamicObject(19313,2524.0844720,-5312.1298820,0.4242460,0.0000000,0.0000000,-82.8000030,0,-1,-1);
+	CreateDynamicObject(1231,2526.2783200,-5301.6596670,4.3942480,0.0000000,0.0000000,0.0000000,0,-1,-1);
+	CreateDynamicObject(5191,2719.2351070,-5294.9321280,-4.1644430,0.0000000,0.0000000,-90.2999800,0,-1,-1);
+	CreateDynamicObject(8411,2684.8574210,-5265.0253900,-5.5025730,0.0000000,0.0000000,0.0000000,0,-1,-1);
+	CreateDynamicObject(8411,2747.3149410,-5265.0253900,-5.5025730,0.0000000,0.0000000,0.0000000,0,-1,-1);
+	CreateDynamicObject(8411,2565.1662590,-5324.3374020,-6.4125770,0.0000000,0.0000000,0.0000000,0,-1,-1);
+	CreateDynamicObject(8411,2627.7338860,-5324.3374020,-6.4025750,0.0000000,0.0000000,0.0000000,0,-1,-1);
+	CreateDynamicObject(8411,2690.1223140,-5324.3374020,-6.4625740,0.0000000,0.0000000,0.0000000,0,-1,-1);
+	CreateDynamicObject(8411,2752.3212890,-5324.3374020,-6.4625740,0.0000000,0.0000000,0.0000000,0,-1,-1);
+	CreateDynamicObject(1223,2667.0895990,-5300.5371090,1.7224290,0.0000000,0.0000000,93.5000000,0,-1,-1);
+	CreateDynamicObject(1223,2685.2619620,-5300.5029290,1.7224290,0.0000000,0.0000000,93.5000000,0,-1,-1);
+	CreateDynamicObject(1223,2704.8847650,-5300.6206050,1.7224290,0.0000000,0.0000000,93.5000000,0,-1,-1);
+	CreateDynamicObject(5431,2829.9790030,-5343.1723630,2.4777920,0.8000040,0.1999990,-90.5000070,0,-1,-1);
+	CreateDynamicObject(12924,2801.6606440,-5314.4287100,1.8428410,0.0000000,0.0000000,178.9000090,0,-1,-1);
+	CreateDynamicObject(19313,2779.5341790,-5331.6005850,1.4982910,0.0000000,0.0000000,0.0000000,0,-1,-1);
+	CreateDynamicObject(11008,2843.1682120,-5340.4755850,9.4480650,0.0000000,0.0000000,175.1000060,0,-1,-1);
+	CreateDynamicObject(9310,2828.7719720,-5309.9262690,7.6368160,0.0000000,0.0000000,177.7999720,0,-1,-1);
+	CreateDynamicObject(19313,2821.7060540,-5305.9667960,3.1893630,0.0000000,0.0000000,-3.1999990,0,-1,-1);
+	CreateDynamicObject(898,2847.6591790,-5320.3715820,4.3121800,0.0000000,0.0000000,0.0000000,0,-1,-1);
+	CreateDynamicObject(898,2840.0690910,-5314.0830070,4.3121800,0.0000000,0.0000000,0.0000000,0,-1,-1);
+	CreateDynamicObject(5773,2811.5559080,-5262.6933590,-0.9009420,0.0000000,0.0000000,0.0000000,0,-1,-1);
+	CreateDynamicObject(1226,2818.7392570,-5289.2734370,5.7538890,0.0000000,0.0000000,63.0999980,0,-1,-1);
+	CreateDynamicObject(16067,2858.9172360,-5282.4750970,2.4988360,0.0000000,0.0000000,-3.9999990,0,-1,-1);
+	CreateDynamicObject(7037,2832.9396970,-5279.0756830,7.3060640,0.0000000,0.0000000,86.9000010,0,-1,-1);
+	CreateDynamicObject(19313,2849.0825190,-5282.8608390,2.1105770,0.0000000,0.0000000,0.0000000,0,-1,-1);
+	CreateDynamicObject(5189,2887.0725090,-5298.4355460,8.3826520,0.0000000,0.0000000,0.0000000,0,-1,-1);
+	CreateDynamicObject(19313,2869.4506830,-5283.5561520,4.1518600,0.0000000,0.0000000,-2.0000000,0,-1,-1);
+	CreateDynamicObject(823,2878.4768060,-5321.5424800,3.5037410,0.0000000,0.0000000,0.0000000,0,-1,-1);
+	CreateDynamicObject(823,2875.8967280,-5315.3930660,3.9837410,0.0000000,0.0000000,0.0000000,0,-1,-1);
+	CreateDynamicObject(880,2873.5732420,-5321.8569330,3.8819730,0.0000000,0.0000000,0.0000000,0,-1,-1);
+	CreateDynamicObject(880,2874.5732420,-5317.1494140,3.8819730,0.0000000,0.0000000,0.0000000,0,-1,-1);
+	CreateDynamicObject(3863,2865.4050290,-5299.2416990,3.8816280,0.0000000,0.0000000,0.0000000,0,-1,-1);
+	CreateDynamicObject(1226,2863.4758300,-5301.4428710,6.3988140,0.0000000,0.0000000,0.0000000,0,-1,-1);
+	CreateDynamicObject(5763,2868.1918940,-5358.4033200,2.2964300,0.0000000,0.0000000,83.0000070,0,-1,-1);
+	CreateDynamicObject(823,2875.1364740,-5321.5424800,3.5037410,0.0000000,0.0000000,0.0000000,0,-1,-1);
+	CreateDynamicObject(1226,2855.1831050,-5362.1577140,6.2645950,0.0000000,0.0000000,173.8000180,0,-1,-1);
+	CreateDynamicObject(6875,2837.5395500,-5382.2910150,1.9426740,0.0000000,0.0000000,-9.3999970,0,-1,-1);
+	CreateDynamicObject(19313,2851.3679190,-5390.7348630,3.9443940,0.0000000,0.0000000,0.0000000,0,-1,-1);
+	CreateDynamicObject(19313,2859.6582030,-5390.7348630,3.9443940,0.0000000,0.0000000,0.0000000,0,-1,-1);
+	CreateDynamicObject(11469,2393.6838370,-5121.8813470,2.1371150,0.0000000,0.0000000,-89.8999930,0,-1,-1);
+	CreateDynamicObject(4152,2454.5168450,-5139.4057610,2.0030510,0.0000000,0.0000000,-91.7000350,0,-1,-1);
+	CreateDynamicObject(8710,2455.4228510,-5106.0761710,2.1089890,0.0000000,0.0000000,-1.3999990,0,-1,-1);
+	CreateDynamicObject(10193,2511.8923330,-5115.5307610,36.7389750,0.0000000,0.0000000,0.0000000,0,-1,-1);
+	CreateDynamicObject(1226,2486.5468750,-5133.7392570,5.6449270,-0.1999990,-0.0999990,102.5999830,0,-1,-1);
+	CreateDynamicObject(5333,2582.1437980,-5144.6694330,10.3051490,0.0000000,0.0000000,176.8000330,0,-1,-1);
+	CreateDynamicObject(5147,2786.3063960,-5156.6342770,11.3279580,0.0000000,0.0000000,-3.5000000,0,-1,-1);
+	CreateDynamicObject(5491,2946.3559570,-5165.7177730,1.6136000,0.0000000,0.0000000,-3.0999980,0,-1,-1);
+	CreateDynamicObject(13132,2872.7209470,-5175.7626950,4.8254730,0.0000000,0.0000000,-90.4999920,0,-1,-1);
+	CreateDynamicObject(12941,2881.0292960,-5139.4394530,1.5594670,0.0000000,0.0000000,-1.8000000,0,-1,-1);
+	CreateDynamicObject(1226,2883.4362790,-5158.0947260,5.2497650,0.0000000,0.0000000,88.9999920,0,-1,-1);
+	CreateDynamicObject(4564,2927.9790030,-5137.3496090,100.9326090,0.0000000,0.0000000,86.6000360,0,-1,-1);
+	CreateDynamicObject(6159,2907.1049800,-5180.9394530,8.0173460,0.0000000,0.0000000,176.6999510,0,-1,-1);
+	CreateDynamicObject(1226,2930.9165030,-5170.8100580,5.1583180,0.0000000,0.0000000,-85.8000030,0,-1,-1);
+	CreateDynamicObject(8566,2951.3593750,-5195.2675780,9.3607560,0.0000000,0.0000000,86.0999220,0,-1,-1);
+	CreateDynamicObject(10606,2985.5688470,-5200.9868160,10.4932880,0.0000000,0.0000000,-3.8000000,0,-1,-1);
+	CreateDynamicObject(1226,2990.2763670,-5173.3178710,5.1532850,0.0000000,0.0000000,-89.5000000,0,-1,-1);
+	CreateDynamicObject(5189,2973.6813960,-5147.4282220,6.8069190,0.0000000,0.0000000,86.2999490,0,-1,-1);
+	CreateDynamicObject(10193,3015.7519530,-5144.3681640,36.2978130,0.0000000,0.0000000,-3.3999990,0,-1,-1);
+	CreateDynamicObject(4857,3011.2709960,-5185.2641600,3.9373490,0.0000000,0.0000000,90.0000000,0,-1,-1);
+	CreateDynamicObject(3986,3031.2509760,-5208.7202140,12.2832840,0.0000000,0.0000000,88.0999830,0,-1,-1);
+	CreateDynamicObject(19313,3035.6499020,-5167.2807610,2.7073500,0.0000000,0.0000000,83.5999830,0,-1,-1);
+	CreateDynamicObject(19313,3035.1069330,-5172.8618160,2.7073500,0.0000000,0.0000000,83.5999830,0,-1,-1);
 
 
 	// /jump
-	CreateDynamicObject(18450, 2612.445801, -1767.673828, 863.040771, 0.0000, 0.0000, 0.0000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18450, 2541.092529, -1767.671143, 839.126648, 0.0000, 323.0442, 0.0000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18450, 2478.290527, -1767.670288, 791.927551, 0.0000, 323.0442, 0.0000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18450, 2415.908691, -1767.694092, 745.001587, 0.0000, 323.0442, 0.0000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18450, 2353.765381, -1767.659302, 698.244690, 0.0000, 323.0442, 0.0000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1634, 2322.294189, -1771.604614, 676.294922, 337.6546, 0.0000, 90.0000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1634, 2322.308105, -1767.651001, 676.305542, 337.6546, 0.0000, 90.0000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1634, 2322.319092, -1764.208374, 676.313782, 337.6546, 0.0000, 90.0000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1634, 2316.589355, -1771.587280, 678.143677, 6.8755, 0.0000, 90.0000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1634, 2316.594971, -1767.717163, 678.158264, 6.8755, 0.0000, 90.0000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1634, 2316.602539, -1764.210693, 678.155334, 6.8755, 0.0000, 90.0000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18450, 2194.445313, -1771.186768, 543.302002, 0.0000, 0.0000, 0.0000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18450, 2116.376709, -1771.197876, 554.539001, 0.0000, 16.3293, 0.0000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18450, 2040.445068, -1771.193237, 576.773804, 0.0000, 16.3293, 0.0000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18450, 1972.051758, -1771.215332, 562.119019, 0.0000, 319.6065, 0.0000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18450, 1914.345947, -1771.227173, 513.024414, 0.0000, 319.6065, 0.0000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18450, 1854.321777, -1771.254028, 461.981720, 0.0000, 319.6065, 0.0000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1634, 1824.576782, -1775.083252, 438.421234, 340.2330, 0.0000, 90.0000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1634, 1824.610352, -1771.147461, 438.449768, 340.2330, 0.0000, 90.0000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1634, 1824.628174, -1767.742188, 438.464935, 340.2330, 0.0000, 90.0000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1634, 1817.967041, -1767.724731, 440.190613, 357.4217, 0.0000, 90.0000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1634, 1817.912964, -1771.832275, 440.183380, 357.4217, 0.0000, 90.0000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1634, 1817.920898, -1775.031860, 440.182770, 357.4217, 0.0000, 90.0000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1634, 1812.790771, -1775.052368, 444.080841, 22.3454, 0.0000, 90.0000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1634, 1812.780396, -1771.245483, 444.106262, 22.3454, 0.0000, 90.0000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1634, 1812.764771, -1767.637329, 444.126709, 22.3454, 0.0000, 90.0000,0,-1,-1,STREAMER_OBJECT_DD);
+	CreateDynamicObject(18450, 2612.445801, -1767.673828, 863.040771, 0.0000, 0.0000, 0.0000,0,-1,-1);
+	CreateDynamicObject(18450, 2541.092529, -1767.671143, 839.126648, 0.0000, 323.0442, 0.0000,0,-1,-1);
+	CreateDynamicObject(18450, 2478.290527, -1767.670288, 791.927551, 0.0000, 323.0442, 0.0000,0,-1,-1);
+	CreateDynamicObject(18450, 2415.908691, -1767.694092, 745.001587, 0.0000, 323.0442, 0.0000,0,-1,-1);
+	CreateDynamicObject(18450, 2353.765381, -1767.659302, 698.244690, 0.0000, 323.0442, 0.0000,0,-1,-1);
+	CreateDynamicObject(1634, 2322.294189, -1771.604614, 676.294922, 337.6546, 0.0000, 90.0000,0,-1,-1);
+	CreateDynamicObject(1634, 2322.308105, -1767.651001, 676.305542, 337.6546, 0.0000, 90.0000,0,-1,-1);
+	CreateDynamicObject(1634, 2322.319092, -1764.208374, 676.313782, 337.6546, 0.0000, 90.0000,0,-1,-1);
+	CreateDynamicObject(1634, 2316.589355, -1771.587280, 678.143677, 6.8755, 0.0000, 90.0000,0,-1,-1);
+	CreateDynamicObject(1634, 2316.594971, -1767.717163, 678.158264, 6.8755, 0.0000, 90.0000,0,-1,-1);
+	CreateDynamicObject(1634, 2316.602539, -1764.210693, 678.155334, 6.8755, 0.0000, 90.0000,0,-1,-1);
+	CreateDynamicObject(18450, 2194.445313, -1771.186768, 543.302002, 0.0000, 0.0000, 0.0000,0,-1,-1);
+	CreateDynamicObject(18450, 2116.376709, -1771.197876, 554.539001, 0.0000, 16.3293, 0.0000,0,-1,-1);
+	CreateDynamicObject(18450, 2040.445068, -1771.193237, 576.773804, 0.0000, 16.3293, 0.0000,0,-1,-1);
+	CreateDynamicObject(18450, 1972.051758, -1771.215332, 562.119019, 0.0000, 319.6065, 0.0000,0,-1,-1);
+	CreateDynamicObject(18450, 1914.345947, -1771.227173, 513.024414, 0.0000, 319.6065, 0.0000,0,-1,-1);
+	CreateDynamicObject(18450, 1854.321777, -1771.254028, 461.981720, 0.0000, 319.6065, 0.0000,0,-1,-1);
+	CreateDynamicObject(1634, 1824.576782, -1775.083252, 438.421234, 340.2330, 0.0000, 90.0000,0,-1,-1);
+	CreateDynamicObject(1634, 1824.610352, -1771.147461, 438.449768, 340.2330, 0.0000, 90.0000,0,-1,-1);
+	CreateDynamicObject(1634, 1824.628174, -1767.742188, 438.464935, 340.2330, 0.0000, 90.0000,0,-1,-1);
+	CreateDynamicObject(1634, 1817.967041, -1767.724731, 440.190613, 357.4217, 0.0000, 90.0000,0,-1,-1);
+	CreateDynamicObject(1634, 1817.912964, -1771.832275, 440.183380, 357.4217, 0.0000, 90.0000,0,-1,-1);
+	CreateDynamicObject(1634, 1817.920898, -1775.031860, 440.182770, 357.4217, 0.0000, 90.0000,0,-1,-1);
+	CreateDynamicObject(1634, 1812.790771, -1775.052368, 444.080841, 22.3454, 0.0000, 90.0000,0,-1,-1);
+	CreateDynamicObject(1634, 1812.780396, -1771.245483, 444.106262, 22.3454, 0.0000, 90.0000,0,-1,-1);
+	CreateDynamicObject(1634, 1812.764771, -1767.637329, 444.126709, 22.3454, 0.0000, 90.0000,0,-1,-1);
 
 
 	// Hideout3
-    CreateDynamicObject(987, 1643.1407470703, -1554.1456298828, 12.600336074829, 0.000000, 0.000000, 89.325012207031,0,-1,-1,STREAMER_OBJECT_DD); //
-	CreateDynamicObject(987, 1643.2836914063, -1544.0498046875, 12.600336074829, 0.000000, 0.000000, 89.324340820313,0,-1,-1,STREAMER_OBJECT_DD); //
-	CreateDynamicObject(987, 1643.3756103516, -1532.6756591797, 12.600336074829, 0.000000, 0.000000, 89.324340820313,0,-1,-1,STREAMER_OBJECT_DD); //
-	CreateDynamicObject(987, 1643.4189453125, -1521.4248046875, 12.600336074829, 0.000000, 0.000000, 89.324340820313,0,-1,-1,STREAMER_OBJECT_DD); //
-	CreateDynamicObject(987, 1558.1202392578, -1559.9505615234, 12.546875, 0.000000, 0.000000, 0.000000,0,-1,-1,STREAMER_OBJECT_DD); //
-	CreateDynamicObject(987, 1550.0948486328, -1559.9582519531, 12.546875, 0.000000, 0.000000, 0.000000,0,-1,-1,STREAMER_OBJECT_DD); //
-	CreateDynamicObject(987, 1550.7065429688, -1507.376953125, 12.5546875, 0.000000, 0.000000, 91.310028076172,0,-1,-1,STREAMER_OBJECT_DD); //
-	CreateDynamicObject(987, 1550.5073242188, -1498.126953125, 12.5546875, 0.000000, 0.000000, 91.307373046875,0,-1,-1,STREAMER_OBJECT_DD); //
-	CreateDynamicObject(987, 1550.3393554688, -1487.6157226563, 12.5546875, 0.000000, 0.000000, 91.307373046875,0,-1,-1,STREAMER_OBJECT_DD); //
-	CreateDynamicObject(987, 1550.1657714844, -1480.3643798828, 12.5546875, 0.000000, 0.000000, 91.307373046875,0,-1,-1,STREAMER_OBJECT_DD); //
-	CreateDynamicObject(987, 1603.2061767578, -1465.9611816406, 12.56759262085, 0.000000, 0.000000, 0.000000,0,-1,-1,STREAMER_OBJECT_DD); //
-	CreateDynamicObject(987, 1592.4631347656, -1465.9606933594, 12.56759262085, 0.000000, 0.000000, 0.000000,0,-1,-1,STREAMER_OBJECT_DD); //
-	CreateDynamicObject(5816, 1558.3172607422, -1518.3251953125, 18.988437652588, 0.000000, 0.000000, 0.000000,0,-1,-1,STREAMER_OBJECT_DD); //
-	CreateDynamicObject(16151, 1630.9311523438, -1515.5087890625, 12.589176177979, 0.000000, 0.000000, 0.000000,0,-1,-1,STREAMER_OBJECT_DD); //
-	CreateDynamicObject(16152, 1626.3089599609, -1509.3505859375, 12.357471466064, 0.000000, 0.000000, 87.340026855469,0,-1,-1,STREAMER_OBJECT_DD); //
-	CreateDynamicObject(16152, 1618.7059326172, -1516.1817626953, 12.357471466064, 0.000000, 0.000000, 359.99578857422,0,-1,-1,STREAMER_OBJECT_DD); //
-	CreateDynamicObject(2071, 1622.8619384766, -1516.9024658203, 14.104511260986, 0.000000, 0.000000, 0.000000,0,-1,-1,STREAMER_OBJECT_DD); //
-	CreateDynamicObject(2071, 1627.2805175781, -1516.603515625, 14.104511260986, 0.000000, 0.000000, 0.000000,0,-1,-1,STREAMER_OBJECT_DD); //
-	CreateDynamicObject(1709, 1578.0225830078, -1548.8074951172, 12.567485809326, 0.000000, 0.000000, 175.39495849609,0,-1,-1,STREAMER_OBJECT_DD); //
-	CreateDynamicObject(1709, 1572.9913330078, -1547.4890136719, 12.567485809326, 0.000000, 0.000000, 72.171203613281,0,-1,-1,STREAMER_OBJECT_DD); //
-	CreateDynamicObject(2024, 1576.7646484375, -1546.8786621094, 12.565334320068, 0.000000, 0.000000, 0.000000,0,-1,-1,STREAMER_OBJECT_DD); //
-	CreateDynamicObject(2024, 1576.8056640625, -1544.642578125, 12.565334320068, 0.000000, 0.000000, 91.310028076172,0,-1,-1,STREAMER_OBJECT_DD); //
-	CreateDynamicObject(1836, 1596.9302978516, -1532.5046386719, 12.650966644287, 0.000000, 0.000000, 352.05999755859,0,-1,-1,STREAMER_OBJECT_DD); //
-	CreateDynamicObject(1836, 1596.9494628906, -1532.4886474609, 12.601608276367, 0.000000, 0.000000, 352.05999755859,0,-1,-1,STREAMER_OBJECT_DD); //
-	CreateDynamicObject(1836, 1596.998046875, -1531.9907226563, 12.601608276367, 0.000000, 0.000000, 172.69061279297,0,-1,-1,STREAMER_OBJECT_DD); //
-	CreateDynamicObject(1836, 1596.802734375, -1533.98046875, 12.601608276367, 0.000000, 0.000000, 172.68859863281,0,-1,-1,STREAMER_OBJECT_DD); //
-	CreateDynamicObject(1836, 1596.75390625, -1534.4780273438, 12.601608276367, 0.000000, 0.000000, 354.03854370117,0,-1,-1,STREAMER_OBJECT_DD); //
-	CreateDynamicObject(1978, 1590.8596191406, -1526.5321044922, 13.643382072449, 0.000000, 0.000000, 0.000000,0,-1,-1,STREAMER_OBJECT_DD); //
-	CreateDynamicObject(1978, 1586.4367675781, -1526.5224609375, 13.643382072449, 0.000000, 0.000000, 0.000000,0,-1,-1,STREAMER_OBJECT_DD); //
-	CreateDynamicObject(14582, 1588.7700195313, -1536.3840332031, 16.067651748657, 0.000000, 0.000000, 0.000000,0,-1,-1,STREAMER_OBJECT_DD); //
-	CreateDynamicObject(3092, 1556.0147705078, -1525.7241210938, 17.082229614258, 0.000000, 0.000000, 264.71997070313,0,-1,-1,STREAMER_OBJECT_DD); //
-	CreateDynamicObject(3092, 1556.4035644531, -1529.4514160156, 17.082229614258, 0.000000, 0.000000, 264.71557617188,0,-1,-1,STREAMER_OBJECT_DD); //
-	CreateDynamicObject(2908, 1557.7681884766, -1525.5825195313, 12.624091148376, 0.000000, 0.000000, 0.000000,0,-1,-1,STREAMER_OBJECT_DD); //
-	CreateDynamicObject(2908, 1558.7899169922, -1527.9830322266, 12.624091148376, 0.000000, 0.000000, 0.000000,0,-1,-1,STREAMER_OBJECT_DD); //
-	CreateDynamicObject(2908, 1557.9329833984, -1527.0718994141, 12.624091148376, 0.000000, 0.000000, 0.000000,0,-1,-1,STREAMER_OBJECT_DD); //
-	CreateDynamicObject(2908, 1557.3813476563, -1528.8933105469, 12.624091148376, 0.000000, 0.000000, 0.000000,0,-1,-1,STREAMER_OBJECT_DD); //
-	CreateDynamicObject(2908, 1556.7989501953, -1523.6759033203, 12.624091148376, 0.000000, 0.000000, 0.000000,0,-1,-1,STREAMER_OBJECT_DD); //
-	CreateDynamicObject(2908, 1558.2893066406, -1523.5095214844, 12.624091148376, 0.000000, 0.000000, 0.000000,0,-1,-1,STREAMER_OBJECT_DD); //
-	CreateDynamicObject(2908, 1558.3721923828, -1524.2540283203, 12.624091148376, 0.000000, 0.000000, 0.000000,0,-1,-1,STREAMER_OBJECT_DD); //
-	CreateDynamicObject(2908, 1557.1854248047, -1524.8892822266, 12.624091148376, 0.000000, 0.000000, 0.000000,0,-1,-1,STREAMER_OBJECT_DD); //
-	CreateDynamicObject(2907, 1559.2233886719, -1526.3054199219, 12.706350326538, 0.000000, 0.000000, 0.000000,0,-1,-1,STREAMER_OBJECT_DD); //
-	CreateDynamicObject(2907, 1556.4968261719, -1525.9448242188, 12.706350326538, 0.000000, 0.000000, 55.580017089844,0,-1,-1,STREAMER_OBJECT_DD); //
-	CreateDynamicObject(2907, 1558.8293457031, -1529.2778320313, 12.706350326538, 0.000000, 0.000000, 250.10986328125,0,-1,-1,STREAMER_OBJECT_DD); //
-	CreateDynamicObject(2907, 1556.3510742188, -1528.9501953125, 12.706350326538, 0.000000, 13.894989013672, 250.10925292969,0,-1,-1,STREAMER_OBJECT_DD); //
-	CreateDynamicObject(2907, 1555.9343261719, -1526.3740234375, 12.706350326538, 304.41998291016, 342.13220214844, 250.10375976563,0,-1,-1,STREAMER_OBJECT_DD); //
-	CreateDynamicObject(2907, 1557.7475585938, -1524.0922851563, 12.456350326538, 179.35998535156, 21.830444335938, 267.96313476563,0,-1,-1,STREAMER_OBJECT_DD); //
-	CreateDynamicObject(2906, 1557.1870117188, -1527.5728759766, 12.620824813843, 0.000000, 0.000000, 0.000000,0,-1,-1,STREAMER_OBJECT_DD); //
-	CreateDynamicObject(2906, 1556.9942626953, -1525.3299560547, 12.620824813843, 0.000000, 0.000000, 292.50997924805,0,-1,-1,STREAMER_OBJECT_DD); //
-	CreateDynamicObject(2906, 1557.9552001953, -1527.7564697266, 12.620824813843, 0.000000, 0.000000, 292.50549316406,0,-1,-1,STREAMER_OBJECT_DD); //
-	CreateDynamicObject(2906, 1558.2183837891, -1524.9725341797, 12.620824813843, 0.000000, 19.850006103516, 211.12072753906,0,-1,-1,STREAMER_OBJECT_DD); //
-	CreateDynamicObject(2905, 1558.80078125, -1528.6248779297, 12.637806892395, 0.000000, 0.000000, 0.000000,0,-1,-1,STREAMER_OBJECT_DD); //
-	CreateDynamicObject(2905, 1558.5657958984, -1525.8834228516, 12.637806892395, 0.000000, 248.83996582031, 288.53997802734,0,-1,-1,STREAMER_OBJECT_DD); //
-	CreateDynamicObject(2905, 1556.4299316406, -1527.3208007813, 12.637806892395, 0.000000, 248.83483886719, 314.34423828125,0,-1,-1,STREAMER_OBJECT_DD); //
-	CreateDynamicObject(2905, 1555.7177734375, -1524.8715820313, 12.637806892395, 316.32998657227, 248.83483886719, 274.64111328125,0,-1,-1,STREAMER_OBJECT_DD); //
-	CreateDynamicObject(2905, 1559.4549560547, -1524.5506591797, 12.637806892395, 354.04406738281, 219.05981445313, 302.42602539063,0,-1,-1,STREAMER_OBJECT_DD); //
-	CreateDynamicObject(1415, 1557.5603027344, -1531.1873779297, 12.546722412109, 0.000000, 0.000000, 182.62005615234,0,-1,-1,STREAMER_OBJECT_DD); //
-	CreateDynamicObject(2907, 1557.0714111328, -1531.5213623047, 12.706350326538, 0.000000, 0.000000, 250.10925292969,0,-1,-1,STREAMER_OBJECT_DD); //
-	CreateDynamicObject(2905, 1557.416015625, -1531.3237304688, 13.137806892395, 0.000000, 248.83483886719, 314.3408203125,0,-1,-1,STREAMER_OBJECT_DD); //
-	CreateDynamicObject(3092, 1557.3973388672, -1531.2045898438, 13.582229614258, 11.910003662109, 0.000000, 264.71557617188,0,-1,-1,STREAMER_OBJECT_DD); //
-	CreateDynamicObject(12957, 1558.3878173828, -1520.7763671875, 12.924925804138, 0.000000, 0.000000, 39.700012207031,0,-1,-1,STREAMER_OBJECT_DD); //
-	CreateDynamicObject(1264, 1556.4666748047, -1533.0367431641, 13.019131660461, 0.000000, 0.000000, 0.000000,0,-1,-1,STREAMER_OBJECT_DD); //
-	CreateDynamicObject(1264, 1557.2037353516, -1533.1694335938, 13.019131660461, 0.000000, 19.850006103516, 0.000000,0,-1,-1,STREAMER_OBJECT_DD); //
-	CreateDynamicObject(1264, 1557.0904541016, -1532.3865966797, 12.769131660461, 0.000000, 19.846801757813, 0.000000,0,-1,-1,STREAMER_OBJECT_DD); //
-	CreateDynamicObject(13591, 1561.6329345703, -1555.0107421875, 12.959146499634, 0.000000, 0.000000, 0.000000,0,-1,-1,STREAMER_OBJECT_DD); //
+    CreateDynamicObject(987, 1643.1407470703, -1554.1456298828, 12.600336074829, 0.000000, 0.000000, 89.325012207031,0,-1,-1); //
+	CreateDynamicObject(987, 1643.2836914063, -1544.0498046875, 12.600336074829, 0.000000, 0.000000, 89.324340820313,0,-1,-1); //
+	CreateDynamicObject(987, 1643.3756103516, -1532.6756591797, 12.600336074829, 0.000000, 0.000000, 89.324340820313,0,-1,-1); //
+	CreateDynamicObject(987, 1643.4189453125, -1521.4248046875, 12.600336074829, 0.000000, 0.000000, 89.324340820313,0,-1,-1); //
+	CreateDynamicObject(987, 1558.1202392578, -1559.9505615234, 12.546875, 0.000000, 0.000000, 0.000000,0,-1,-1); //
+	CreateDynamicObject(987, 1550.0948486328, -1559.9582519531, 12.546875, 0.000000, 0.000000, 0.000000,0,-1,-1); //
+	CreateDynamicObject(987, 1550.7065429688, -1507.376953125, 12.5546875, 0.000000, 0.000000, 91.310028076172,0,-1,-1); //
+	CreateDynamicObject(987, 1550.5073242188, -1498.126953125, 12.5546875, 0.000000, 0.000000, 91.307373046875,0,-1,-1); //
+	CreateDynamicObject(987, 1550.3393554688, -1487.6157226563, 12.5546875, 0.000000, 0.000000, 91.307373046875,0,-1,-1); //
+	CreateDynamicObject(987, 1550.1657714844, -1480.3643798828, 12.5546875, 0.000000, 0.000000, 91.307373046875,0,-1,-1); //
+	CreateDynamicObject(987, 1603.2061767578, -1465.9611816406, 12.56759262085, 0.000000, 0.000000, 0.000000,0,-1,-1); //
+	CreateDynamicObject(987, 1592.4631347656, -1465.9606933594, 12.56759262085, 0.000000, 0.000000, 0.000000,0,-1,-1); //
+	CreateDynamicObject(5816, 1558.3172607422, -1518.3251953125, 18.988437652588, 0.000000, 0.000000, 0.000000,0,-1,-1); //
+	CreateDynamicObject(16151, 1630.9311523438, -1515.5087890625, 12.589176177979, 0.000000, 0.000000, 0.000000,0,-1,-1); //
+	CreateDynamicObject(16152, 1626.3089599609, -1509.3505859375, 12.357471466064, 0.000000, 0.000000, 87.340026855469,0,-1,-1); //
+	CreateDynamicObject(16152, 1618.7059326172, -1516.1817626953, 12.357471466064, 0.000000, 0.000000, 359.99578857422,0,-1,-1); //
+	CreateDynamicObject(2071, 1622.8619384766, -1516.9024658203, 14.104511260986, 0.000000, 0.000000, 0.000000,0,-1,-1); //
+	CreateDynamicObject(2071, 1627.2805175781, -1516.603515625, 14.104511260986, 0.000000, 0.000000, 0.000000,0,-1,-1); //
+	CreateDynamicObject(1709, 1578.0225830078, -1548.8074951172, 12.567485809326, 0.000000, 0.000000, 175.39495849609,0,-1,-1); //
+	CreateDynamicObject(1709, 1572.9913330078, -1547.4890136719, 12.567485809326, 0.000000, 0.000000, 72.171203613281,0,-1,-1); //
+	CreateDynamicObject(2024, 1576.7646484375, -1546.8786621094, 12.565334320068, 0.000000, 0.000000, 0.000000,0,-1,-1); //
+	CreateDynamicObject(2024, 1576.8056640625, -1544.642578125, 12.565334320068, 0.000000, 0.000000, 91.310028076172,0,-1,-1); //
+	CreateDynamicObject(1836, 1596.9302978516, -1532.5046386719, 12.650966644287, 0.000000, 0.000000, 352.05999755859,0,-1,-1); //
+	CreateDynamicObject(1836, 1596.9494628906, -1532.4886474609, 12.601608276367, 0.000000, 0.000000, 352.05999755859,0,-1,-1); //
+	CreateDynamicObject(1836, 1596.998046875, -1531.9907226563, 12.601608276367, 0.000000, 0.000000, 172.69061279297,0,-1,-1); //
+	CreateDynamicObject(1836, 1596.802734375, -1533.98046875, 12.601608276367, 0.000000, 0.000000, 172.68859863281,0,-1,-1); //
+	CreateDynamicObject(1836, 1596.75390625, -1534.4780273438, 12.601608276367, 0.000000, 0.000000, 354.03854370117,0,-1,-1); //
+	CreateDynamicObject(1978, 1590.8596191406, -1526.5321044922, 13.643382072449, 0.000000, 0.000000, 0.000000,0,-1,-1); //
+	CreateDynamicObject(1978, 1586.4367675781, -1526.5224609375, 13.643382072449, 0.000000, 0.000000, 0.000000,0,-1,-1); //
+	CreateDynamicObject(14582, 1588.7700195313, -1536.3840332031, 16.067651748657, 0.000000, 0.000000, 0.000000,0,-1,-1); //
+	CreateDynamicObject(3092, 1556.0147705078, -1525.7241210938, 17.082229614258, 0.000000, 0.000000, 264.71997070313,0,-1,-1); //
+	CreateDynamicObject(3092, 1556.4035644531, -1529.4514160156, 17.082229614258, 0.000000, 0.000000, 264.71557617188,0,-1,-1); //
+	CreateDynamicObject(2908, 1557.7681884766, -1525.5825195313, 12.624091148376, 0.000000, 0.000000, 0.000000,0,-1,-1); //
+	CreateDynamicObject(2908, 1558.7899169922, -1527.9830322266, 12.624091148376, 0.000000, 0.000000, 0.000000,0,-1,-1); //
+	CreateDynamicObject(2908, 1557.9329833984, -1527.0718994141, 12.624091148376, 0.000000, 0.000000, 0.000000,0,-1,-1); //
+	CreateDynamicObject(2908, 1557.3813476563, -1528.8933105469, 12.624091148376, 0.000000, 0.000000, 0.000000,0,-1,-1); //
+	CreateDynamicObject(2908, 1556.7989501953, -1523.6759033203, 12.624091148376, 0.000000, 0.000000, 0.000000,0,-1,-1); //
+	CreateDynamicObject(2908, 1558.2893066406, -1523.5095214844, 12.624091148376, 0.000000, 0.000000, 0.000000,0,-1,-1); //
+	CreateDynamicObject(2908, 1558.3721923828, -1524.2540283203, 12.624091148376, 0.000000, 0.000000, 0.000000,0,-1,-1); //
+	CreateDynamicObject(2908, 1557.1854248047, -1524.8892822266, 12.624091148376, 0.000000, 0.000000, 0.000000,0,-1,-1); //
+	CreateDynamicObject(2907, 1559.2233886719, -1526.3054199219, 12.706350326538, 0.000000, 0.000000, 0.000000,0,-1,-1); //
+	CreateDynamicObject(2907, 1556.4968261719, -1525.9448242188, 12.706350326538, 0.000000, 0.000000, 55.580017089844,0,-1,-1); //
+	CreateDynamicObject(2907, 1558.8293457031, -1529.2778320313, 12.706350326538, 0.000000, 0.000000, 250.10986328125,0,-1,-1); //
+	CreateDynamicObject(2907, 1556.3510742188, -1528.9501953125, 12.706350326538, 0.000000, 13.894989013672, 250.10925292969,0,-1,-1); //
+	CreateDynamicObject(2907, 1555.9343261719, -1526.3740234375, 12.706350326538, 304.41998291016, 342.13220214844, 250.10375976563,0,-1,-1); //
+	CreateDynamicObject(2907, 1557.7475585938, -1524.0922851563, 12.456350326538, 179.35998535156, 21.830444335938, 267.96313476563,0,-1,-1); //
+	CreateDynamicObject(2906, 1557.1870117188, -1527.5728759766, 12.620824813843, 0.000000, 0.000000, 0.000000,0,-1,-1); //
+	CreateDynamicObject(2906, 1556.9942626953, -1525.3299560547, 12.620824813843, 0.000000, 0.000000, 292.50997924805,0,-1,-1); //
+	CreateDynamicObject(2906, 1557.9552001953, -1527.7564697266, 12.620824813843, 0.000000, 0.000000, 292.50549316406,0,-1,-1); //
+	CreateDynamicObject(2906, 1558.2183837891, -1524.9725341797, 12.620824813843, 0.000000, 19.850006103516, 211.12072753906,0,-1,-1); //
+	CreateDynamicObject(2905, 1558.80078125, -1528.6248779297, 12.637806892395, 0.000000, 0.000000, 0.000000,0,-1,-1); //
+	CreateDynamicObject(2905, 1558.5657958984, -1525.8834228516, 12.637806892395, 0.000000, 248.83996582031, 288.53997802734,0,-1,-1); //
+	CreateDynamicObject(2905, 1556.4299316406, -1527.3208007813, 12.637806892395, 0.000000, 248.83483886719, 314.34423828125,0,-1,-1); //
+	CreateDynamicObject(2905, 1555.7177734375, -1524.8715820313, 12.637806892395, 316.32998657227, 248.83483886719, 274.64111328125,0,-1,-1); //
+	CreateDynamicObject(2905, 1559.4549560547, -1524.5506591797, 12.637806892395, 354.04406738281, 219.05981445313, 302.42602539063,0,-1,-1); //
+	CreateDynamicObject(1415, 1557.5603027344, -1531.1873779297, 12.546722412109, 0.000000, 0.000000, 182.62005615234,0,-1,-1); //
+	CreateDynamicObject(2907, 1557.0714111328, -1531.5213623047, 12.706350326538, 0.000000, 0.000000, 250.10925292969,0,-1,-1); //
+	CreateDynamicObject(2905, 1557.416015625, -1531.3237304688, 13.137806892395, 0.000000, 248.83483886719, 314.3408203125,0,-1,-1); //
+	CreateDynamicObject(3092, 1557.3973388672, -1531.2045898438, 13.582229614258, 11.910003662109, 0.000000, 264.71557617188,0,-1,-1); //
+	CreateDynamicObject(12957, 1558.3878173828, -1520.7763671875, 12.924925804138, 0.000000, 0.000000, 39.700012207031,0,-1,-1); //
+	CreateDynamicObject(1264, 1556.4666748047, -1533.0367431641, 13.019131660461, 0.000000, 0.000000, 0.000000,0,-1,-1); //
+	CreateDynamicObject(1264, 1557.2037353516, -1533.1694335938, 13.019131660461, 0.000000, 19.850006103516, 0.000000,0,-1,-1); //
+	CreateDynamicObject(1264, 1557.0904541016, -1532.3865966797, 12.769131660461, 0.000000, 19.846801757813, 0.000000,0,-1,-1); //
+	CreateDynamicObject(13591, 1561.6329345703, -1555.0107421875, 12.959146499634, 0.000000, 0.000000, 0.000000,0,-1,-1); //
 
 
 	// city3
-	CreateDynamicObject(4108, 3391.492432, -1216.417603, 10.438354, 0.000000, 0.000000, 0.000000,0,-1,-1,STREAMER_OBJECT_DD); //
-	CreateDynamicObject(4892, 3418.121094, -1265.705811, 12.847887, 0.000000, 0.000000, 91.1002894258,0,-1,-1,STREAMER_OBJECT_DD); //
-	CreateDynamicObject(3307, 3414.646973, -1244.022461, 11.631484, 0.000000, 0.000000, -178.763003968,0,-1,-1,STREAMER_OBJECT_DD); //
-	CreateDynamicObject(615, 3424.807373, -1253.094604, 11.511489, 0.000000, 0.000000, 0.000000,0,-1,-1,STREAMER_OBJECT_DD); //
-	CreateDynamicObject(647, 3405.299561, -1238.201782, 12.095119, 0.000000, 0.000000, 0.000000,0,-1,-1,STREAMER_OBJECT_DD); //
-	CreateDynamicObject(682, 3415.796631, -1275.107178, 10.424088, 0.000000, 0.000000, 0.000000,0,-1,-1,STREAMER_OBJECT_DD); //
-	CreateDynamicObject(17573, 3407.119385, -1222.792847, 12.133308, 0.000000, 0.000000, 0.000000,0,-1,-1,STREAMER_OBJECT_DD); //
-	CreateDynamicObject(3336, 3381.011475, -1168.228516, 10.221304, 0.000000, 0.000000, 0.000000,0,-1,-1,STREAMER_OBJECT_DD); //
-	CreateDynamicObject(12983, 3420.353271, -1181.124146, 10.331022, 0.000000, 0.000000, 90.2408527331,0,-1,-1,STREAMER_OBJECT_DD); //
-	CreateDynamicObject(1675, 3373.298340, -1239.306763, 13.447570, 0.000000, 0.000000, -90.2408527331,0,-1,-1,STREAMER_OBJECT_DD); //
-	CreateDynamicObject(13132, 3375.402588, -1254.433472, 13.594113, 0.000000, 0.000000, -180.481762762,0,-1,-1,STREAMER_OBJECT_DD); //
-	CreateDynamicObject(1684, 3377.558105, -1267.717407, 11.734484, 0.000000, 0.000000, 90.2408527331,0,-1,-1,STREAMER_OBJECT_DD); //
-	CreateDynamicObject(970, 3379.552246, -1274.251953, 10.896086, 0.000000, 0.000000, -90.2408527331,0,-1,-1,STREAMER_OBJECT_DD); //
-	CreateDynamicObject(1211, 3401.361572, -1224.381836, 10.955411, 0.000000, 0.000000, 0.000000,0,-1,-1,STREAMER_OBJECT_DD); //
-	CreateDynamicObject(1216, 3402.133789, -1190.109863, 11.036607, 0.000000, 0.000000, -90.2408527331,0,-1,-1,STREAMER_OBJECT_DD); //
-	CreateDynamicObject(1231, 3391.362061, -1194.819336, 13.074997, 0.000000, 0.000000, 0.000000,0,-1,-1,STREAMER_OBJECT_DD); //
-	CreateDynamicObject(1231, 3391.361572, -1261.032715, 13.071527, 0.000000, 0.000000, 0.000000,0,-1,-1,STREAMER_OBJECT_DD); //
-	CreateDynamicObject(1257, 3391.451660, -1227.030396, 11.623796, 0.000000, 0.000000, -180.481762762,0,-1,-1,STREAMER_OBJECT_DD); //
-	CreateDynamicObject(1258, 3392.167969, -1229.939697, 11.006326, 0.000000, 0.000000, 89.3814160404,0,-1,-1,STREAMER_OBJECT_DD); //
-	CreateDynamicObject(1294, 3381.521729, -1167.735229, 14.705713, 0.000000, 0.000000, 73.9115555719,0,-1,-1,STREAMER_OBJECT_DD); //
-	CreateDynamicObject(1346, 3382.374756, -1260.226563, 11.695610, 0.000000, 0.000000, 0.000000,0,-1,-1,STREAMER_OBJECT_DD); //
-	CreateDynamicObject(1478, 3402.052002, -1258.994141, 10.980779, 0.000000, 0.000000, -90.2408527331,0,-1,-1,STREAMER_OBJECT_DD); //
-	CreateDynamicObject(1215, 3406.688965, -1181.299683, 11.098471, 0.000000, 0.000000, 0.000000,0,-1,-1,STREAMER_OBJECT_DD); //
-	CreateDynamicObject(1215, 3406.754395, -1189.972900, 11.096169, 0.000000, 0.000000, 0.000000,0,-1,-1,STREAMER_OBJECT_DD); //
-	CreateDynamicObject(975, 3396.925781, -1156.749634, 11.908859, 0.000000, 0.000000, 0.000000,0,-1,-1,STREAMER_OBJECT_DD); //
-	CreateDynamicObject(975, 3388.028564, -1156.703735, 11.916414, 0.000000, 0.000000, 0.000000,0,-1,-1,STREAMER_OBJECT_DD); //
-	CreateDynamicObject(975, 3383.501465, -1156.742676, 11.940969, 0.000000, 0.000000, 0.000000,0,-1,-1,STREAMER_OBJECT_DD); //
-	CreateDynamicObject(4148, 3319.413330, -1177.872314, 10.326540, 0.000000, -1.71887338539, 90.2408527331,0,-1,-1,STREAMER_OBJECT_DD); //
-	CreateDynamicObject(8167, 3382.285400, -1275.845459, 11.269571, 0.000000, 0.000000, -89.3814160404,0,-1,-1,STREAMER_OBJECT_DD); //
-	CreateDynamicObject(8167, 3389.700195, -1275.736328, 11.259880, 0.000000, 0.000000, -89.3814160404,0,-1,-1,STREAMER_OBJECT_DD); //
-	CreateDynamicObject(8167, 3397.084961, -1275.664063, 11.256401, 0.000000, 0.000000, -89.3814160404,0,-1,-1,STREAMER_OBJECT_DD); //
-	CreateDynamicObject(16781, 3270.406494, -1164.800903, 10.481220, 0.000000, 0.000000, 0.000000,0,-1,-1,STREAMER_OBJECT_DD); //
-	CreateDynamicObject(972, 3256.473145, -1175.235474, 10.243730, 0.000000, 0.000000, 0.000000,0,-1,-1,STREAMER_OBJECT_DD); //
-	CreateDynamicObject(10056, 3329.592529, -1144.035156, 25.024782, 0.000000, 0.000000, 90.2408527331,0,-1,-1,STREAMER_OBJECT_DD); //
-	CreateDynamicObject(8131, 3312.968018, -1163.354736, 20.536942, 0.000000, 0.000000, 0.000000,0,-1,-1,STREAMER_OBJECT_DD); //
-	CreateDynamicObject(10767, 3294.190674, -1213.741333, -4.231852, 0.000000, 0.000000, 134.931560753,0,-1,-1,STREAMER_OBJECT_DD); //
-	CreateDynamicObject(8155, 3351.926758, -1214.644531, 12.081676, 0.000000, 0.000000, -91.1002894258,0,-1,-1,STREAMER_OBJECT_DD); //
-	CreateDynamicObject(8149, 3299.817383, -1231.033203, 13.486362, 0.000000, 0.000000, -90.2408527331,0,-1,-1,STREAMER_OBJECT_DD); //
-	CreateDynamicObject(8155, 3239.240479, -1211.161621, 12.306676, 0.000000, 0.000000, -270.722558199,0,-1,-1,STREAMER_OBJECT_DD); //
-	CreateDynamicObject(8210, 3240.036377, -1193.751221, 11.434799, 0.000000, 0.000000, 0.000000,0,-1,-1,STREAMER_OBJECT_DD); //
-	CreateDynamicObject(8210, 3269.779297, -1193.540527, 11.334797, 0.000000, 0.000000, 0.000000,0,-1,-1,STREAMER_OBJECT_DD); //
-	CreateDynamicObject(8168, 3301.011719, -1191.307251, 12.550060, 0.000000, 0.000000, -163.293028908,0,-1,-1,STREAMER_OBJECT_DD); //
-	CreateDynamicObject(966, 3304.872803, -1193.425781, 10.584085, 0.000000, 0.000000, -177.903395388,0,-1,-1,STREAMER_OBJECT_DD); //
-	CreateDynamicObject(968, 3311.811523, -1193.275391, 11.355752, 0.000000, -85.0842325769, -2.57831007809,0,-1,-1,STREAMER_OBJECT_DD); //
-	CreateDynamicObject(8210, 3339.135986, -1194.152466, 10.982130, 0.000000, 0.000000, -1.71887338539,0,-1,-1,STREAMER_OBJECT_DD); //
+	CreateDynamicObject(4108, 3391.492432, -1216.417603, 10.438354, 0.000000, 0.000000, 0.000000,0,-1,-1); //
+	CreateDynamicObject(4892, 3418.121094, -1265.705811, 12.847887, 0.000000, 0.000000, 91.1002894258,0,-1,-1); //
+	CreateDynamicObject(3307, 3414.646973, -1244.022461, 11.631484, 0.000000, 0.000000, -178.763003968,0,-1,-1); //
+	CreateDynamicObject(615, 3424.807373, -1253.094604, 11.511489, 0.000000, 0.000000, 0.000000,0,-1,-1); //
+	CreateDynamicObject(647, 3405.299561, -1238.201782, 12.095119, 0.000000, 0.000000, 0.000000,0,-1,-1); //
+	CreateDynamicObject(682, 3415.796631, -1275.107178, 10.424088, 0.000000, 0.000000, 0.000000,0,-1,-1); //
+	CreateDynamicObject(17573, 3407.119385, -1222.792847, 12.133308, 0.000000, 0.000000, 0.000000,0,-1,-1); //
+	CreateDynamicObject(3336, 3381.011475, -1168.228516, 10.221304, 0.000000, 0.000000, 0.000000,0,-1,-1); //
+	CreateDynamicObject(12983, 3420.353271, -1181.124146, 10.331022, 0.000000, 0.000000, 90.2408527331,0,-1,-1); //
+	CreateDynamicObject(1675, 3373.298340, -1239.306763, 13.447570, 0.000000, 0.000000, -90.2408527331,0,-1,-1); //
+	CreateDynamicObject(13132, 3375.402588, -1254.433472, 13.594113, 0.000000, 0.000000, -180.481762762,0,-1,-1); //
+	CreateDynamicObject(1684, 3377.558105, -1267.717407, 11.734484, 0.000000, 0.000000, 90.2408527331,0,-1,-1); //
+	CreateDynamicObject(970, 3379.552246, -1274.251953, 10.896086, 0.000000, 0.000000, -90.2408527331,0,-1,-1); //
+	CreateDynamicObject(1211, 3401.361572, -1224.381836, 10.955411, 0.000000, 0.000000, 0.000000,0,-1,-1); //
+	CreateDynamicObject(1216, 3402.133789, -1190.109863, 11.036607, 0.000000, 0.000000, -90.2408527331,0,-1,-1); //
+	CreateDynamicObject(1231, 3391.362061, -1194.819336, 13.074997, 0.000000, 0.000000, 0.000000,0,-1,-1); //
+	CreateDynamicObject(1231, 3391.361572, -1261.032715, 13.071527, 0.000000, 0.000000, 0.000000,0,-1,-1); //
+	CreateDynamicObject(1257, 3391.451660, -1227.030396, 11.623796, 0.000000, 0.000000, -180.481762762,0,-1,-1); //
+	CreateDynamicObject(1258, 3392.167969, -1229.939697, 11.006326, 0.000000, 0.000000, 89.3814160404,0,-1,-1); //
+	CreateDynamicObject(1294, 3381.521729, -1167.735229, 14.705713, 0.000000, 0.000000, 73.9115555719,0,-1,-1); //
+	CreateDynamicObject(1346, 3382.374756, -1260.226563, 11.695610, 0.000000, 0.000000, 0.000000,0,-1,-1); //
+	CreateDynamicObject(1478, 3402.052002, -1258.994141, 10.980779, 0.000000, 0.000000, -90.2408527331,0,-1,-1); //
+	CreateDynamicObject(1215, 3406.688965, -1181.299683, 11.098471, 0.000000, 0.000000, 0.000000,0,-1,-1); //
+	CreateDynamicObject(1215, 3406.754395, -1189.972900, 11.096169, 0.000000, 0.000000, 0.000000,0,-1,-1); //
+	CreateDynamicObject(975, 3396.925781, -1156.749634, 11.908859, 0.000000, 0.000000, 0.000000,0,-1,-1); //
+	CreateDynamicObject(975, 3388.028564, -1156.703735, 11.916414, 0.000000, 0.000000, 0.000000,0,-1,-1); //
+	CreateDynamicObject(975, 3383.501465, -1156.742676, 11.940969, 0.000000, 0.000000, 0.000000,0,-1,-1); //
+	CreateDynamicObject(4148, 3319.413330, -1177.872314, 10.326540, 0.000000, -1.71887338539, 90.2408527331,0,-1,-1); //
+	CreateDynamicObject(8167, 3382.285400, -1275.845459, 11.269571, 0.000000, 0.000000, -89.3814160404,0,-1,-1); //
+	CreateDynamicObject(8167, 3389.700195, -1275.736328, 11.259880, 0.000000, 0.000000, -89.3814160404,0,-1,-1); //
+	CreateDynamicObject(8167, 3397.084961, -1275.664063, 11.256401, 0.000000, 0.000000, -89.3814160404,0,-1,-1); //
+	CreateDynamicObject(16781, 3270.406494, -1164.800903, 10.481220, 0.000000, 0.000000, 0.000000,0,-1,-1); //
+	CreateDynamicObject(972, 3256.473145, -1175.235474, 10.243730, 0.000000, 0.000000, 0.000000,0,-1,-1); //
+	CreateDynamicObject(10056, 3329.592529, -1144.035156, 25.024782, 0.000000, 0.000000, 90.2408527331,0,-1,-1); //
+	CreateDynamicObject(8131, 3312.968018, -1163.354736, 20.536942, 0.000000, 0.000000, 0.000000,0,-1,-1); //
+	CreateDynamicObject(10767, 3294.190674, -1213.741333, -4.231852, 0.000000, 0.000000, 134.931560753,0,-1,-1); //
+	CreateDynamicObject(8155, 3351.926758, -1214.644531, 12.081676, 0.000000, 0.000000, -91.1002894258,0,-1,-1); //
+	CreateDynamicObject(8149, 3299.817383, -1231.033203, 13.486362, 0.000000, 0.000000, -90.2408527331,0,-1,-1); //
+	CreateDynamicObject(8155, 3239.240479, -1211.161621, 12.306676, 0.000000, 0.000000, -270.722558199,0,-1,-1); //
+	CreateDynamicObject(8210, 3240.036377, -1193.751221, 11.434799, 0.000000, 0.000000, 0.000000,0,-1,-1); //
+	CreateDynamicObject(8210, 3269.779297, -1193.540527, 11.334797, 0.000000, 0.000000, 0.000000,0,-1,-1); //
+	CreateDynamicObject(8168, 3301.011719, -1191.307251, 12.550060, 0.000000, 0.000000, -163.293028908,0,-1,-1); //
+	CreateDynamicObject(966, 3304.872803, -1193.425781, 10.584085, 0.000000, 0.000000, -177.903395388,0,-1,-1); //
+	CreateDynamicObject(968, 3311.811523, -1193.275391, 11.355752, 0.000000, -85.0842325769, -2.57831007809,0,-1,-1); //
+	CreateDynamicObject(8210, 3339.135986, -1194.152466, 10.982130, 0.000000, 0.000000, -1.71887338539,0,-1,-1); //
 	// submarine
 	/*
-	CreateDynamicObject(9958, 3137.547119, -1700.142456, 6.637642, 0.000000, 1.71887338539, 0.000000,0,-1,-1,STREAMER_OBJECT_DD); //
-	CreateDynamicObject(9823, 3133.865234, -1731.097290, 3.394757, 0.000000, 90.2408527331, 0.000000,0,-1,-1,STREAMER_OBJECT_DD); //
-	CreateDynamicObject(9823, 3130.369629, -1731.097534, 3.402311, 0.000000, 90.2408527331, 0.000000,0,-1,-1,STREAMER_OBJECT_DD); //
-	CreateDynamicObject(9823, 3133.840088, -1725.685059, 3.378903, 0.000000, 90.2408527331, 0.000000,0,-1,-1,STREAMER_OBJECT_DD); //
-	CreateDynamicObject(9823, 3130.177246, -1725.676880, 3.383360, 0.000000, 90.2408527331, 0.000000,0,-1,-1,STREAMER_OBJECT_DD); //
-	CreateDynamicObject(9823, 3133.005615, -1733.888062, 1.620137, 0.000000, 0.963256645174, 90.2408527331,0,-1,-1,STREAMER_OBJECT_DD); //
-	CreateDynamicObject(9823, 3131.084473, -1733.937744, 1.652344, 0.000000, 0.963256645174, 90.2408527331,0,-1,-1,STREAMER_OBJECT_DD); //
-	CreateDynamicObject(9958, 3126.310547, -1700.878906, 6.902039, 0.000000, 0.000000, 0.000000,0,-1,-1,STREAMER_OBJECT_DD); //
-	CreateDynamicObject(9823, 3135.124023, -1725.714722, 4.907219, 0.000000, 1.71887338539, 0.000000,0,-1,-1,STREAMER_OBJECT_DD); //
-	CreateDynamicObject(9823, 3135.139404, -1731.135864, 5.046227, 0.000000, 1.71887338539, 0.000000,0,-1,-1,STREAMER_OBJECT_DD); //
-	CreateDynamicObject(9823, 3128.375732, -1731.342529, 5.135150, 0.000000, 1.71887338539, 180.481820058,0,-1,-1,STREAMER_OBJECT_DD); //
-	CreateDynamicObject(9823, 3128.372559, -1725.808838, 4.918064, 0.000000, 1.71887338539, 179.622383365,0,-1,-1,STREAMER_OBJECT_DD); //
-	CreateDynamicObject(9823, 3132.773438, -1723.011475, 4.926931, 0.000000, 182.200693443, -89.3814160404,0,-1,-1,STREAMER_OBJECT_DD); //
-	CreateDynamicObject(9823, 3132.771484, -1722.914185, 3.973455, 0.000000, 0.963256645174, -89.3814160404,0,-1,-1,STREAMER_OBJECT_DD); //
-	CreateDynamicObject(9823, 3131.033203, -1725.008545, 6.834068, 0.000000, 89.3814733362, -89.3814160404,0,-1,-1,STREAMER_OBJECT_DD); //
-	CreateDynamicObject(9823, 3132.695313, -1724.988525, 6.827456, 0.000000, 89.3814733362, -89.3814160404,0,-1,-1,STREAMER_OBJECT_DD); //
-	CreateDynamicObject(9823, 3132.732910, -1728.579468, 6.858684, 0.000000, 89.3814733362, -89.3814160404,0,-1,-1,STREAMER_OBJECT_DD); //
-	CreateDynamicObject(9823, 3131.162354, -1733.853271, 5.056025, 0.000000, 1.71887338539, 270.722558199,0,-1,-1,STREAMER_OBJECT_DD); //
-	CreateDynamicObject(9823, 3131.042969, -1732.174927, 6.921035, 0.000000, 89.3814733362, -89.3814160404,0,-1,-1,STREAMER_OBJECT_DD); //
-	CreateDynamicObject(9823, 3132.774414, -1732.145142, 6.895279, 0.000000, 89.3814733362, -89.3814160404,0,-1,-1,STREAMER_OBJECT_DD); //
-	CreateDynamicObject(927, 3128.530518, -1725.019165, 5.236899, 0.000000, 0.000000, 90.2408527331,0,-1,-1,STREAMER_OBJECT_DD); //
-	CreateDynamicObject(958, 3133.689941, -1723.505859, 4.370689, 0.000000, 0.000000, 180.481762762,0,-1,-1,STREAMER_OBJECT_DD); //
-	CreateDynamicObject(16782, 3128.599609, -1727.042480, 5.279640, 0.000000, -1.71887338539, -1.71887338539,0,-1,-1,STREAMER_OBJECT_DD); //
-	CreateDynamicObject(3390, 3134.562500, -1729.730103, 3.474406, 0.000000, 0.000000, 0.000000,0,-1,-1,STREAMER_OBJECT_DD); //
-	CreateDynamicObject(9823, 3132.982422, -1721.562012, 3.328444, 0.000000, 91.2041093783, -89.3814160404,0,-1,-1,STREAMER_OBJECT_DD); //
-	CreateDynamicObject(9823, 3130.385742, -1721.587036, 3.319919, 0.000000, 91.2041093783, -89.3814160404,0,-1,-1,STREAMER_OBJECT_DD); //
-	CreateDynamicObject(9823, 3135.406006, -1722.472534, 4.985548, 0.000000, 0.963256645174, 0.859436692696,0,-1,-1,STREAMER_OBJECT_DD); //
-	CreateDynamicObject(9823, 3132.578857, -1719.632813, 3.959970, 0.000000, -0.755616740219, 90.2408527331,0,-1,-1,STREAMER_OBJECT_DD); //
-	CreateDynamicObject(9823, 3129.879639, -1720.238525, 5.039379, 0.000000, -0.755616740219, -359.244308364,0,-1,-1,STREAMER_OBJECT_DD); //
-	CreateDynamicObject(9823, 3132.645752, -1721.323120, 6.850866, 0.000000, 91.2041093783, -89.3814160404,0,-1,-1,STREAMER_OBJECT_DD); //
-	CreateDynamicObject(9823, 3132.543213, -1717.523438, 5.177180, 0.000000, 0.103819952478, -449.484931914,0,-1,-1,STREAMER_OBJECT_DD); //
-	CreateDynamicObject(9823, 3132.581055, -1719.242554, 6.892124, 0.000000, 91.2041093783, -88.5219793477,0,-1,-1,STREAMER_OBJECT_DD); //
-	CreateDynamicObject(9823, 3128.930176, -1719.327026, 3.337573, 0.000000, 91.2041093783, -89.3814160404,0,-1,-1,STREAMER_OBJECT_DD); //
-	CreateDynamicObject(9823, 3132.992676, -1716.121338, 3.316848, 0.000000, 91.2041093783, -89.3814160404,0,-1,-1,STREAMER_OBJECT_DD); //
-	CreateDynamicObject(9823, 3129.242676, -1716.696899, 3.366848, 0.000000, 91.2041093783, -89.3814160404,0,-1,-1,STREAMER_OBJECT_DD); //
-	CreateDynamicObject(9823, 3130.983643, -1713.602295, 3.383955, 0.000000, 91.2041093783, -89.3814160404,0,-1,-1,STREAMER_OBJECT_DD); //
-	CreateDynamicObject(9823, 3133.533447, -1713.602295, 3.333956, 0.000000, 91.2041093783, -89.3814160404,0,-1,-1,STREAMER_OBJECT_DD); //
-	CreateDynamicObject(9823, 3135.298584, -1714.671387, 5.215299, 0.000000, 0.103819952478, -359.244308364,0,-1,-1,STREAMER_OBJECT_DD); //
-	CreateDynamicObject(9823, 3128.348389, -1714.576782, 5.119480, 0.000000, 0.103819952478, -539.72561276,0,-1,-1,STREAMER_OBJECT_DD); //
-	CreateDynamicObject(9823, 3132.503662, -1711.889038, 5.250404, 0.000000, 0.963256645174, -269.003684814,0,-1,-1,STREAMER_OBJECT_DD); //
-	CreateDynamicObject(9823, 3131.006592, -1711.895264, 5.274620, 0.000000, 0.963256645174, -269.003684814,0,-1,-1,STREAMER_OBJECT_DD); //
-	CreateDynamicObject(9823, 3131.007080, -1713.662354, 7.016951, 0.000000, 91.2041093783, -89.3814160404,0,-1,-1,STREAMER_OBJECT_DD); //
-	CreateDynamicObject(9823, 3131.060791, -1716.751953, 6.932937, 0.000000, 91.2041093783, -89.3814160404,0,-1,-1,STREAMER_OBJECT_DD); //
-	CreateDynamicObject(9823, 3132.524658, -1716.778564, 6.932776, 0.000000, 91.2041093783, -89.3814160404,0,-1,-1,STREAMER_OBJECT_DD); //
-	CreateDynamicObject(9823, 3132.540771, -1713.659302, 7.013185, 0.000000, 91.2041093783, -89.3814160404,0,-1,-1,STREAMER_OBJECT_DD); //
-	CreateDynamicObject(929, 3131.435059, -1712.460327, 4.406627, 0.000000, 0.000000, 90.2408527331,0,-1,-1,STREAMER_OBJECT_DD); //
-	CreateDynamicObject(9823, 3135.351318, -1717.491943, 5.091776, 0.000000, 0.103819952478, -359.244308364,0,-1,-1,STREAMER_OBJECT_DD); //
-	CreateDynamicObject(3273, 3131.940918, -1710.959717, 1.576022, 0.000000, 0.000000, -90.2408527331,0,-1,-1,STREAMER_OBJECT_DD); //
-	CreateDynamicObject(2653, 3131.926270, -1696.696289, 1.060752, 0.000000, 0.000000, -85.9436692696,0,-1,-1,STREAMER_OBJECT_DD); //
-	CreateDynamicObject(3631, 3131.992920, -1711.043091, 1.252128, 0.000000, 0.000000, 0.000000,0,-1,-1,STREAMER_OBJECT_DD); //
-	CreateDynamicObject(8886, 3132.261719, -1705.078125, -0.471108, 0.000000, 0.000000, -90.2408527331,0,-1,-1,STREAMER_OBJECT_DD); //
-	CreateDynamicObject(8886, 3132.294189, -1695.770752, -0.453680, 0.000000, 0.000000, -90.2408527331,0,-1,-1,STREAMER_OBJECT_DD); //
-	CreateDynamicObject(8886, 3132.301514, -1686.505005, -0.461251, 0.000000, 0.000000, -90.2408527331,0,-1,-1,STREAMER_OBJECT_DD); //
-	CreateDynamicObject(1319, 3127.539795, -1697.217285, 5.367828, 0.000000, 0.000000, 0.000000,0,-1,-1,STREAMER_OBJECT_DD); //
-	CreateDynamicObject(1319, 3126.980957, -1702.874146, 5.522538, 0.000000, 0.000000, 0.000000,0,-1,-1,STREAMER_OBJECT_DD); //
-	CreateDynamicObject(1319, 3136.224854, -1707.117554, 5.902269, 0.000000, 0.000000, 0.000000,0,-1,-1,STREAMER_OBJECT_DD); //
-	CreateDynamicObject(1319, 3136.320068, -1699.402588, 5.972448, 0.000000, 0.000000, 0.000000,0,-1,-1,STREAMER_OBJECT_DD); //
-	CreateDynamicObject(1381, 3131.752197, -1739.925903, 2.379735, 0.000000, 0.000000, 0.000000,0,-1,-1,STREAMER_OBJECT_DD); //
-	CreateDynamicObject(2653, 3131.296387, -1741.464600, 1.320170, 0.000000, 0.000000, -90.2408527331,0,-1,-1,STREAMER_OBJECT_DD); //
-	CreateDynamicObject(2653, 3131.297119, -1738.243164, 1.309375, 0.000000, 0.000000, -90.2408527331,0,-1,-1,STREAMER_OBJECT_DD); //
-	CreateDynamicObject(3258, 3131.911377, -1739.486206, 0.847859, 64.4577519522, 0.000000, 0.000000,0,-1,-1,STREAMER_OBJECT_DD); //
-	CreateDynamicObject(2653, 3132.017578, -1737.940552, 1.310582, 0.000000, 0.000000, -182.200636147,0,-1,-1,STREAMER_OBJECT_DD); //
-	CreateDynamicObject(3786, 3131.964355, -1766.548584, 13.623023, 0.000000, 30.0802842444, 85.9436692696,0,-1,-1,STREAMER_OBJECT_DD); //
-	CreateDynamicObject(1215, 3132.039795, -1766.265381, 13.556199, 0.000000, 0.000000, 0.000000,0,-1,-1,STREAMER_OBJECT_DD); //
-	CreateDynamicObject(1215, 3131.840088, -1754.637329, 9.546943, 0.000000, 0.000000, 0.000000,0,-1,-1,STREAMER_OBJECT_DD); //
-	CreateDynamicObject(1319, 3132.054443, -1739.692871, 1.709709, 0.000000, 0.000000, 0.000000,0,-1,-1,STREAMER_OBJECT_DD); //
-	CreateDynamicObject(1319, 3131.939453, -1767.117432, 14.946374, 0.000000, 0.000000, 0.000000,0,-1,-1,STREAMER_OBJECT_DD); //
-	CreateDynamicObject(9823, 3131.046631, -1728.597900, 6.885416, 0.000000, 89.3814733362, -89.3814160404,0,-1,-1,STREAMER_OBJECT_DD); //
-	CreateDynamicObject(959, 3133.668213, -1723.400146, 4.355588, 0.000000, 0.000000, -176.184579299,0,-1,-1,STREAMER_OBJECT_DD); //
-	CreateDynamicObject(2649, 3136.986816, -1713.012329, 5.520746, 0.000000, 0.000000, 0.000000,0,-1,-1,STREAMER_OBJECT_DD); //
-	CreateDynamicObject(3384, 3134.280029, -1726.484741, 4.928932, 0.000000, 0.000000, 0.000000,0,-1,-1,STREAMER_OBJECT_DD); //
-	CreateDynamicObject(3384, 3134.227295, -1725.442017, 4.911182, 0.000000, 0.000000, 0.000000,0,-1,-1,STREAMER_OBJECT_DD); //
-	CreateDynamicObject(9823, 3132.552490, -1733.880493, 5.139562, 0.000000, 1.71887338539, 270.722558199,0,-1,-1,STREAMER_OBJECT_DD); //
-	CreateDynamicObject(3787, 3131.619629, -1708.885376, 3.534773, 0.000000, 0.000000, 0.000000,0,-1,-1,STREAMER_OBJECT_DD); //
-	CreateDynamicObject(915, 3126.355957, -1726.814697, 5.472849, 0.000000, 0.000000, 77.3493023427,0,-1,-1,STREAMER_OBJECT_DD); //
-	CreateDynamicObject(1687, 3132.476318, -1720.346313, 7.774983, 0.000000, 0.000000, 90.2408527331,0,-1,-1,STREAMER_OBJECT_DD); //
-	CreateDynamicObject(1689, 3131.613281, -1712.860962, 8.303764, 0.000000, 0.000000, 0.000000,0,-1,-1,STREAMER_OBJECT_DD); //
-	CreateDynamicObject(2041, 3134.887451, -1715.829468, 3.636892, 0.000000, 0.000000, 0.000000,0,-1,-1,STREAMER_OBJECT_DD); //
-	CreateDynamicObject(1392, 3131.820313, -1680.594238, 2.812915, 0.000000, 0.000000, 0.000000,0,-1,-1,STREAMER_OBJECT_DD); //
-	CreateDynamicObject(1390, 3131.929199, -1680.518188, 1.808045, 0.000000, 0.000000, 0.000000,0,-1,-1,STREAMER_OBJECT_DD); //
-	CreateDynamicObject(2775, 3128.416992, -1731.568726, 6.108447, -15.4698604685, 1.71887338539, -273.300868277,0,-1,-1,STREAMER_OBJECT_DD); //
-	CreateDynamicObject(1738, 3131.656006, -1723.139648, 4.141150, 0.000000, 0.000000, 0.000000,0,-1,-1,STREAMER_OBJECT_DD); //
-	CreateDynamicObject(3392, 3129.070313, -1730.363525, 3.513351, 0.000000, 0.000000, -179.622383365,0,-1,-1,STREAMER_OBJECT_DD); //
-	CreateDynamicObject(3391, 3130.204834, -1732.767212, 3.506288, 0.000000, 0.000000, -90.2408527331,0,-1,-1,STREAMER_OBJECT_DD); //
-	CreateDynamicObject(3396, 3133.561035, -1732.825928, 3.503193, 0.000000, 0.000000, -91.9597261185,0,-1,-1,STREAMER_OBJECT_DD); //
-	CreateDynamicObject(3388, 3130.623779, -1723.572021, 3.492852, 0.000000, 0.000000, 90.2408527331,0,-1,-1,STREAMER_OBJECT_DD); //
-	CreateDynamicObject(1671, 3133.042969, -1731.656006, 3.967804, 0.000000, 0.000000, 0.000000,0,-1,-1,STREAMER_OBJECT_DD); //
-	CreateDynamicObject(1671, 3130.031494, -1730.348633, 3.949347, 0.000000, -4.29718346348, -90.2408527331,0,-1,-1,STREAMER_OBJECT_DD); //
-	CreateDynamicObject(1671, 3133.461426, -1729.521973, 3.964993, 0.000000, -4.29718346348, 51.5662015618,0,-1,-1,STREAMER_OBJECT_DD); //
-	CreateDynamicObject(3274, 3130.424316, -1685.093750, 2.015429, 0.000000, 0.000000, 90.2408527331,0,-1,-1,STREAMER_OBJECT_DD); //
-	CreateDynamicObject(1689, 3131.721436, -1732.770386, 8.242434, 0.000000, 0.000000, -180.481762762,0,-1,-1,STREAMER_OBJECT_DD); //
-	CreateDynamicObject(1691, 3130.997559, -1720.420166, 7.400939, 0.000000, 0.000000, 0.000000,0,-1,-1,STREAMER_OBJECT_DD); //
-	CreateDynamicObject(3675, 3135.186768, -1673.048462, 1.150002, 0.000000, 90.2408527331, 0.000000,0,-1,-1,STREAMER_OBJECT_DD); //
-	CreateDynamicObject(1465, 3121.510986, -1729.892456, 0.718386, 0.000000, 0.000000, 0.000000,0,-1,-1,STREAMER_OBJECT_DD); //
-	CreateDynamicObject(3797, 3124.208252, -1729.936401, 4.939959, 0.000000, 15.4698604685, 84.22485318,0,-1,-1,STREAMER_OBJECT_DD); //
-	CreateDynamicObject(3397, 3134.422119, -1715.373291, 3.474515, 0.000000, 0.000000, 0.000000,0,-1,-1,STREAMER_OBJECT_DD); //
-	CreateDynamicObject(3393, 3131.606689, -1716.858398, 3.473217, 0.000000, 0.000000, -90.2408527331,0,-1,-1,STREAMER_OBJECT_DD); //
-	CreateDynamicObject(3384, 3129.063477, -1712.845459, 4.773356, 0.000000, 0.000000, 85.9436692696,0,-1,-1,STREAMER_OBJECT_DD); //
-	CreateDynamicObject(3267, 3131.859863, -1695.571167, 2.546411, 0.000000, 0.000000, 0.000000,0,-1,-1,STREAMER_OBJECT_DD); //
-	CreateDynamicObject(3526, 3131.750000, -1682.703613, 3.046814, 0.000000, 0.000000, 90.2408527331,0,-1,-1,STREAMER_OBJECT_DD); //
-	CreateDynamicObject(1523, 3128.324463, -1723.009888, 3.474871, 0.000000, 0.000000, 0.000000,0,-1,-1,STREAMER_OBJECT_DD); //
-	CreateDynamicObject(3389, 3131.376709, -1722.655762, 6.402623, 90.2408527331, 0.000000, -89.3814160404,0,-1,-1,STREAMER_OBJECT_DD); //
-	CreateDynamicObject(1523, 3128.256836, -1717.459473, 3.362599, 0.000000, 0.000000, 0.000000,0,-1,-1,STREAMER_OBJECT_DD); //
-	CreateDynamicObject(3389, 3131.306641, -1717.607178, 6.379457, 90.2408527331, 0.000000, -85.9436692696,0,-1,-1,STREAMER_OBJECT_DD); //
-	CreateDynamicObject(2035, 3133.974609, -1714.437500, 4.563654, 0.000000, 0.000000, -90.2408527331,0,-1,-1,STREAMER_OBJECT_DD); //
-	CreateDynamicObject(1242, 3133.991943, -1713.815186, 4.598327, 0.000000, 0.000000, 0.000000,0,-1,-1,STREAMER_OBJECT_DD); //
+	CreateDynamicObject(9958, 3137.547119, -1700.142456, 6.637642, 0.000000, 1.71887338539, 0.000000,0,-1,-1); //
+	CreateDynamicObject(9823, 3133.865234, -1731.097290, 3.394757, 0.000000, 90.2408527331, 0.000000,0,-1,-1); //
+	CreateDynamicObject(9823, 3130.369629, -1731.097534, 3.402311, 0.000000, 90.2408527331, 0.000000,0,-1,-1); //
+	CreateDynamicObject(9823, 3133.840088, -1725.685059, 3.378903, 0.000000, 90.2408527331, 0.000000,0,-1,-1); //
+	CreateDynamicObject(9823, 3130.177246, -1725.676880, 3.383360, 0.000000, 90.2408527331, 0.000000,0,-1,-1); //
+	CreateDynamicObject(9823, 3133.005615, -1733.888062, 1.620137, 0.000000, 0.963256645174, 90.2408527331,0,-1,-1); //
+	CreateDynamicObject(9823, 3131.084473, -1733.937744, 1.652344, 0.000000, 0.963256645174, 90.2408527331,0,-1,-1); //
+	CreateDynamicObject(9958, 3126.310547, -1700.878906, 6.902039, 0.000000, 0.000000, 0.000000,0,-1,-1); //
+	CreateDynamicObject(9823, 3135.124023, -1725.714722, 4.907219, 0.000000, 1.71887338539, 0.000000,0,-1,-1); //
+	CreateDynamicObject(9823, 3135.139404, -1731.135864, 5.046227, 0.000000, 1.71887338539, 0.000000,0,-1,-1); //
+	CreateDynamicObject(9823, 3128.375732, -1731.342529, 5.135150, 0.000000, 1.71887338539, 180.481820058,0,-1,-1); //
+	CreateDynamicObject(9823, 3128.372559, -1725.808838, 4.918064, 0.000000, 1.71887338539, 179.622383365,0,-1,-1); //
+	CreateDynamicObject(9823, 3132.773438, -1723.011475, 4.926931, 0.000000, 182.200693443, -89.3814160404,0,-1,-1); //
+	CreateDynamicObject(9823, 3132.771484, -1722.914185, 3.973455, 0.000000, 0.963256645174, -89.3814160404,0,-1,-1); //
+	CreateDynamicObject(9823, 3131.033203, -1725.008545, 6.834068, 0.000000, 89.3814733362, -89.3814160404,0,-1,-1); //
+	CreateDynamicObject(9823, 3132.695313, -1724.988525, 6.827456, 0.000000, 89.3814733362, -89.3814160404,0,-1,-1); //
+	CreateDynamicObject(9823, 3132.732910, -1728.579468, 6.858684, 0.000000, 89.3814733362, -89.3814160404,0,-1,-1); //
+	CreateDynamicObject(9823, 3131.162354, -1733.853271, 5.056025, 0.000000, 1.71887338539, 270.722558199,0,-1,-1); //
+	CreateDynamicObject(9823, 3131.042969, -1732.174927, 6.921035, 0.000000, 89.3814733362, -89.3814160404,0,-1,-1); //
+	CreateDynamicObject(9823, 3132.774414, -1732.145142, 6.895279, 0.000000, 89.3814733362, -89.3814160404,0,-1,-1); //
+	CreateDynamicObject(927, 3128.530518, -1725.019165, 5.236899, 0.000000, 0.000000, 90.2408527331,0,-1,-1); //
+	CreateDynamicObject(958, 3133.689941, -1723.505859, 4.370689, 0.000000, 0.000000, 180.481762762,0,-1,-1); //
+	CreateDynamicObject(16782, 3128.599609, -1727.042480, 5.279640, 0.000000, -1.71887338539, -1.71887338539,0,-1,-1); //
+	CreateDynamicObject(3390, 3134.562500, -1729.730103, 3.474406, 0.000000, 0.000000, 0.000000,0,-1,-1); //
+	CreateDynamicObject(9823, 3132.982422, -1721.562012, 3.328444, 0.000000, 91.2041093783, -89.3814160404,0,-1,-1); //
+	CreateDynamicObject(9823, 3130.385742, -1721.587036, 3.319919, 0.000000, 91.2041093783, -89.3814160404,0,-1,-1); //
+	CreateDynamicObject(9823, 3135.406006, -1722.472534, 4.985548, 0.000000, 0.963256645174, 0.859436692696,0,-1,-1); //
+	CreateDynamicObject(9823, 3132.578857, -1719.632813, 3.959970, 0.000000, -0.755616740219, 90.2408527331,0,-1,-1); //
+	CreateDynamicObject(9823, 3129.879639, -1720.238525, 5.039379, 0.000000, -0.755616740219, -359.244308364,0,-1,-1); //
+	CreateDynamicObject(9823, 3132.645752, -1721.323120, 6.850866, 0.000000, 91.2041093783, -89.3814160404,0,-1,-1); //
+	CreateDynamicObject(9823, 3132.543213, -1717.523438, 5.177180, 0.000000, 0.103819952478, -449.484931914,0,-1,-1); //
+	CreateDynamicObject(9823, 3132.581055, -1719.242554, 6.892124, 0.000000, 91.2041093783, -88.5219793477,0,-1,-1); //
+	CreateDynamicObject(9823, 3128.930176, -1719.327026, 3.337573, 0.000000, 91.2041093783, -89.3814160404,0,-1,-1); //
+	CreateDynamicObject(9823, 3132.992676, -1716.121338, 3.316848, 0.000000, 91.2041093783, -89.3814160404,0,-1,-1); //
+	CreateDynamicObject(9823, 3129.242676, -1716.696899, 3.366848, 0.000000, 91.2041093783, -89.3814160404,0,-1,-1); //
+	CreateDynamicObject(9823, 3130.983643, -1713.602295, 3.383955, 0.000000, 91.2041093783, -89.3814160404,0,-1,-1); //
+	CreateDynamicObject(9823, 3133.533447, -1713.602295, 3.333956, 0.000000, 91.2041093783, -89.3814160404,0,-1,-1); //
+	CreateDynamicObject(9823, 3135.298584, -1714.671387, 5.215299, 0.000000, 0.103819952478, -359.244308364,0,-1,-1); //
+	CreateDynamicObject(9823, 3128.348389, -1714.576782, 5.119480, 0.000000, 0.103819952478, -539.72561276,0,-1,-1); //
+	CreateDynamicObject(9823, 3132.503662, -1711.889038, 5.250404, 0.000000, 0.963256645174, -269.003684814,0,-1,-1); //
+	CreateDynamicObject(9823, 3131.006592, -1711.895264, 5.274620, 0.000000, 0.963256645174, -269.003684814,0,-1,-1); //
+	CreateDynamicObject(9823, 3131.007080, -1713.662354, 7.016951, 0.000000, 91.2041093783, -89.3814160404,0,-1,-1); //
+	CreateDynamicObject(9823, 3131.060791, -1716.751953, 6.932937, 0.000000, 91.2041093783, -89.3814160404,0,-1,-1); //
+	CreateDynamicObject(9823, 3132.524658, -1716.778564, 6.932776, 0.000000, 91.2041093783, -89.3814160404,0,-1,-1); //
+	CreateDynamicObject(9823, 3132.540771, -1713.659302, 7.013185, 0.000000, 91.2041093783, -89.3814160404,0,-1,-1); //
+	CreateDynamicObject(929, 3131.435059, -1712.460327, 4.406627, 0.000000, 0.000000, 90.2408527331,0,-1,-1); //
+	CreateDynamicObject(9823, 3135.351318, -1717.491943, 5.091776, 0.000000, 0.103819952478, -359.244308364,0,-1,-1); //
+	CreateDynamicObject(3273, 3131.940918, -1710.959717, 1.576022, 0.000000, 0.000000, -90.2408527331,0,-1,-1); //
+	CreateDynamicObject(2653, 3131.926270, -1696.696289, 1.060752, 0.000000, 0.000000, -85.9436692696,0,-1,-1); //
+	CreateDynamicObject(3631, 3131.992920, -1711.043091, 1.252128, 0.000000, 0.000000, 0.000000,0,-1,-1); //
+	CreateDynamicObject(8886, 3132.261719, -1705.078125, -0.471108, 0.000000, 0.000000, -90.2408527331,0,-1,-1); //
+	CreateDynamicObject(8886, 3132.294189, -1695.770752, -0.453680, 0.000000, 0.000000, -90.2408527331,0,-1,-1); //
+	CreateDynamicObject(8886, 3132.301514, -1686.505005, -0.461251, 0.000000, 0.000000, -90.2408527331,0,-1,-1); //
+	CreateDynamicObject(1319, 3127.539795, -1697.217285, 5.367828, 0.000000, 0.000000, 0.000000,0,-1,-1); //
+	CreateDynamicObject(1319, 3126.980957, -1702.874146, 5.522538, 0.000000, 0.000000, 0.000000,0,-1,-1); //
+	CreateDynamicObject(1319, 3136.224854, -1707.117554, 5.902269, 0.000000, 0.000000, 0.000000,0,-1,-1); //
+	CreateDynamicObject(1319, 3136.320068, -1699.402588, 5.972448, 0.000000, 0.000000, 0.000000,0,-1,-1); //
+	CreateDynamicObject(1381, 3131.752197, -1739.925903, 2.379735, 0.000000, 0.000000, 0.000000,0,-1,-1); //
+	CreateDynamicObject(2653, 3131.296387, -1741.464600, 1.320170, 0.000000, 0.000000, -90.2408527331,0,-1,-1); //
+	CreateDynamicObject(2653, 3131.297119, -1738.243164, 1.309375, 0.000000, 0.000000, -90.2408527331,0,-1,-1); //
+	CreateDynamicObject(3258, 3131.911377, -1739.486206, 0.847859, 64.4577519522, 0.000000, 0.000000,0,-1,-1); //
+	CreateDynamicObject(2653, 3132.017578, -1737.940552, 1.310582, 0.000000, 0.000000, -182.200636147,0,-1,-1); //
+	CreateDynamicObject(3786, 3131.964355, -1766.548584, 13.623023, 0.000000, 30.0802842444, 85.9436692696,0,-1,-1); //
+	CreateDynamicObject(1215, 3132.039795, -1766.265381, 13.556199, 0.000000, 0.000000, 0.000000,0,-1,-1); //
+	CreateDynamicObject(1215, 3131.840088, -1754.637329, 9.546943, 0.000000, 0.000000, 0.000000,0,-1,-1); //
+	CreateDynamicObject(1319, 3132.054443, -1739.692871, 1.709709, 0.000000, 0.000000, 0.000000,0,-1,-1); //
+	CreateDynamicObject(1319, 3131.939453, -1767.117432, 14.946374, 0.000000, 0.000000, 0.000000,0,-1,-1); //
+	CreateDynamicObject(9823, 3131.046631, -1728.597900, 6.885416, 0.000000, 89.3814733362, -89.3814160404,0,-1,-1); //
+	CreateDynamicObject(959, 3133.668213, -1723.400146, 4.355588, 0.000000, 0.000000, -176.184579299,0,-1,-1); //
+	CreateDynamicObject(2649, 3136.986816, -1713.012329, 5.520746, 0.000000, 0.000000, 0.000000,0,-1,-1); //
+	CreateDynamicObject(3384, 3134.280029, -1726.484741, 4.928932, 0.000000, 0.000000, 0.000000,0,-1,-1); //
+	CreateDynamicObject(3384, 3134.227295, -1725.442017, 4.911182, 0.000000, 0.000000, 0.000000,0,-1,-1); //
+	CreateDynamicObject(9823, 3132.552490, -1733.880493, 5.139562, 0.000000, 1.71887338539, 270.722558199,0,-1,-1); //
+	CreateDynamicObject(3787, 3131.619629, -1708.885376, 3.534773, 0.000000, 0.000000, 0.000000,0,-1,-1); //
+	CreateDynamicObject(915, 3126.355957, -1726.814697, 5.472849, 0.000000, 0.000000, 77.3493023427,0,-1,-1); //
+	CreateDynamicObject(1687, 3132.476318, -1720.346313, 7.774983, 0.000000, 0.000000, 90.2408527331,0,-1,-1); //
+	CreateDynamicObject(1689, 3131.613281, -1712.860962, 8.303764, 0.000000, 0.000000, 0.000000,0,-1,-1); //
+	CreateDynamicObject(2041, 3134.887451, -1715.829468, 3.636892, 0.000000, 0.000000, 0.000000,0,-1,-1); //
+	CreateDynamicObject(1392, 3131.820313, -1680.594238, 2.812915, 0.000000, 0.000000, 0.000000,0,-1,-1); //
+	CreateDynamicObject(1390, 3131.929199, -1680.518188, 1.808045, 0.000000, 0.000000, 0.000000,0,-1,-1); //
+	CreateDynamicObject(2775, 3128.416992, -1731.568726, 6.108447, -15.4698604685, 1.71887338539, -273.300868277,0,-1,-1); //
+	CreateDynamicObject(1738, 3131.656006, -1723.139648, 4.141150, 0.000000, 0.000000, 0.000000,0,-1,-1); //
+	CreateDynamicObject(3392, 3129.070313, -1730.363525, 3.513351, 0.000000, 0.000000, -179.622383365,0,-1,-1); //
+	CreateDynamicObject(3391, 3130.204834, -1732.767212, 3.506288, 0.000000, 0.000000, -90.2408527331,0,-1,-1); //
+	CreateDynamicObject(3396, 3133.561035, -1732.825928, 3.503193, 0.000000, 0.000000, -91.9597261185,0,-1,-1); //
+	CreateDynamicObject(3388, 3130.623779, -1723.572021, 3.492852, 0.000000, 0.000000, 90.2408527331,0,-1,-1); //
+	CreateDynamicObject(1671, 3133.042969, -1731.656006, 3.967804, 0.000000, 0.000000, 0.000000,0,-1,-1); //
+	CreateDynamicObject(1671, 3130.031494, -1730.348633, 3.949347, 0.000000, -4.29718346348, -90.2408527331,0,-1,-1); //
+	CreateDynamicObject(1671, 3133.461426, -1729.521973, 3.964993, 0.000000, -4.29718346348, 51.5662015618,0,-1,-1); //
+	CreateDynamicObject(3274, 3130.424316, -1685.093750, 2.015429, 0.000000, 0.000000, 90.2408527331,0,-1,-1); //
+	CreateDynamicObject(1689, 3131.721436, -1732.770386, 8.242434, 0.000000, 0.000000, -180.481762762,0,-1,-1); //
+	CreateDynamicObject(1691, 3130.997559, -1720.420166, 7.400939, 0.000000, 0.000000, 0.000000,0,-1,-1); //
+	CreateDynamicObject(3675, 3135.186768, -1673.048462, 1.150002, 0.000000, 90.2408527331, 0.000000,0,-1,-1); //
+	CreateDynamicObject(1465, 3121.510986, -1729.892456, 0.718386, 0.000000, 0.000000, 0.000000,0,-1,-1); //
+	CreateDynamicObject(3797, 3124.208252, -1729.936401, 4.939959, 0.000000, 15.4698604685, 84.22485318,0,-1,-1); //
+	CreateDynamicObject(3397, 3134.422119, -1715.373291, 3.474515, 0.000000, 0.000000, 0.000000,0,-1,-1); //
+	CreateDynamicObject(3393, 3131.606689, -1716.858398, 3.473217, 0.000000, 0.000000, -90.2408527331,0,-1,-1); //
+	CreateDynamicObject(3384, 3129.063477, -1712.845459, 4.773356, 0.000000, 0.000000, 85.9436692696,0,-1,-1); //
+	CreateDynamicObject(3267, 3131.859863, -1695.571167, 2.546411, 0.000000, 0.000000, 0.000000,0,-1,-1); //
+	CreateDynamicObject(3526, 3131.750000, -1682.703613, 3.046814, 0.000000, 0.000000, 90.2408527331,0,-1,-1); //
+	CreateDynamicObject(1523, 3128.324463, -1723.009888, 3.474871, 0.000000, 0.000000, 0.000000,0,-1,-1); //
+	CreateDynamicObject(3389, 3131.376709, -1722.655762, 6.402623, 90.2408527331, 0.000000, -89.3814160404,0,-1,-1); //
+	CreateDynamicObject(1523, 3128.256836, -1717.459473, 3.362599, 0.000000, 0.000000, 0.000000,0,-1,-1); //
+	CreateDynamicObject(3389, 3131.306641, -1717.607178, 6.379457, 90.2408527331, 0.000000, -85.9436692696,0,-1,-1); //
+	CreateDynamicObject(2035, 3133.974609, -1714.437500, 4.563654, 0.000000, 0.000000, -90.2408527331,0,-1,-1); //
+	CreateDynamicObject(1242, 3133.991943, -1713.815186, 4.598327, 0.000000, 0.000000, 0.000000,0,-1,-1); //
 	*/
 
     // quarry
-    CreateDynamicObject(1634, 796.315674, 839.002991, 7.875257, 0.0000, 0.0000, 101.2500,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1634, 791.715515, 838.060913, 10.775533, 12.0321, 0.0000, 101.2500,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1225, 783.963440, 835.080994, 5.241086, 0.0000, 0.0000, 11.2500,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1225, 784.019531, 836.858521, 6.335558, 0.0000, 0.0000, 11.2500,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1225, 784.229919, 838.226990, 7.457629, 0.0000, 0.0000, 11.2500,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1225, 781.830566, 835.997192, 5.249953, 0.0000, 0.0000, 11.2500,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1225, 782.126343, 837.361511, 6.297642, 0.0000, 0.0000, 11.2500,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1225, 782.071899, 834.809814, 5.248485, 0.0000, 0.0000, 11.2500,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1225, 780.561951, 834.923523, 5.255887, 0.0000, 0.0000, 11.2500,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1225, 776.945984, 835.984375, 5.273803, 0.0000, 0.0000, 11.2500,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1225, 778.738586, 837.178223, 5.265344, 0.0000, 0.0000, 11.2500,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1225, 778.534729, 835.092346, 5.265830, 0.0000, 0.0000, 11.2500,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1225, 780.028137, 834.326477, 5.258346, 0.0000, 0.0000, 11.2500,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1225, 781.743103, 833.847229, 5.249854, 0.0000, 0.0000, 11.2500,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1225, 779.941895, 840.495728, 5.260276, 0.0000, 0.0000, 11.2500,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1225, 778.258362, 840.101685, 5.268403, 0.0000, 0.0000, 11.2500,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1225, 780.432495, 839.455872, 5.257625, 0.0000, 0.0000, 11.2500,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1225, 779.818726, 838.620605, 5.260419, 0.0000, 0.0000, 11.2500,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1225, 776.825195, 839.171204, 5.275086, 0.0000, 0.0000, 11.2500,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1225, 774.075562, 836.975708, 5.288785, 0.0000, 0.0000, 11.2500,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1225, 773.667358, 833.160706, 5.289128, 0.0000, 0.0000, 11.2500,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1225, 777.403015, 833.368286, 5.270934, 0.0000, 0.0000, 11.2500,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1225, 778.957886, 832.997375, 5.263249, 0.0000, 0.0000, 11.2500,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1225, 781.676514, 832.769958, 5.249917, 0.0000, 0.0000, 11.2500,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1225, 783.363281, 833.173218, 5.241776, 0.0000, 0.0000, 11.2500,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1225, 784.730652, 834.095581, 5.236962, 0.0000, 0.0000, 11.2500,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1225, 784.000977, 839.754028, 5.240884, 0.0000, 0.0000, 11.2500,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1225, 783.361694, 840.664795, 5.244317, 0.0000, 0.0000, 11.2500,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1225, 782.355042, 841.214478, 5.249726, 0.0000, 0.0000, 11.2500,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1225, 781.898010, 840.271729, 5.252181, 0.0000, 0.0000, 11.2500,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1225, 780.129578, 837.090088, 5.258529, 0.0000, 0.0000, 11.2500,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1225, 776.314453, 838.035461, 5.277278, 0.0000, 0.0000, 11.2500,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1225, 774.064880, 837.105774, 5.288905, 0.0000, 0.0000, 11.2500,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1225, 775.200317, 834.624451, 5.282001, 0.0000, 0.0000, 11.2500,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1225, 773.099182, 835.993530, 5.293553, 0.0000, 0.0000, 11.2500,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1225, 773.945251, 834.962585, 6.159101, 0.0000, 0.0000, 11.2500,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1225, 773.680664, 834.499146, 6.458931, 0.0000, 0.0000, 11.2500,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1225, 775.908691, 832.814453, 5.278096, 0.0000, 0.0000, 11.2500,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1225, 775.651794, 831.648743, 5.279067, 0.0000, 0.0000, 11.2500,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1225, 774.870361, 838.607300, 5.285314, 0.0000, 0.0000, 11.2500,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1225, 774.847778, 839.795044, 6.342804, 0.0000, 0.0000, 11.2500,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1225, 772.809814, 839.225037, 5.296683, 0.0000, 0.0000, 11.2500,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1225, 773.230103, 837.244080, 6.385921, 0.0000, 0.0000, 11.2500,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1225, 771.764709, 833.411133, 5.299459, 0.0000, 0.0000, 11.2500,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1225, 771.619995, 832.752747, 5.299916, 0.0000, 0.0000, 11.2500,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1225, 772.917175, 831.518250, 5.292394, 0.0000, 0.0000, 11.2500,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1225, 776.519653, 836.554016, 5.276027, 0.0000, 0.0000, 11.2500,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1225, 775.317871, 836.096191, 6.468391, 0.0000, 0.0000, 11.2500,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1225, 776.000916, 840.078308, 5.279958, 0.0000, 0.0000, 11.2500,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1225, 777.253052, 840.636902, 5.589079, 0.0000, 0.0000, 11.2500,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1225, 778.140564, 831.084900, 5.266774, 0.0000, 0.0000, 11.2500,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1225, 783.334839, 832.148621, 5.241666, 0.0000, 0.0000, 11.2500,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1225, 784.371948, 832.456909, 5.238893, 0.0000, 0.0000, 11.2500,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1225, 785.068420, 831.923828, 5.235150, 0.0000, 0.0000, 11.2500,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1225, 781.311829, 831.090942, 5.251288, 0.0000, 0.0000, 11.2500,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1225, 779.002136, 841.119568, 5.265019, 0.0000, 0.0000, 11.2500,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1225, 776.240356, 829.791382, 5.275741, 0.0000, 0.0000, 11.2500,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1225, 773.276794, 830.168945, 5.290305, 0.0000, 0.0000, 11.2500,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1225, 771.466492, 829.670776, 5.299026, 0.0000, 0.0000, 11.2500,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1225, 771.418274, 831.574768, 6.176823, 0.0000, 0.0000, 11.2500,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1225, 771.614685, 839.770996, 5.303372, 0.0000, 0.0000, 11.2500,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3279, 770.880310, 834.218506, 7.225209, 0.0000, 0.0000, 11.2500,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3458, 749.364319, 829.810791, 22.274879, 0.0000, 0.0000, 11.2500,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(14596, 732.063110, 824.243042, 34.495804, 0.0000, 0.0000, 281.2500,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(11495, 732.515869, 840.036865, 41.000477, 0.0000, 0.0000, 11.2500,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1634, 729.649475, 853.078918, 36.950596, 287.8074, 0.0000, 11.2500,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1634, 728.484619, 858.870544, 31.889357, 300.6989, 0.0000, 11.2500,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1634, 727.291443, 864.849243, 28.680334, 312.7310, 0.0000, 11.2500,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1634, 725.821106, 872.076904, 26.948109, 329.9197, 0.0000, 11.2500,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1634, 724.400513, 878.712036, 28.431961, 6.8755, 0.0000, 12.9689,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1634, 723.049011, 884.503662, 33.547813, 23.2048, 0.0000, 12.9689,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1634, 722.340454, 887.596985, 38.719234, 43.8313, 0.0000, 12.9689,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1225, 722.668701, 889.466309, 42.285759, 0.0000, 0.0000, 11.2500,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1225, 723.668701, 889.716553, 42.285759, 0.0000, 0.0000, 11.2500,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1225, 653.286682, 959.415222, -34.113243, 0.0000, 0.0000, 11.2500,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1225, 703.480469, 956.403625, -19.163582, 0.0000, 0.0000, 11.2500,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1225, 713.200073, 953.600037, -11.140616, 0.0000, 0.0000, 11.2500,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1225, 721.589294, 889.353638, 42.297241, 0.0000, 0.0000, 11.2500,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1225, 723.316101, 888.357971, 39.317085, 0.0000, 0.0000, 11.2500,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1225, 720.510559, 889.077698, 42.309944, 0.0000, 0.0000, 11.2500,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1634, 722.501587, 887.010864, 50.353428, 86.8030, 0.0000, 12.9689,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1634, 723.558289, 882.461548, 56.624340, 115.1644, 0.0000, 12.9689,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(11495, 726.869507, 864.945984, 52.184834, 325.6225, 359.1406, 11.2500,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(11495, 729.887634, 849.908386, 61.681770, 330.7792, 0.0000, 11.2500,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(13638, 723.570984, 846.574829, 68.738029, 0.0000, 0.0000, 11.2500,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(13638, 709.770630, 855.823425, 76.749390, 0.0000, 0.0000, 11.2500,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(13638, 695.577393, 865.212280, 84.985870, 0.0000, 0.0000, 11.2500,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(13645, 691.561096, 870.922974, 91.392792, 0.0000, 0.0000, 8.7490,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(5153, 690.119873, 877.757385, 93.061501, 0.0000, 0.0000, 101.2500,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(5153, 689.412537, 881.245972, 94.627304, 0.0000, 0.0000, 101.2500,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(16640, 681.810730, 890.013306, 98.370918, 0.0000, 0.0000, 101.2500,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(16640, 674.132507, 873.739380, 98.243111, 359.1406, 1.7189, 278.6717,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(969, 661.512573, 882.965332, 95.092232, 91.9597, 0.0000, 8.5944,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1634, 657.993530, 880.490601, 95.975105, 0.0000, 0.0000, 101.2500,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1634, 642.028870, 877.522522, 93.687408, 323.0442, 0.0000, 101.2500,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1634, 633.726807, 875.869202, 94.025902, 350.5462, 0.0000, 101.2500,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(13590, 619.105896, 873.098328, 95.696983, 0.0000, 0.0000, 101.2500,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18262, 617.264893, 868.219727, 96.188370, 20.6265, 0.0000, 3.5150,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(12909, 587.247742, 871.395752, 86.107460, 0.0000, 0.0000, 327.9689,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18262, 602.142639, 865.821045, 96.852127, 13.7510, 0.0000, 0.9367,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(13638, 474.807007, 871.187988, 83.187057, 0.0000, 0.0000, 4.3745,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(13638, 477.083710, 885.926636, 90.926254, 0.0000, 0.0000, 274.3745,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(13638, 477.438263, 880.216736, 98.869209, 0.0000, 0.0000, 92.6557,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1634, 452.426056, 866.895386, 105.069946, 0.0000, 0.0000, 179.2179,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1634, 452.393585, 861.595825, 109.011909, 19.7670, 0.0000, 179.2179,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(11495, 725.656555, 870.892944, 49.429790, 331.6386, 359.1406, 11.2500,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1260, 528.025879, 869.506653, 84.816010, 0.0000, 0.0000, 275.2340,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18367, 517.233154, 868.696716, 86.953209, 12.8916, 0.0000, 275.1566,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(17060, 463.939758, 868.973083, 103.543770, 0.0000, 0.0000, 0.0000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(17060, 449.819397, 878.179260, 103.494934, 0.0000, 0.0000, 180.0000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(4550, 450.853333, 819.446838, 169.361526, 0.0000, 0.0000, 0.0000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3399, 449.856659, 847.585693, 110.781242, 0.0000, 0.0000, 186.9528,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(4882, 431.067627, 863.907898, 117.697083, 0.0000, 0.0000, 277.8122,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(8580, 407.787048, 871.851990, 113.976677, 357.4217, 2.5783, 7.8122,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(12985, 379.153870, 894.138672, 23.234034, 0.0000, 0.0000, 33.7500,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(12985, 396.749390, 859.065552, 117.871803, 0.0000, 0.0000, 9.4538,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(12985, 397.880035, 852.350830, 123.862221, 0.0000, 0.0000, 10.3132,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3279, 394.965118, 846.788574, 126.236275, 0.0000, 0.0000, 97.9757,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18367, 395.230530, 844.843018, 142.071701, 353.1245, 0.0000, 61.0199,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(4199, 417.892395, 816.856384, 147.059418, 357.4217, 357.4217, 0.0000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1634, 419.963898, 803.394409, 150.605042, 0.0000, 0.0000, 225.0000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(4199, 442.447479, 792.774841, 153.620117, 357.4217, 357.4217, 81.2510,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1634, 455.658966, 789.256531, 157.040665, 0.0000, 0.8594, 285.5472,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(4199, 475.703003, 797.683533, 159.378281, 357.4217, 357.4217, 127.8926,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(5152, 484.520874, 810.229675, 162.881836, 0.0000, 0.0000, 78.7500,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(5152, 485.200623, 813.679321, 164.430237, 0.0000, 0.0000, 78.7500,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(5152, 485.531342, 817.075317, 165.990570, 0.0000, 358.2811, 89.0632,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(5152, 485.611267, 820.642395, 167.700806, 0.8594, 358.2811, 89.0632,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(5152, 485.712280, 824.373657, 169.477341, 0.8594, 358.2811, 89.0632,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(5152, 485.347626, 827.512085, 170.964493, 0.8594, 358.2811, 112.2680,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(5152, 483.937988, 831.000732, 172.790222, 0.8594, 358.2811, 112.2680,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18451, 481.444366, 835.138306, 175.383499, 20.6265, 0.0000, 33.7500,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18367, 481.779663, 835.949463, 175.736526, 0.0000, 0.0000, 236.2501,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18367, 458.080841, 851.862976, 178.913101, 0.0000, 0.0000, 270.0001,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18367, 428.021027, 852.533203, 182.402588, 0.0000, 0.0000, 326.2500,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18367, 411.308044, 828.180786, 185.681793, 0.0000, 0.0000, 11.2500,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18367, 416.651672, 800.082336, 189.032974, 0.0000, 0.0000, 56.2500,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18367, 440.961456, 783.678284, 192.381470, 0.0000, 0.0000, 101.2500,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18367, 469.556641, 789.669617, 195.765930, 0.0000, 0.0000, 135.0000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18367, 491.217163, 810.745056, 199.075348, 0.0000, 0.0000, 157.5000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18367, 501.484436, 837.517700, 202.441727, 351.4056, 0.0000, 213.7500,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18367, 485.668457, 862.087097, 210.397247, 351.4056, 0.0000, 258.7500,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18367, 457.867981, 867.287048, 218.143753, 351.4056, 0.0000, 294.3737,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18367, 432.122925, 856.661682, 225.337006, 333.3575, 0.0000, 334.9992,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(14553, 443.081665, 718.431885, 214.160065, 0.0000, 46.4096, 56.2500,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18367, 426.028625, 803.634216, 241.533615, 333.3575, 0.0000, 19.9991,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18367, 434.850708, 780.889954, 257.253754, 333.3575, 0.0000, 64.9991,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18367, 456.346985, 770.480713, 272.459564, 333.3575, 0.0000, 121.2491,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18367, 477.666443, 783.478760, 288.816711, 18.0482, 0.0000, 199.9991,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1634, 430.005219, 804.061096, 286.075256, 0.0000, 0.0000, 56.2500,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1634, 425.895691, 806.817322, 289.931244, 23.2048, 0.0000, 56.2500,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1634, 423.156281, 808.941895, 296.033844, 43.8313, 0.0000, 48.5151,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1634, 422.562256, 809.613281, 301.415344, 70.4738, 12.0321, 45.0773,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1634, 433.228333, 807.479065, 303.675354, 40.3935, 12.0321, 236.3273,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1634, 432.453522, 807.367004, 309.983429, 84.2247, 12.0321, 236.3273,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18367, 429.631592, 830.669128, 299.576874, 333.3575, 0.0000, 177.4991,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18367, 429.245789, 855.542908, 314.034088, 339.3735, 0.0000, 87.4991,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18367, 455.414093, 858.381592, 325.868011, 342.8113, 357.4217, 3.6699,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1634, 464.623840, 833.779114, 335.372803, 0.0000, 0.0000, 236.2499,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1634, 467.844147, 830.630676, 338.617920, 17.1887, 6.0161, 224.2178,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1634, 470.250153, 827.501343, 342.862244, 27.5020, 10.3132, 221.6395,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3625, 473.857635, 815.754272, 349.171783, 0.0000, 1.7189, 307.1877,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18367, 478.869202, 809.966919, 348.290161, 342.8113, 357.4217, 350.7783,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18367, 474.659210, 783.675598, 359.561951, 342.8113, 357.4217, 305.7783,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18367, 452.402100, 767.751404, 371.160492, 342.8113, 357.4217, 260.7783,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18367, 425.472809, 771.993774, 383.322113, 9.4538, 357.4217, 215.7783,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18367, 409.107849, 795.187927, 381.916901, 6.8755, 357.4217, 134.3727,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(4726, 451.353363, 818.844482, 380.758606, 0.0000, 357.4217, 358.2811,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(4727, 451.079254, 818.777039, 381.312653, 0.0000, 0.0000, 359.1406,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(969, 433.701477, 815.224060, 381.785889, 0.0000, 0.0000, 0.0000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(969, 430.358856, 817.796997, 381.657806, 0.0000, 0.0000, 0.0000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(969, 439.070862, 817.933105, 381.608490, 0.0000, 0.0000, 90.0000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(969, 439.140778, 826.433777, 381.695007, 0.0000, 0.0000, 0.0000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(969, 447.837250, 826.419312, 381.672516, 0.0000, 0.0000, 0.0000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(969, 456.207977, 826.143372, 381.743744, 0.0000, 0.0000, 270.0000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(969, 456.256531, 817.546265, 381.704437, 0.0000, 0.0000, 270.0000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(969, 456.826904, 813.048645, 381.615692, 0.0000, 0.0000, 180.0000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(969, 447.877716, 813.113037, 381.654633, 0.0000, 0.0000, 165.2350,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3462, 451.135254, 819.004456, 383.600159, 0.0000, 0.0000, 0.0000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3462, 452.179291, 816.143799, 383.646179, 0.0000, 0.0000, 0.0000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3462, 452.201477, 822.144409, 383.656128, 0.0000, 0.0000, 0.0000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3462, 451.581116, 817.518860, 383.619720, 0.0000, 0.0000, 0.0000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3462, 451.579376, 820.629456, 383.620758, 0.0000, 0.0000, 0.0000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3462, 466.230316, 819.425415, 384.263123, 0.0000, 0.0000, 0.0000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3462, 471.684601, 815.701782, 385.082825, 0.0000, 0.0000, 0.0000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3462, 470.417328, 823.558594, 384.941284, 0.0000, 0.0000, 0.0000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3462, 562.557007, 822.692688, 387.485809, 0.0000, 0.0000, 0.0000,0,-1,-1,STREAMER_OBJECT_DD);
+    CreateDynamicObject(1634, 796.315674, 839.002991, 7.875257, 0.0000, 0.0000, 101.2500,0,-1,-1);
+	CreateDynamicObject(1634, 791.715515, 838.060913, 10.775533, 12.0321, 0.0000, 101.2500,0,-1,-1);
+	CreateDynamicObject(1225, 783.963440, 835.080994, 5.241086, 0.0000, 0.0000, 11.2500,0,-1,-1);
+	CreateDynamicObject(1225, 784.019531, 836.858521, 6.335558, 0.0000, 0.0000, 11.2500,0,-1,-1);
+	CreateDynamicObject(1225, 784.229919, 838.226990, 7.457629, 0.0000, 0.0000, 11.2500,0,-1,-1);
+	CreateDynamicObject(1225, 781.830566, 835.997192, 5.249953, 0.0000, 0.0000, 11.2500,0,-1,-1);
+	CreateDynamicObject(1225, 782.126343, 837.361511, 6.297642, 0.0000, 0.0000, 11.2500,0,-1,-1);
+	CreateDynamicObject(1225, 782.071899, 834.809814, 5.248485, 0.0000, 0.0000, 11.2500,0,-1,-1);
+	CreateDynamicObject(1225, 780.561951, 834.923523, 5.255887, 0.0000, 0.0000, 11.2500,0,-1,-1);
+	CreateDynamicObject(1225, 776.945984, 835.984375, 5.273803, 0.0000, 0.0000, 11.2500,0,-1,-1);
+	CreateDynamicObject(1225, 778.738586, 837.178223, 5.265344, 0.0000, 0.0000, 11.2500,0,-1,-1);
+	CreateDynamicObject(1225, 778.534729, 835.092346, 5.265830, 0.0000, 0.0000, 11.2500,0,-1,-1);
+	CreateDynamicObject(1225, 780.028137, 834.326477, 5.258346, 0.0000, 0.0000, 11.2500,0,-1,-1);
+	CreateDynamicObject(1225, 781.743103, 833.847229, 5.249854, 0.0000, 0.0000, 11.2500,0,-1,-1);
+	CreateDynamicObject(1225, 779.941895, 840.495728, 5.260276, 0.0000, 0.0000, 11.2500,0,-1,-1);
+	CreateDynamicObject(1225, 778.258362, 840.101685, 5.268403, 0.0000, 0.0000, 11.2500,0,-1,-1);
+	CreateDynamicObject(1225, 780.432495, 839.455872, 5.257625, 0.0000, 0.0000, 11.2500,0,-1,-1);
+	CreateDynamicObject(1225, 779.818726, 838.620605, 5.260419, 0.0000, 0.0000, 11.2500,0,-1,-1);
+	CreateDynamicObject(1225, 776.825195, 839.171204, 5.275086, 0.0000, 0.0000, 11.2500,0,-1,-1);
+	CreateDynamicObject(1225, 774.075562, 836.975708, 5.288785, 0.0000, 0.0000, 11.2500,0,-1,-1);
+	CreateDynamicObject(1225, 773.667358, 833.160706, 5.289128, 0.0000, 0.0000, 11.2500,0,-1,-1);
+	CreateDynamicObject(1225, 777.403015, 833.368286, 5.270934, 0.0000, 0.0000, 11.2500,0,-1,-1);
+	CreateDynamicObject(1225, 778.957886, 832.997375, 5.263249, 0.0000, 0.0000, 11.2500,0,-1,-1);
+	CreateDynamicObject(1225, 781.676514, 832.769958, 5.249917, 0.0000, 0.0000, 11.2500,0,-1,-1);
+	CreateDynamicObject(1225, 783.363281, 833.173218, 5.241776, 0.0000, 0.0000, 11.2500,0,-1,-1);
+	CreateDynamicObject(1225, 784.730652, 834.095581, 5.236962, 0.0000, 0.0000, 11.2500,0,-1,-1);
+	CreateDynamicObject(1225, 784.000977, 839.754028, 5.240884, 0.0000, 0.0000, 11.2500,0,-1,-1);
+	CreateDynamicObject(1225, 783.361694, 840.664795, 5.244317, 0.0000, 0.0000, 11.2500,0,-1,-1);
+	CreateDynamicObject(1225, 782.355042, 841.214478, 5.249726, 0.0000, 0.0000, 11.2500,0,-1,-1);
+	CreateDynamicObject(1225, 781.898010, 840.271729, 5.252181, 0.0000, 0.0000, 11.2500,0,-1,-1);
+	CreateDynamicObject(1225, 780.129578, 837.090088, 5.258529, 0.0000, 0.0000, 11.2500,0,-1,-1);
+	CreateDynamicObject(1225, 776.314453, 838.035461, 5.277278, 0.0000, 0.0000, 11.2500,0,-1,-1);
+	CreateDynamicObject(1225, 774.064880, 837.105774, 5.288905, 0.0000, 0.0000, 11.2500,0,-1,-1);
+	CreateDynamicObject(1225, 775.200317, 834.624451, 5.282001, 0.0000, 0.0000, 11.2500,0,-1,-1);
+	CreateDynamicObject(1225, 773.099182, 835.993530, 5.293553, 0.0000, 0.0000, 11.2500,0,-1,-1);
+	CreateDynamicObject(1225, 773.945251, 834.962585, 6.159101, 0.0000, 0.0000, 11.2500,0,-1,-1);
+	CreateDynamicObject(1225, 773.680664, 834.499146, 6.458931, 0.0000, 0.0000, 11.2500,0,-1,-1);
+	CreateDynamicObject(1225, 775.908691, 832.814453, 5.278096, 0.0000, 0.0000, 11.2500,0,-1,-1);
+	CreateDynamicObject(1225, 775.651794, 831.648743, 5.279067, 0.0000, 0.0000, 11.2500,0,-1,-1);
+	CreateDynamicObject(1225, 774.870361, 838.607300, 5.285314, 0.0000, 0.0000, 11.2500,0,-1,-1);
+	CreateDynamicObject(1225, 774.847778, 839.795044, 6.342804, 0.0000, 0.0000, 11.2500,0,-1,-1);
+	CreateDynamicObject(1225, 772.809814, 839.225037, 5.296683, 0.0000, 0.0000, 11.2500,0,-1,-1);
+	CreateDynamicObject(1225, 773.230103, 837.244080, 6.385921, 0.0000, 0.0000, 11.2500,0,-1,-1);
+	CreateDynamicObject(1225, 771.764709, 833.411133, 5.299459, 0.0000, 0.0000, 11.2500,0,-1,-1);
+	CreateDynamicObject(1225, 771.619995, 832.752747, 5.299916, 0.0000, 0.0000, 11.2500,0,-1,-1);
+	CreateDynamicObject(1225, 772.917175, 831.518250, 5.292394, 0.0000, 0.0000, 11.2500,0,-1,-1);
+	CreateDynamicObject(1225, 776.519653, 836.554016, 5.276027, 0.0000, 0.0000, 11.2500,0,-1,-1);
+	CreateDynamicObject(1225, 775.317871, 836.096191, 6.468391, 0.0000, 0.0000, 11.2500,0,-1,-1);
+	CreateDynamicObject(1225, 776.000916, 840.078308, 5.279958, 0.0000, 0.0000, 11.2500,0,-1,-1);
+	CreateDynamicObject(1225, 777.253052, 840.636902, 5.589079, 0.0000, 0.0000, 11.2500,0,-1,-1);
+	CreateDynamicObject(1225, 778.140564, 831.084900, 5.266774, 0.0000, 0.0000, 11.2500,0,-1,-1);
+	CreateDynamicObject(1225, 783.334839, 832.148621, 5.241666, 0.0000, 0.0000, 11.2500,0,-1,-1);
+	CreateDynamicObject(1225, 784.371948, 832.456909, 5.238893, 0.0000, 0.0000, 11.2500,0,-1,-1);
+	CreateDynamicObject(1225, 785.068420, 831.923828, 5.235150, 0.0000, 0.0000, 11.2500,0,-1,-1);
+	CreateDynamicObject(1225, 781.311829, 831.090942, 5.251288, 0.0000, 0.0000, 11.2500,0,-1,-1);
+	CreateDynamicObject(1225, 779.002136, 841.119568, 5.265019, 0.0000, 0.0000, 11.2500,0,-1,-1);
+	CreateDynamicObject(1225, 776.240356, 829.791382, 5.275741, 0.0000, 0.0000, 11.2500,0,-1,-1);
+	CreateDynamicObject(1225, 773.276794, 830.168945, 5.290305, 0.0000, 0.0000, 11.2500,0,-1,-1);
+	CreateDynamicObject(1225, 771.466492, 829.670776, 5.299026, 0.0000, 0.0000, 11.2500,0,-1,-1);
+	CreateDynamicObject(1225, 771.418274, 831.574768, 6.176823, 0.0000, 0.0000, 11.2500,0,-1,-1);
+	CreateDynamicObject(1225, 771.614685, 839.770996, 5.303372, 0.0000, 0.0000, 11.2500,0,-1,-1);
+	CreateDynamicObject(3279, 770.880310, 834.218506, 7.225209, 0.0000, 0.0000, 11.2500,0,-1,-1);
+	CreateDynamicObject(3458, 749.364319, 829.810791, 22.274879, 0.0000, 0.0000, 11.2500,0,-1,-1);
+	CreateDynamicObject(14596, 732.063110, 824.243042, 34.495804, 0.0000, 0.0000, 281.2500,0,-1,-1);
+	CreateDynamicObject(11495, 732.515869, 840.036865, 41.000477, 0.0000, 0.0000, 11.2500,0,-1,-1);
+	CreateDynamicObject(1634, 729.649475, 853.078918, 36.950596, 287.8074, 0.0000, 11.2500,0,-1,-1);
+	CreateDynamicObject(1634, 728.484619, 858.870544, 31.889357, 300.6989, 0.0000, 11.2500,0,-1,-1);
+	CreateDynamicObject(1634, 727.291443, 864.849243, 28.680334, 312.7310, 0.0000, 11.2500,0,-1,-1);
+	CreateDynamicObject(1634, 725.821106, 872.076904, 26.948109, 329.9197, 0.0000, 11.2500,0,-1,-1);
+	CreateDynamicObject(1634, 724.400513, 878.712036, 28.431961, 6.8755, 0.0000, 12.9689,0,-1,-1);
+	CreateDynamicObject(1634, 723.049011, 884.503662, 33.547813, 23.2048, 0.0000, 12.9689,0,-1,-1);
+	CreateDynamicObject(1634, 722.340454, 887.596985, 38.719234, 43.8313, 0.0000, 12.9689,0,-1,-1);
+	CreateDynamicObject(1225, 722.668701, 889.466309, 42.285759, 0.0000, 0.0000, 11.2500,0,-1,-1);
+	CreateDynamicObject(1225, 723.668701, 889.716553, 42.285759, 0.0000, 0.0000, 11.2500,0,-1,-1);
+	CreateDynamicObject(1225, 653.286682, 959.415222, -34.113243, 0.0000, 0.0000, 11.2500,0,-1,-1);
+	CreateDynamicObject(1225, 703.480469, 956.403625, -19.163582, 0.0000, 0.0000, 11.2500,0,-1,-1);
+	CreateDynamicObject(1225, 713.200073, 953.600037, -11.140616, 0.0000, 0.0000, 11.2500,0,-1,-1);
+	CreateDynamicObject(1225, 721.589294, 889.353638, 42.297241, 0.0000, 0.0000, 11.2500,0,-1,-1);
+	CreateDynamicObject(1225, 723.316101, 888.357971, 39.317085, 0.0000, 0.0000, 11.2500,0,-1,-1);
+	CreateDynamicObject(1225, 720.510559, 889.077698, 42.309944, 0.0000, 0.0000, 11.2500,0,-1,-1);
+	CreateDynamicObject(1634, 722.501587, 887.010864, 50.353428, 86.8030, 0.0000, 12.9689,0,-1,-1);
+	CreateDynamicObject(1634, 723.558289, 882.461548, 56.624340, 115.1644, 0.0000, 12.9689,0,-1,-1);
+	CreateDynamicObject(11495, 726.869507, 864.945984, 52.184834, 325.6225, 359.1406, 11.2500,0,-1,-1);
+	CreateDynamicObject(11495, 729.887634, 849.908386, 61.681770, 330.7792, 0.0000, 11.2500,0,-1,-1);
+	CreateDynamicObject(13638, 723.570984, 846.574829, 68.738029, 0.0000, 0.0000, 11.2500,0,-1,-1);
+	CreateDynamicObject(13638, 709.770630, 855.823425, 76.749390, 0.0000, 0.0000, 11.2500,0,-1,-1);
+	CreateDynamicObject(13638, 695.577393, 865.212280, 84.985870, 0.0000, 0.0000, 11.2500,0,-1,-1);
+	CreateDynamicObject(13645, 691.561096, 870.922974, 91.392792, 0.0000, 0.0000, 8.7490,0,-1,-1);
+	CreateDynamicObject(5153, 690.119873, 877.757385, 93.061501, 0.0000, 0.0000, 101.2500,0,-1,-1);
+	CreateDynamicObject(5153, 689.412537, 881.245972, 94.627304, 0.0000, 0.0000, 101.2500,0,-1,-1);
+	CreateDynamicObject(16640, 681.810730, 890.013306, 98.370918, 0.0000, 0.0000, 101.2500,0,-1,-1);
+	CreateDynamicObject(16640, 674.132507, 873.739380, 98.243111, 359.1406, 1.7189, 278.6717,0,-1,-1);
+	CreateDynamicObject(969, 661.512573, 882.965332, 95.092232, 91.9597, 0.0000, 8.5944,0,-1,-1);
+	CreateDynamicObject(1634, 657.993530, 880.490601, 95.975105, 0.0000, 0.0000, 101.2500,0,-1,-1);
+	CreateDynamicObject(1634, 642.028870, 877.522522, 93.687408, 323.0442, 0.0000, 101.2500,0,-1,-1);
+	CreateDynamicObject(1634, 633.726807, 875.869202, 94.025902, 350.5462, 0.0000, 101.2500,0,-1,-1);
+	CreateDynamicObject(13590, 619.105896, 873.098328, 95.696983, 0.0000, 0.0000, 101.2500,0,-1,-1);
+	CreateDynamicObject(18262, 617.264893, 868.219727, 96.188370, 20.6265, 0.0000, 3.5150,0,-1,-1);
+	CreateDynamicObject(12909, 587.247742, 871.395752, 86.107460, 0.0000, 0.0000, 327.9689,0,-1,-1);
+	CreateDynamicObject(18262, 602.142639, 865.821045, 96.852127, 13.7510, 0.0000, 0.9367,0,-1,-1);
+	CreateDynamicObject(13638, 474.807007, 871.187988, 83.187057, 0.0000, 0.0000, 4.3745,0,-1,-1);
+	CreateDynamicObject(13638, 477.083710, 885.926636, 90.926254, 0.0000, 0.0000, 274.3745,0,-1,-1);
+	CreateDynamicObject(13638, 477.438263, 880.216736, 98.869209, 0.0000, 0.0000, 92.6557,0,-1,-1);
+	CreateDynamicObject(1634, 452.426056, 866.895386, 105.069946, 0.0000, 0.0000, 179.2179,0,-1,-1);
+	CreateDynamicObject(1634, 452.393585, 861.595825, 109.011909, 19.7670, 0.0000, 179.2179,0,-1,-1);
+	CreateDynamicObject(11495, 725.656555, 870.892944, 49.429790, 331.6386, 359.1406, 11.2500,0,-1,-1);
+	CreateDynamicObject(1260, 528.025879, 869.506653, 84.816010, 0.0000, 0.0000, 275.2340,0,-1,-1);
+	CreateDynamicObject(18367, 517.233154, 868.696716, 86.953209, 12.8916, 0.0000, 275.1566,0,-1,-1);
+	CreateDynamicObject(17060, 463.939758, 868.973083, 103.543770, 0.0000, 0.0000, 0.0000,0,-1,-1);
+	CreateDynamicObject(17060, 449.819397, 878.179260, 103.494934, 0.0000, 0.0000, 180.0000,0,-1,-1);
+	CreateDynamicObject(4550, 450.853333, 819.446838, 169.361526, 0.0000, 0.0000, 0.0000,0,-1,-1);
+	CreateDynamicObject(3399, 449.856659, 847.585693, 110.781242, 0.0000, 0.0000, 186.9528,0,-1,-1);
+	CreateDynamicObject(4882, 431.067627, 863.907898, 117.697083, 0.0000, 0.0000, 277.8122,0,-1,-1);
+	CreateDynamicObject(8580, 407.787048, 871.851990, 113.976677, 357.4217, 2.5783, 7.8122,0,-1,-1);
+	CreateDynamicObject(12985, 379.153870, 894.138672, 23.234034, 0.0000, 0.0000, 33.7500,0,-1,-1);
+	CreateDynamicObject(12985, 396.749390, 859.065552, 117.871803, 0.0000, 0.0000, 9.4538,0,-1,-1);
+	CreateDynamicObject(12985, 397.880035, 852.350830, 123.862221, 0.0000, 0.0000, 10.3132,0,-1,-1);
+	CreateDynamicObject(3279, 394.965118, 846.788574, 126.236275, 0.0000, 0.0000, 97.9757,0,-1,-1);
+	CreateDynamicObject(18367, 395.230530, 844.843018, 142.071701, 353.1245, 0.0000, 61.0199,0,-1,-1);
+	CreateDynamicObject(4199, 417.892395, 816.856384, 147.059418, 357.4217, 357.4217, 0.0000,0,-1,-1);
+	CreateDynamicObject(1634, 419.963898, 803.394409, 150.605042, 0.0000, 0.0000, 225.0000,0,-1,-1);
+	CreateDynamicObject(4199, 442.447479, 792.774841, 153.620117, 357.4217, 357.4217, 81.2510,0,-1,-1);
+	CreateDynamicObject(1634, 455.658966, 789.256531, 157.040665, 0.0000, 0.8594, 285.5472,0,-1,-1);
+	CreateDynamicObject(4199, 475.703003, 797.683533, 159.378281, 357.4217, 357.4217, 127.8926,0,-1,-1);
+	CreateDynamicObject(5152, 484.520874, 810.229675, 162.881836, 0.0000, 0.0000, 78.7500,0,-1,-1);
+	CreateDynamicObject(5152, 485.200623, 813.679321, 164.430237, 0.0000, 0.0000, 78.7500,0,-1,-1);
+	CreateDynamicObject(5152, 485.531342, 817.075317, 165.990570, 0.0000, 358.2811, 89.0632,0,-1,-1);
+	CreateDynamicObject(5152, 485.611267, 820.642395, 167.700806, 0.8594, 358.2811, 89.0632,0,-1,-1);
+	CreateDynamicObject(5152, 485.712280, 824.373657, 169.477341, 0.8594, 358.2811, 89.0632,0,-1,-1);
+	CreateDynamicObject(5152, 485.347626, 827.512085, 170.964493, 0.8594, 358.2811, 112.2680,0,-1,-1);
+	CreateDynamicObject(5152, 483.937988, 831.000732, 172.790222, 0.8594, 358.2811, 112.2680,0,-1,-1);
+	CreateDynamicObject(18451, 481.444366, 835.138306, 175.383499, 20.6265, 0.0000, 33.7500,0,-1,-1);
+	CreateDynamicObject(18367, 481.779663, 835.949463, 175.736526, 0.0000, 0.0000, 236.2501,0,-1,-1);
+	CreateDynamicObject(18367, 458.080841, 851.862976, 178.913101, 0.0000, 0.0000, 270.0001,0,-1,-1);
+	CreateDynamicObject(18367, 428.021027, 852.533203, 182.402588, 0.0000, 0.0000, 326.2500,0,-1,-1);
+	CreateDynamicObject(18367, 411.308044, 828.180786, 185.681793, 0.0000, 0.0000, 11.2500,0,-1,-1);
+	CreateDynamicObject(18367, 416.651672, 800.082336, 189.032974, 0.0000, 0.0000, 56.2500,0,-1,-1);
+	CreateDynamicObject(18367, 440.961456, 783.678284, 192.381470, 0.0000, 0.0000, 101.2500,0,-1,-1);
+	CreateDynamicObject(18367, 469.556641, 789.669617, 195.765930, 0.0000, 0.0000, 135.0000,0,-1,-1);
+	CreateDynamicObject(18367, 491.217163, 810.745056, 199.075348, 0.0000, 0.0000, 157.5000,0,-1,-1);
+	CreateDynamicObject(18367, 501.484436, 837.517700, 202.441727, 351.4056, 0.0000, 213.7500,0,-1,-1);
+	CreateDynamicObject(18367, 485.668457, 862.087097, 210.397247, 351.4056, 0.0000, 258.7500,0,-1,-1);
+	CreateDynamicObject(18367, 457.867981, 867.287048, 218.143753, 351.4056, 0.0000, 294.3737,0,-1,-1);
+	CreateDynamicObject(18367, 432.122925, 856.661682, 225.337006, 333.3575, 0.0000, 334.9992,0,-1,-1);
+	CreateDynamicObject(14553, 443.081665, 718.431885, 214.160065, 0.0000, 46.4096, 56.2500,0,-1,-1);
+	CreateDynamicObject(18367, 426.028625, 803.634216, 241.533615, 333.3575, 0.0000, 19.9991,0,-1,-1);
+	CreateDynamicObject(18367, 434.850708, 780.889954, 257.253754, 333.3575, 0.0000, 64.9991,0,-1,-1);
+	CreateDynamicObject(18367, 456.346985, 770.480713, 272.459564, 333.3575, 0.0000, 121.2491,0,-1,-1);
+	CreateDynamicObject(18367, 477.666443, 783.478760, 288.816711, 18.0482, 0.0000, 199.9991,0,-1,-1);
+	CreateDynamicObject(1634, 430.005219, 804.061096, 286.075256, 0.0000, 0.0000, 56.2500,0,-1,-1);
+	CreateDynamicObject(1634, 425.895691, 806.817322, 289.931244, 23.2048, 0.0000, 56.2500,0,-1,-1);
+	CreateDynamicObject(1634, 423.156281, 808.941895, 296.033844, 43.8313, 0.0000, 48.5151,0,-1,-1);
+	CreateDynamicObject(1634, 422.562256, 809.613281, 301.415344, 70.4738, 12.0321, 45.0773,0,-1,-1);
+	CreateDynamicObject(1634, 433.228333, 807.479065, 303.675354, 40.3935, 12.0321, 236.3273,0,-1,-1);
+	CreateDynamicObject(1634, 432.453522, 807.367004, 309.983429, 84.2247, 12.0321, 236.3273,0,-1,-1);
+	CreateDynamicObject(18367, 429.631592, 830.669128, 299.576874, 333.3575, 0.0000, 177.4991,0,-1,-1);
+	CreateDynamicObject(18367, 429.245789, 855.542908, 314.034088, 339.3735, 0.0000, 87.4991,0,-1,-1);
+	CreateDynamicObject(18367, 455.414093, 858.381592, 325.868011, 342.8113, 357.4217, 3.6699,0,-1,-1);
+	CreateDynamicObject(1634, 464.623840, 833.779114, 335.372803, 0.0000, 0.0000, 236.2499,0,-1,-1);
+	CreateDynamicObject(1634, 467.844147, 830.630676, 338.617920, 17.1887, 6.0161, 224.2178,0,-1,-1);
+	CreateDynamicObject(1634, 470.250153, 827.501343, 342.862244, 27.5020, 10.3132, 221.6395,0,-1,-1);
+	CreateDynamicObject(3625, 473.857635, 815.754272, 349.171783, 0.0000, 1.7189, 307.1877,0,-1,-1);
+	CreateDynamicObject(18367, 478.869202, 809.966919, 348.290161, 342.8113, 357.4217, 350.7783,0,-1,-1);
+	CreateDynamicObject(18367, 474.659210, 783.675598, 359.561951, 342.8113, 357.4217, 305.7783,0,-1,-1);
+	CreateDynamicObject(18367, 452.402100, 767.751404, 371.160492, 342.8113, 357.4217, 260.7783,0,-1,-1);
+	CreateDynamicObject(18367, 425.472809, 771.993774, 383.322113, 9.4538, 357.4217, 215.7783,0,-1,-1);
+	CreateDynamicObject(18367, 409.107849, 795.187927, 381.916901, 6.8755, 357.4217, 134.3727,0,-1,-1);
+	CreateDynamicObject(4726, 451.353363, 818.844482, 380.758606, 0.0000, 357.4217, 358.2811,0,-1,-1);
+	CreateDynamicObject(4727, 451.079254, 818.777039, 381.312653, 0.0000, 0.0000, 359.1406,0,-1,-1);
+	CreateDynamicObject(969, 433.701477, 815.224060, 381.785889, 0.0000, 0.0000, 0.0000,0,-1,-1);
+	CreateDynamicObject(969, 430.358856, 817.796997, 381.657806, 0.0000, 0.0000, 0.0000,0,-1,-1);
+	CreateDynamicObject(969, 439.070862, 817.933105, 381.608490, 0.0000, 0.0000, 90.0000,0,-1,-1);
+	CreateDynamicObject(969, 439.140778, 826.433777, 381.695007, 0.0000, 0.0000, 0.0000,0,-1,-1);
+	CreateDynamicObject(969, 447.837250, 826.419312, 381.672516, 0.0000, 0.0000, 0.0000,0,-1,-1);
+	CreateDynamicObject(969, 456.207977, 826.143372, 381.743744, 0.0000, 0.0000, 270.0000,0,-1,-1);
+	CreateDynamicObject(969, 456.256531, 817.546265, 381.704437, 0.0000, 0.0000, 270.0000,0,-1,-1);
+	CreateDynamicObject(969, 456.826904, 813.048645, 381.615692, 0.0000, 0.0000, 180.0000,0,-1,-1);
+	CreateDynamicObject(969, 447.877716, 813.113037, 381.654633, 0.0000, 0.0000, 165.2350,0,-1,-1);
+	CreateDynamicObject(3462, 451.135254, 819.004456, 383.600159, 0.0000, 0.0000, 0.0000,0,-1,-1);
+	CreateDynamicObject(3462, 452.179291, 816.143799, 383.646179, 0.0000, 0.0000, 0.0000,0,-1,-1);
+	CreateDynamicObject(3462, 452.201477, 822.144409, 383.656128, 0.0000, 0.0000, 0.0000,0,-1,-1);
+	CreateDynamicObject(3462, 451.581116, 817.518860, 383.619720, 0.0000, 0.0000, 0.0000,0,-1,-1);
+	CreateDynamicObject(3462, 451.579376, 820.629456, 383.620758, 0.0000, 0.0000, 0.0000,0,-1,-1);
+	CreateDynamicObject(3462, 466.230316, 819.425415, 384.263123, 0.0000, 0.0000, 0.0000,0,-1,-1);
+	CreateDynamicObject(3462, 471.684601, 815.701782, 385.082825, 0.0000, 0.0000, 0.0000,0,-1,-1);
+	CreateDynamicObject(3462, 470.417328, 823.558594, 384.941284, 0.0000, 0.0000, 0.0000,0,-1,-1);
+	CreateDynamicObject(3462, 562.557007, 822.692688, 387.485809, 0.0000, 0.0000, 0.0000,0,-1,-1);
 	
 	// SALOUN2 CONVERTED FROM .RXO
 	
@@ -45566,94 +45531,94 @@ public BuildObjects()
 	// sfa new objects go here
 	
 	// city
-	CreateDynamicObject(4142, 3488.049805, -153.126984, 14.772326, 0.0000, 0.0000, 0.0000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(5137, 3507.147949, -209.530304, 18.842964, 0.0000, 0.0000, 0.0000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18239, 3464.534424, -196.788391, 14.659071, 0.0000, 0.0000, 268.8998,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(4142, 3417.496826, -242.456100, 14.714994, 0.0000, 0.0000, 89.3814,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(17545, 3477.903564, -217.169006, 14.964321, 0.0000, 0.0000, 0.0000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18243, 3466.500977, -218.716003, 14.697914, 0.0000, 0.0000, 65.3171,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18283, 3459.255859, -230.605652, 14.601184, 0.0000, 0.0000, 88.5219,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18266, 3468.367188, -150.561249, 19.284874, 0.0000, 0.0000, 0.0000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3983, 3480.570801, -162.065994, 16.408045, 0.0000, 0.0000, 181.2368,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(11631, 3470.000000, -149.004898, 16.772966, 0.0000, 0.0000, 0.0000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(16377, 3467.326416, -149.955795, 16.507395, 0.0000, 0.0000, 263.7431,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3689, 3421.310303, -182.135300, 22.688459, 0.0000, 0.0000, 89.3814,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(16021, 3522.120117, -167.664154, 14.663858, 0.0000, 0.0000, 90.2409,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18255, 3536.505615, -202.916656, 15.451546, 0.0000, 0.0000, 0.0000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18255, 3502.872803, -142.079514, 14.906277, 0.0000, 0.0000, 0.0000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18255, 3458.103516, -143.906982, 15.324768, 0.0000, 0.0000, 0.0000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18255, 3427.415771, -112.731819, 15.326555, 0.0000, 0.0000, 269.7591,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18255, 3482.926514, -248.492737, 13.911642, 0.0000, 0.0000, 269.7592,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18255, 3501.893555, -218.016113, 14.382734, 0.0000, 0.0000, 181.2368,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18552, 3430.230713, -260.575409, 14.631942, 0.0000, 0.0000, 89.3814,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(17545, 3416.222900, -243.483444, 14.974895, 0.0000, 0.0000, 0.0000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(17038, 3418.584961, -268.963806, 14.678911, 0.0000, 0.0000, 89.3814,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(4857, 3397.375488, -265.494873, 17.060202, 0.0000, 0.0000, 268.8998,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18255, 3392.958984, -241.505341, 15.144215, 0.0000, 4.2972, 181.2372,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18255, 3407.770508, -211.936737, 14.235527, 0.0000, 353.9839, 89.2774,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18255, 3456.782471, -265.832581, 15.209469, 0.0000, 0.0000, 178.6589,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18255, 3426.016846, -292.107422, 14.097307, 0.0000, 0.0000, 270.6186,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18255, 3410.338135, -292.211304, 14.056170, 0.0000, 0.0000, 270.6186,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(972, 3375.405029, -282.551422, 13.149443, 0.0000, 0.0000, 0.0000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(972, 3378.298584, -269.520142, 13.141586, 0.0000, 0.0000, 272.3375,0,-1,-1,STREAMER_OBJECT_DD);
+	CreateDynamicObject(4142, 3488.049805, -153.126984, 14.772326, 0.0000, 0.0000, 0.0000,0,-1,-1);
+	CreateDynamicObject(5137, 3507.147949, -209.530304, 18.842964, 0.0000, 0.0000, 0.0000,0,-1,-1);
+	CreateDynamicObject(18239, 3464.534424, -196.788391, 14.659071, 0.0000, 0.0000, 268.8998,0,-1,-1);
+	CreateDynamicObject(4142, 3417.496826, -242.456100, 14.714994, 0.0000, 0.0000, 89.3814,0,-1,-1);
+	CreateDynamicObject(17545, 3477.903564, -217.169006, 14.964321, 0.0000, 0.0000, 0.0000,0,-1,-1);
+	CreateDynamicObject(18243, 3466.500977, -218.716003, 14.697914, 0.0000, 0.0000, 65.3171,0,-1,-1);
+	CreateDynamicObject(18283, 3459.255859, -230.605652, 14.601184, 0.0000, 0.0000, 88.5219,0,-1,-1);
+	CreateDynamicObject(18266, 3468.367188, -150.561249, 19.284874, 0.0000, 0.0000, 0.0000,0,-1,-1);
+	CreateDynamicObject(3983, 3480.570801, -162.065994, 16.408045, 0.0000, 0.0000, 181.2368,0,-1,-1);
+	CreateDynamicObject(11631, 3470.000000, -149.004898, 16.772966, 0.0000, 0.0000, 0.0000,0,-1,-1);
+	CreateDynamicObject(16377, 3467.326416, -149.955795, 16.507395, 0.0000, 0.0000, 263.7431,0,-1,-1);
+	CreateDynamicObject(3689, 3421.310303, -182.135300, 22.688459, 0.0000, 0.0000, 89.3814,0,-1,-1);
+	CreateDynamicObject(16021, 3522.120117, -167.664154, 14.663858, 0.0000, 0.0000, 90.2409,0,-1,-1);
+	CreateDynamicObject(18255, 3536.505615, -202.916656, 15.451546, 0.0000, 0.0000, 0.0000,0,-1,-1);
+	CreateDynamicObject(18255, 3502.872803, -142.079514, 14.906277, 0.0000, 0.0000, 0.0000,0,-1,-1);
+	CreateDynamicObject(18255, 3458.103516, -143.906982, 15.324768, 0.0000, 0.0000, 0.0000,0,-1,-1);
+	CreateDynamicObject(18255, 3427.415771, -112.731819, 15.326555, 0.0000, 0.0000, 269.7591,0,-1,-1);
+	CreateDynamicObject(18255, 3482.926514, -248.492737, 13.911642, 0.0000, 0.0000, 269.7592,0,-1,-1);
+	CreateDynamicObject(18255, 3501.893555, -218.016113, 14.382734, 0.0000, 0.0000, 181.2368,0,-1,-1);
+	CreateDynamicObject(18552, 3430.230713, -260.575409, 14.631942, 0.0000, 0.0000, 89.3814,0,-1,-1);
+	CreateDynamicObject(17545, 3416.222900, -243.483444, 14.974895, 0.0000, 0.0000, 0.0000,0,-1,-1);
+	CreateDynamicObject(17038, 3418.584961, -268.963806, 14.678911, 0.0000, 0.0000, 89.3814,0,-1,-1);
+	CreateDynamicObject(4857, 3397.375488, -265.494873, 17.060202, 0.0000, 0.0000, 268.8998,0,-1,-1);
+	CreateDynamicObject(18255, 3392.958984, -241.505341, 15.144215, 0.0000, 4.2972, 181.2372,0,-1,-1);
+	CreateDynamicObject(18255, 3407.770508, -211.936737, 14.235527, 0.0000, 353.9839, 89.2774,0,-1,-1);
+	CreateDynamicObject(18255, 3456.782471, -265.832581, 15.209469, 0.0000, 0.0000, 178.6589,0,-1,-1);
+	CreateDynamicObject(18255, 3426.016846, -292.107422, 14.097307, 0.0000, 0.0000, 270.6186,0,-1,-1);
+	CreateDynamicObject(18255, 3410.338135, -292.211304, 14.056170, 0.0000, 0.0000, 270.6186,0,-1,-1);
+	CreateDynamicObject(972, 3375.405029, -282.551422, 13.149443, 0.0000, 0.0000, 0.0000,0,-1,-1);
+	CreateDynamicObject(972, 3378.298584, -269.520142, 13.141586, 0.0000, 0.0000, 272.3375,0,-1,-1);
 	// /CITY2
-	CreateDynamicObject(16781, -3192.361328, -2611.029785, 53.156120, 0.0000, 0.0000, 149.4379,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3996, -3155.254150, -2608.875732, 53.537560, 0.0000, 0.0000, 329.0603,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3983, -3192.297119, -2622.638184, 55.431007, 0.0000, 0.0000, 239.6788,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3469, -3186.137207, -2637.030273, 56.558617, 0.0000, 0.0000, 73.0521,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3875, -3198.455811, -2594.829834, 60.215611, 0.0000, 0.0000, 0.0000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(16777, -3168.457764, -2626.138672, 52.995243, 0.0000, 0.0000, 299.8394,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18255, -3203.342529, -2640.987793, 53.957569, 0.0000, 0.0000, 60.1606,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(8674, -3226.229736, -2623.006348, 54.931126, 0.0000, 0.0000, 256.8676,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(4018, -3148.856934, -2628.055664, 53.661495, 0.0000, 0.0000, 149.4379,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(969, -3160.943359, -2634.490723, 53.605419, 0.0000, 0.0000, 239.6788,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(11504, -3115.092529, -2633.906982, 53.458855, 0.0000, 0.0000, 239.6788,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3306, -3180.507568, -2576.333984, 54.046322, 0.0000, 0.0000, 239.6788,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3307, -3158.995361, -2588.308105, 54.160320, 0.0000, 0.0000, 239.6788,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3308, -3139.213379, -2599.978760, 54.030365, 0.0000, 0.0000, 239.6788,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3310, -3114.379639, -2608.469482, 55.586189, 0.0000, 0.0000, 57.5823,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(5112, -3263.938477, -2545.128662, 48.975784, 0.0000, 0.0000, 329.9197,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(5052, -3347.706055, -2496.318848, 53.030342, 0.0000, 0.0000, 239.6788,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(17862, -3399.442627, -2497.140625, 53.293468, 0.0000, 0.0000, 329.9197,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(17921, -3430.468750, -2482.001709, 53.033676, 0.0000, 0.0000, 147.7190,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(615, -3395.604004, -2460.227295, 50.874878, 0.0000, 0.0000, 0.0000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18255, -3425.419189, -2477.940918, 53.883888, 0.0000, 0.0000, 325.6225,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(880, -3411.738037, -2459.359619, 54.276962, 0.0000, 0.0000, 0.0000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(880, -3408.238770, -2458.873047, 54.820354, 0.0000, 0.0000, 0.0000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(880, -3404.238770, -2459.123047, 55.070354, 0.0000, 0.0000, 0.0000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(880, -3399.726318, -2458.884033, 54.443462, 0.0000, 0.0000, 0.0000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18255, -3385.387939, -2465.691650, 54.140827, 0.0000, 0.0000, 239.6788,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18255, -3359.370361, -2479.843018, 53.836555, 0.0000, 0.0000, 239.6788,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(880, -3435.876953, -2516.329590, 54.495686, 0.0000, 0.0000, 351.4056,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(880, -3442.502686, -2516.163086, 54.548351, 0.0000, 0.0000, 320.4659,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(880, -3447.762939, -2513.650146, 54.062572, 0.0000, 0.0000, 297.2612,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(880, -3452.200439, -2512.972900, 53.077385, 0.0000, 0.0000, 297.2612,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(803, -3439.572998, -2515.669434, 54.538918, 0.0000, 0.0000, 0.0000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(880, -3446.101318, -2498.354492, 53.780445, 0.0000, 0.0000, 297.2612,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(880, -3452.318115, -2496.837646, 53.995686, 0.0000, 0.0000, 297.2612,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(880, -3459.052490, -2497.257080, 54.245686, 0.0000, 0.0000, 297.2612,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(880, -3466.150391, -2500.940918, 53.737892, 0.0000, 0.0000, 311.0122,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(803, -3460.776367, -2501.896240, 53.585350, 0.0000, 0.0000, 0.0000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(17927, -3474.868652, -2551.152832, 54.156708, 0.0000, 0.0000, 55.8634,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(618, -3453.875000, -2513.008545, 53.174515, 0.0000, 0.0000, 0.0000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(17573, -3457.011475, -2527.786377, 54.649490, 0.0000, 0.0000, 325.6225,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(13696, -3466.938965, -2548.563477, 52.439804, 0.0000, 0.0000, 56.7228,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18255, -3478.106934, -2522.029541, 52.035847, 0.0000, 0.0000, 325.6225,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18255, -3499.699951, -2552.855713, 51.749989, 0.0000, 0.0000, 325.6225,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3983, -3473.576416, -2532.645996, 54.384331, 0.0000, 0.0000, 239.6788,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18255, -3442.193359, -2541.936035, 52.656986, 0.0000, 0.0000, 330.7792,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(880, -3440.166260, -2518.467773, 54.620724, 0.0000, 0.0000, 320.4659,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(880, -3439.939209, -2521.614014, 55.996811, 0.0000, 0.0000, 0.0000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(880, -3445.254639, -2520.003906, 55.215698, 0.0000, 0.0000, 0.0000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(880, -3449.293457, -2516.808838, 55.117794, 0.0000, 0.0000, 0.0000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(880, -3447.236084, -2518.046143, 55.222820, 0.0000, 0.0000, 0.0000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18282, -3476.356201, -2573.499023, 52.699989, 0.0000, 0.0000, 235.3816,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(17577, -3514.414795, -2588.900391, 57.350174, 0.0000, 0.0000, 145.1407,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(17934, -3492.821045, -2585.035156, 54.780689, 0.0000, 0.0000, 325.6225,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1216, -3476.330566, -2563.648438, 53.243252, 0.0000, 0.0000, 239.6788,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1226, -3484.505127, -2558.026855, 56.874878, 0.0000, 0.0000, 321.3253,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1226, -3465.913818, -2510.856445, 56.173607, 0.0000, 0.0000, 153.7351,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1257, -3485.759521, -2561.463135, 54.279648, 0.0000, 0.0000, 325.6225,0,-1,-1,STREAMER_OBJECT_DD);
+	CreateDynamicObject(16781, -3192.361328, -2611.029785, 53.156120, 0.0000, 0.0000, 149.4379,0,-1,-1);
+	CreateDynamicObject(3996, -3155.254150, -2608.875732, 53.537560, 0.0000, 0.0000, 329.0603,0,-1,-1);
+	CreateDynamicObject(3983, -3192.297119, -2622.638184, 55.431007, 0.0000, 0.0000, 239.6788,0,-1,-1);
+	CreateDynamicObject(3469, -3186.137207, -2637.030273, 56.558617, 0.0000, 0.0000, 73.0521,0,-1,-1);
+	CreateDynamicObject(3875, -3198.455811, -2594.829834, 60.215611, 0.0000, 0.0000, 0.0000,0,-1,-1);
+	CreateDynamicObject(16777, -3168.457764, -2626.138672, 52.995243, 0.0000, 0.0000, 299.8394,0,-1,-1);
+	CreateDynamicObject(18255, -3203.342529, -2640.987793, 53.957569, 0.0000, 0.0000, 60.1606,0,-1,-1);
+	CreateDynamicObject(8674, -3226.229736, -2623.006348, 54.931126, 0.0000, 0.0000, 256.8676,0,-1,-1);
+	CreateDynamicObject(4018, -3148.856934, -2628.055664, 53.661495, 0.0000, 0.0000, 149.4379,0,-1,-1);
+	CreateDynamicObject(969, -3160.943359, -2634.490723, 53.605419, 0.0000, 0.0000, 239.6788,0,-1,-1);
+	CreateDynamicObject(11504, -3115.092529, -2633.906982, 53.458855, 0.0000, 0.0000, 239.6788,0,-1,-1);
+	CreateDynamicObject(3306, -3180.507568, -2576.333984, 54.046322, 0.0000, 0.0000, 239.6788,0,-1,-1);
+	CreateDynamicObject(3307, -3158.995361, -2588.308105, 54.160320, 0.0000, 0.0000, 239.6788,0,-1,-1);
+	CreateDynamicObject(3308, -3139.213379, -2599.978760, 54.030365, 0.0000, 0.0000, 239.6788,0,-1,-1);
+	CreateDynamicObject(3310, -3114.379639, -2608.469482, 55.586189, 0.0000, 0.0000, 57.5823,0,-1,-1);
+	CreateDynamicObject(5112, -3263.938477, -2545.128662, 48.975784, 0.0000, 0.0000, 329.9197,0,-1,-1);
+	CreateDynamicObject(5052, -3347.706055, -2496.318848, 53.030342, 0.0000, 0.0000, 239.6788,0,-1,-1);
+	CreateDynamicObject(17862, -3399.442627, -2497.140625, 53.293468, 0.0000, 0.0000, 329.9197,0,-1,-1);
+	CreateDynamicObject(17921, -3430.468750, -2482.001709, 53.033676, 0.0000, 0.0000, 147.7190,0,-1,-1);
+	CreateDynamicObject(615, -3395.604004, -2460.227295, 50.874878, 0.0000, 0.0000, 0.0000,0,-1,-1);
+	CreateDynamicObject(18255, -3425.419189, -2477.940918, 53.883888, 0.0000, 0.0000, 325.6225,0,-1,-1);
+	CreateDynamicObject(880, -3411.738037, -2459.359619, 54.276962, 0.0000, 0.0000, 0.0000,0,-1,-1);
+	CreateDynamicObject(880, -3408.238770, -2458.873047, 54.820354, 0.0000, 0.0000, 0.0000,0,-1,-1);
+	CreateDynamicObject(880, -3404.238770, -2459.123047, 55.070354, 0.0000, 0.0000, 0.0000,0,-1,-1);
+	CreateDynamicObject(880, -3399.726318, -2458.884033, 54.443462, 0.0000, 0.0000, 0.0000,0,-1,-1);
+	CreateDynamicObject(18255, -3385.387939, -2465.691650, 54.140827, 0.0000, 0.0000, 239.6788,0,-1,-1);
+	CreateDynamicObject(18255, -3359.370361, -2479.843018, 53.836555, 0.0000, 0.0000, 239.6788,0,-1,-1);
+	CreateDynamicObject(880, -3435.876953, -2516.329590, 54.495686, 0.0000, 0.0000, 351.4056,0,-1,-1);
+	CreateDynamicObject(880, -3442.502686, -2516.163086, 54.548351, 0.0000, 0.0000, 320.4659,0,-1,-1);
+	CreateDynamicObject(880, -3447.762939, -2513.650146, 54.062572, 0.0000, 0.0000, 297.2612,0,-1,-1);
+	CreateDynamicObject(880, -3452.200439, -2512.972900, 53.077385, 0.0000, 0.0000, 297.2612,0,-1,-1);
+	CreateDynamicObject(803, -3439.572998, -2515.669434, 54.538918, 0.0000, 0.0000, 0.0000,0,-1,-1);
+	CreateDynamicObject(880, -3446.101318, -2498.354492, 53.780445, 0.0000, 0.0000, 297.2612,0,-1,-1);
+	CreateDynamicObject(880, -3452.318115, -2496.837646, 53.995686, 0.0000, 0.0000, 297.2612,0,-1,-1);
+	CreateDynamicObject(880, -3459.052490, -2497.257080, 54.245686, 0.0000, 0.0000, 297.2612,0,-1,-1);
+	CreateDynamicObject(880, -3466.150391, -2500.940918, 53.737892, 0.0000, 0.0000, 311.0122,0,-1,-1);
+	CreateDynamicObject(803, -3460.776367, -2501.896240, 53.585350, 0.0000, 0.0000, 0.0000,0,-1,-1);
+	CreateDynamicObject(17927, -3474.868652, -2551.152832, 54.156708, 0.0000, 0.0000, 55.8634,0,-1,-1);
+	CreateDynamicObject(618, -3453.875000, -2513.008545, 53.174515, 0.0000, 0.0000, 0.0000,0,-1,-1);
+	CreateDynamicObject(17573, -3457.011475, -2527.786377, 54.649490, 0.0000, 0.0000, 325.6225,0,-1,-1);
+	CreateDynamicObject(13696, -3466.938965, -2548.563477, 52.439804, 0.0000, 0.0000, 56.7228,0,-1,-1);
+	CreateDynamicObject(18255, -3478.106934, -2522.029541, 52.035847, 0.0000, 0.0000, 325.6225,0,-1,-1);
+	CreateDynamicObject(18255, -3499.699951, -2552.855713, 51.749989, 0.0000, 0.0000, 325.6225,0,-1,-1);
+	CreateDynamicObject(3983, -3473.576416, -2532.645996, 54.384331, 0.0000, 0.0000, 239.6788,0,-1,-1);
+	CreateDynamicObject(18255, -3442.193359, -2541.936035, 52.656986, 0.0000, 0.0000, 330.7792,0,-1,-1);
+	CreateDynamicObject(880, -3440.166260, -2518.467773, 54.620724, 0.0000, 0.0000, 320.4659,0,-1,-1);
+	CreateDynamicObject(880, -3439.939209, -2521.614014, 55.996811, 0.0000, 0.0000, 0.0000,0,-1,-1);
+	CreateDynamicObject(880, -3445.254639, -2520.003906, 55.215698, 0.0000, 0.0000, 0.0000,0,-1,-1);
+	CreateDynamicObject(880, -3449.293457, -2516.808838, 55.117794, 0.0000, 0.0000, 0.0000,0,-1,-1);
+	CreateDynamicObject(880, -3447.236084, -2518.046143, 55.222820, 0.0000, 0.0000, 0.0000,0,-1,-1);
+	CreateDynamicObject(18282, -3476.356201, -2573.499023, 52.699989, 0.0000, 0.0000, 235.3816,0,-1,-1);
+	CreateDynamicObject(17577, -3514.414795, -2588.900391, 57.350174, 0.0000, 0.0000, 145.1407,0,-1,-1);
+	CreateDynamicObject(17934, -3492.821045, -2585.035156, 54.780689, 0.0000, 0.0000, 325.6225,0,-1,-1);
+	CreateDynamicObject(1216, -3476.330566, -2563.648438, 53.243252, 0.0000, 0.0000, 239.6788,0,-1,-1);
+	CreateDynamicObject(1226, -3484.505127, -2558.026855, 56.874878, 0.0000, 0.0000, 321.3253,0,-1,-1);
+	CreateDynamicObject(1226, -3465.913818, -2510.856445, 56.173607, 0.0000, 0.0000, 153.7351,0,-1,-1);
+	CreateDynamicObject(1257, -3485.759521, -2561.463135, 54.279648, 0.0000, 0.0000, 325.6225,0,-1,-1);
 	// cops spawn by doshka & maluda
 	CreateDynamicObject(19538, -1635.78784, 659.35510, 6.23723,   0.00000, 0.00000, 359.21326);
     CreateDynamicObject(655, -1572.96509, 655.30450, 6.21454,   0.00000, 0.00000, 0.00000);
@@ -45677,149 +45642,149 @@ public BuildObjects()
 	
 	
 	// city4
-	CreateDynamicObject(17927,5426.915039,-2239.931885,4.902738,0.000000,0.000000,-90.2408527331,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(618,5415.497559,-2266.279297,4.494958,0.000000,0.000000,0.000000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(618,5415.497559,-2253.279297,4.494958,0.000000,0.000000,0.000000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(618,5415.492676,-2241.446777,4.525938,0.000000,0.000000,0.000000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(618,5414.925781,-2221.355713,4.243308,0.000000,0.000000,0.000000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(5812,5413.161621,-2240.026611,3.706949,0.000000,0.000000,0.000000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(800,5414.631836,-2232.637451,4.707473,0.000000,0.000000,0.000000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(800,5414.696777,-2245.970459,2.956885,0.000000,0.000000,0.000000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(800,5414.904785,-2259.727783,4.213409,0.000000,0.000000,0.000000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1807,5415.490234,-2251.675537,4.869319,0.000000,0.000000,0.000000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1226,5427.488770,-2282.968018,7.661386,0.000000,0.000000,0.000000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1226,5427.343750,-2259.683105,7.398297,0.000000,0.000000,0.000000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1226,5427.471680,-2226.264404,7.420905,0.000000,0.000000,0.000000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1226,5427.432617,-2204.883057,7.420907,0.000000,0.000000,0.000000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1257,5429.791992,-2215.131104,4.825679,0.000000,0.000000,-180.481762762,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1283,5439.548828,-2195.330322,6.451453,0.000000,0.000000,0.000000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1340,5421.898926,-2216.856445,4.684682,0.000000,0.000000,-98.8352196601,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1342,5419.442383,-2272.114990,4.596464,0.000000,0.000000,0.000000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(6299,5412.246582,-2203.122803,5.906399,0.000000,0.000000,-90.2408527331,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3515,5410.648438,-2245.372314,2.382648,0.000000,0.000000,0.000000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(982,5398.959473,-2273.615234,4.185730,0.000000,0.000000,0.000000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(982,5399.027832,-2247.947510,4.233001,0.000000,0.000000,0.000000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(982,5399.033691,-2222.327637,4.232688,0.000000,0.000000,0.000000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(982,5399.067871,-2206.273193,4.251499,0.000000,0.000000,0.000000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(982,5411.922852,-2193.580322,4.247926,0.000000,0.000000,-90.2408527331,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(982,5411.824707,-2286.246826,4.161715,0.000000,0.000000,-89.3814160404,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(983,5401.894531,-2281.492432,4.222557,0.000000,0.000000,0.000000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(983,5405.090820,-2278.267334,4.222557,0.000000,0.000000,90.2408527331,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(983,5405.117676,-2284.667725,4.222557,0.000000,0.000000,90.2408527331,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(983,5408.313477,-2281.444580,4.246117,0.000000,0.859436692696,-0.859436692696,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3521,5405.173828,-2281.535156,5.061937,0.000000,0.000000,0.000000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(5189,5413.583496,-2182.365967,8.996927,0.000000,0.000000,-91.9597261185,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(17921,5448.050293,-2155.594238,3.647854,0.000000,0.000000,-180.481762762,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18242,5469.824707,-2160.101318,3.618221,0.000000,0.000000,0.000000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(8411,5459.702637,-2246.978760,-4.706079,0.000000,0.000000,269.003684814,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(11469,5454.044922,-2203.271240,3.821796,0.000000,0.000000,-180.481762762,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(17554,5429.922363,-2164.577148,20.805017,0.000000,0.000000,0.000000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(752,5435.420410,-2180.333984,4.098986,0.000000,0.000000,0.000000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(752,5433.668945,-2182.010498,3.098986,0.000000,0.000000,0.000000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(752,5431.922363,-2179.811768,4.406843,0.000000,0.000000,0.000000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(752,5431.172363,-2182.811768,2.906843,0.000000,0.000000,0.000000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(752,5431.172363,-2182.061768,4.406843,0.000000,0.000000,0.000000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(752,5430.292969,-2184.887451,4.098986,0.000000,0.000000,0.000000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(752,5429.757324,-2186.151367,3.841192,0.000000,0.000000,0.000000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(752,5429.762207,-2189.022461,3.098986,0.000000,0.000000,0.000000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(752,5465.246094,-2175.709717,4.057716,0.000000,0.000000,-73.0521188792,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(752,5464.521484,-2181.657715,3.723984,0.000000,0.000000,-73.0521188792,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(752,5462.516113,-2185.352295,3.748988,0.000000,0.000000,-103.991839816,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(752,5460.447754,-2188.213867,3.723984,0.000000,0.000000,-123.758941044,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(752,5457.112305,-2190.482178,3.598986,0.000000,0.000000,-123.758941044,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(752,5455.247070,-2192.581055,3.402205,0.000000,0.000000,-123.758941044,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(792,5430.370117,-2196.584473,3.792508,0.000000,0.000000,0.000000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1363,5446.286621,-2215.073486,4.582850,0.000000,0.000000,0.000000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(8229,5438.612305,-2285.496826,6.322718,0.000000,0.000000,-176.184579299,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(8229,5447.099121,-2274.031006,6.181022,0.000000,0.000000,-88.5219793477,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(17030,5445.883301,-2128.457520,-4.160812,0.000000,0.000000,-71.3332454938,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(906,5465.105469,-2142.103271,5.392971,0.000000,0.000000,0.000000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(906,5465.043945,-2138.368408,4.395511,0.000000,0.000000,0.000000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(906,5465.535645,-2134.678223,4.398927,0.000000,0.000000,0.000000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(906,5462.199219,-2121.329102,5.631088,0.000000,0.000000,81.6464858061,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(906,5465.265137,-2121.016846,1.492989,0.000000,0.000000,81.6464858061,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(906,5465.969238,-2120.648193,5.302791,0.000000,0.000000,81.6464858061,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(906,5466.330566,-2145.585449,4.482656,0.000000,0.000000,0.000000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(906,5465.938965,-2172.745605,4.129441,0.000000,0.000000,0.000000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(5191,5525.109863,-2117.198730,-2.132280,0.000000,0.000000,98.8352196601,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(17596,5650.027344,-2098.114258,3.707829,0.000000,0.000000,-81.6464858061,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3516,5580.964844,-2110.997559,7.132761,0.000000,0.000000,-79.9276124207,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1226,5511.287598,-2125.739258,6.859327,0.000000,0.000000,-85.9436692696,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(17537,5603.460938,-2122.269775,14.928219,0.000000,0.000000,-172.746889824,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(17526,5599.983398,-2086.468506,6.404025,0.000000,0.000000,-81.6464858061,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(17529,5637.112793,-2084.035400,7.835511,0.000000,0.000000,-81.6464858061,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(17522,5663.352051,-2079.400635,5.719702,0.000000,0.000000,-171.887395835,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(17521,5690.280273,-2072.811768,7.051445,0.000000,0.000000,8.59436692696,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(16475,5627.861816,-2119.379883,3.656466,0.000000,0.000000,10.3132403124,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(13013,5677.546387,-2112.288574,7.284744,0.000000,0.000000,-82.5059224988,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(971,5710.449219,-2113.753662,5.254663,0.000000,0.000000,-81.6464858061,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1267,5707.410156,-2113.253906,8.599438,0.000000,0.000000,-22.3453540101,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(8530,5446.442871,-2219.388916,8.760754,0.000000,0.000000,0.000000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3468,5615.503418,-2095.399414,4.496579,0.000000,0.000000,-83.3653591915,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1234,5430.562988,-2212.000732,4.631169,0.000000,0.000000,0.000000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1215,5408.707520,-2214.701660,4.509254,0.000000,0.000000,0.000000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1215,5409.004395,-2268.677979,4.509540,0.000000,0.000000,0.000000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(955,5401.232422,-2278.707275,3.933664,0.000000,0.000000,-177.044015991,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1776,5409.025391,-2278.623291,4.649897,0.000000,0.000000,-183.919509533,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1211,5428.822266,-2218.396729,4.357294,0.000000,0.000000,0.000000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(983,5709.074219,-2099.269775,4.469528,0.000000,0.000000,98.8352769558,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1231,5640.506348,-2106.152100,6.524159,0.000000,0.000000,0.000000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1231,5655.740723,-2090.623047,6.404798,0.000000,0.000000,0.000000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1283,5709.412109,-2090.349121,6.862814,0.000000,0.000000,-73.9115555719,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(17596,5771.339355,-2080.273926,3.693110,0.000000,0.000000,-81.6464285104,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(4176,5726.144531,-2065.840820,9.336946,0.000000,0.000000,7.73493023427,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(4683,5762.858398,-2106.000000,10.517022,0.000000,0.000000,8.59436692696,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(4894,5769.186523,-2056.099609,10.550310,0.000000,0.000000,-171.027959142,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(643,5780.713379,-2062.330322,4.243747,0.000000,0.000000,0.000000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(643,5790.758789,-2059.968506,4.243572,0.000000,0.000000,0.000000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(643,5784.166016,-2056.550293,4.244648,0.000000,0.000000,0.000000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(643,5785.979004,-2062.569824,4.243127,0.000000,0.000000,0.000000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(643,5790.317383,-2055.612305,4.245002,0.000000,0.000000,0.000000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(643,5779.636230,-2057.684082,4.244900,0.000000,0.000000,0.000000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1215,5790.109863,-2067.919678,4.343370,0.000000,0.000000,0.000000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1215,5783.867188,-2068.882813,4.343370,0.000000,0.000000,0.000000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3468,5790.829590,-2068.753174,4.481859,0.000000,0.000000,3.43774677078,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(6986,5609.311035,-2113.408203,22.564306,0.000000,0.000000,94.5380361966,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(8408,5704.173828,-2076.584473,14.047625,0.000000,0.000000,-47.2690180983,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(8581,5823.911621,-2099.965576,8.887544,0.000000,0.000000,-81.6464858061,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(12944,5818.681152,-2056.889893,3.768826,0.000000,0.000000,98.8352196601,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1553,5826.794922,-2060.763184,4.668683,0.000000,0.000000,10.3132403124,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(717,5795.394531,-2069.614990,3.926156,0.000000,0.000000,0.000000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(5184,5887.190430,-2051.029297,22.488825,0.000000,0.000000,7.73493023427,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3753,5877.993164,-2081.740967,-5.732483,0.000000,0.000000,-171.887395835,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(10830,5914.436035,-2035.674683,11.812511,0.000000,0.000000,-38.6746511713,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3255,5836.431641,-2033.117798,3.611010,0.000000,0.000000,1.71887338539,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3470,5850.520508,-2080.129150,2.085672,0.000000,1.71887338539,189.076129689,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(17020,5932.836914,-2035.495605,7.601662,0.000000,0.000000,6.87549354157,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3569,5877.355957,-2015.951660,6.219629,0.000000,0.000000,0.000000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3570,5866.628906,-2024.548462,4.953953,0.000000,0.000000,0.000000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3571,5867.005371,-2019.915527,4.953953,0.000000,0.000000,0.000000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3573,5864.702148,-2014.096680,6.297704,0.000000,0.000000,7.73493023427,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1383,5849.482422,-2020.264404,36.136314,0.000000,0.000000,6.01605684887,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1384,5849.388672,-2020.277344,68.233406,0.000000,0.000000,0.000000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(16337,5857.346680,-2025.250244,4.490728,0.000000,0.000000,98.8352196601,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(8263,5880.998047,-2005.539307,6.707039,0.000000,0.000000,7.73493023427,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(8210,5926.344727,-2066.681641,6.707039,0.000000,0.000000,8.59436692696,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(8210,5949.902832,-2036.748535,6.607039,0.000000,0.000000,97.1163462747,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(8210,5822.482422,-2035.381592,6.707037,0.000000,0.000000,90.2408527331,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1437,5878.357422,-2027.693726,4.593243,-25.7831007809,0.000000,0.000000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(16082,5873.703613,-2033.303589,7.653520,0.000000,0.000000,0.000000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(17596,5846.596191,-2136.437500,3.676864,0.000000,0.000000,-171.887338539,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(8390,5920.870605,-2119.320313,23.025623,0.000000,0.000000,-82.5059224988,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18240,5863.683594,-2182.323242,3.758660,0.000000,0.000000,-81.6464858061,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(4048,5829.506348,-2145.191162,15.627405,0.000000,0.000000,98.8352196601,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(4848,5838.826172,-2184.024658,7.134173,0.000000,0.000000,98.8352196601,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(972,5852.890625,-2191.794922,1.453416,0.000000,0.000000,-67.0361193261,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3264,5842.810059,-2074.288330,3.606012,0.000000,0.000000,-81.6464858061,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3265,5842.811035,-2073.194092,3.606012,0.000000,0.000000,-85.9436692696,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1682,5831.813965,-2051.912842,9.363436,0.000000,0.000000,-68.7549354157,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3881,5844.488770,-2069.516846,5.457577,0.000000,0.000000,6.01605684887,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3882,5844.612305,-2068.852295,4.603809,0.000000,0.000000,-83.3653591915,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(4874,5933.101074,-1971.827759,6.821972,0.000000,0.000000,-81.6464858061,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(966,5841.534668,-2065.902588,3.606012,0.000000,0.000000,6.01605684887,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(968,5834.626953,-2066.619141,4.363664,85.9436692696,0.000000,92.8191628112,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(971,5831.356445,-2063.550537,6.925930,0.000000,0.000000,-42.9718346348,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(971,5848.579102,-2075.299072,2.557717,0.000000,0.000000,-67.8955560188,0,-1,-1,STREAMER_OBJECT_DD);
+	CreateDynamicObject(17927,5426.915039,-2239.931885,4.902738,0.000000,0.000000,-90.2408527331,0,-1,-1);
+	CreateDynamicObject(618,5415.497559,-2266.279297,4.494958,0.000000,0.000000,0.000000,0,-1,-1);
+	CreateDynamicObject(618,5415.497559,-2253.279297,4.494958,0.000000,0.000000,0.000000,0,-1,-1);
+	CreateDynamicObject(618,5415.492676,-2241.446777,4.525938,0.000000,0.000000,0.000000,0,-1,-1);
+	CreateDynamicObject(618,5414.925781,-2221.355713,4.243308,0.000000,0.000000,0.000000,0,-1,-1);
+	CreateDynamicObject(5812,5413.161621,-2240.026611,3.706949,0.000000,0.000000,0.000000,0,-1,-1);
+	CreateDynamicObject(800,5414.631836,-2232.637451,4.707473,0.000000,0.000000,0.000000,0,-1,-1);
+	CreateDynamicObject(800,5414.696777,-2245.970459,2.956885,0.000000,0.000000,0.000000,0,-1,-1);
+	CreateDynamicObject(800,5414.904785,-2259.727783,4.213409,0.000000,0.000000,0.000000,0,-1,-1);
+	CreateDynamicObject(1807,5415.490234,-2251.675537,4.869319,0.000000,0.000000,0.000000,0,-1,-1);
+	CreateDynamicObject(1226,5427.488770,-2282.968018,7.661386,0.000000,0.000000,0.000000,0,-1,-1);
+	CreateDynamicObject(1226,5427.343750,-2259.683105,7.398297,0.000000,0.000000,0.000000,0,-1,-1);
+	CreateDynamicObject(1226,5427.471680,-2226.264404,7.420905,0.000000,0.000000,0.000000,0,-1,-1);
+	CreateDynamicObject(1226,5427.432617,-2204.883057,7.420907,0.000000,0.000000,0.000000,0,-1,-1);
+	CreateDynamicObject(1257,5429.791992,-2215.131104,4.825679,0.000000,0.000000,-180.481762762,0,-1,-1);
+	CreateDynamicObject(1283,5439.548828,-2195.330322,6.451453,0.000000,0.000000,0.000000,0,-1,-1);
+	CreateDynamicObject(1340,5421.898926,-2216.856445,4.684682,0.000000,0.000000,-98.8352196601,0,-1,-1);
+	CreateDynamicObject(1342,5419.442383,-2272.114990,4.596464,0.000000,0.000000,0.000000,0,-1,-1);
+	CreateDynamicObject(6299,5412.246582,-2203.122803,5.906399,0.000000,0.000000,-90.2408527331,0,-1,-1);
+	CreateDynamicObject(3515,5410.648438,-2245.372314,2.382648,0.000000,0.000000,0.000000,0,-1,-1);
+	CreateDynamicObject(982,5398.959473,-2273.615234,4.185730,0.000000,0.000000,0.000000,0,-1,-1);
+	CreateDynamicObject(982,5399.027832,-2247.947510,4.233001,0.000000,0.000000,0.000000,0,-1,-1);
+	CreateDynamicObject(982,5399.033691,-2222.327637,4.232688,0.000000,0.000000,0.000000,0,-1,-1);
+	CreateDynamicObject(982,5399.067871,-2206.273193,4.251499,0.000000,0.000000,0.000000,0,-1,-1);
+	CreateDynamicObject(982,5411.922852,-2193.580322,4.247926,0.000000,0.000000,-90.2408527331,0,-1,-1);
+	CreateDynamicObject(982,5411.824707,-2286.246826,4.161715,0.000000,0.000000,-89.3814160404,0,-1,-1);
+	CreateDynamicObject(983,5401.894531,-2281.492432,4.222557,0.000000,0.000000,0.000000,0,-1,-1);
+	CreateDynamicObject(983,5405.090820,-2278.267334,4.222557,0.000000,0.000000,90.2408527331,0,-1,-1);
+	CreateDynamicObject(983,5405.117676,-2284.667725,4.222557,0.000000,0.000000,90.2408527331,0,-1,-1);
+	CreateDynamicObject(983,5408.313477,-2281.444580,4.246117,0.000000,0.859436692696,-0.859436692696,0,-1,-1);
+	CreateDynamicObject(3521,5405.173828,-2281.535156,5.061937,0.000000,0.000000,0.000000,0,-1,-1);
+	CreateDynamicObject(5189,5413.583496,-2182.365967,8.996927,0.000000,0.000000,-91.9597261185,0,-1,-1);
+	CreateDynamicObject(17921,5448.050293,-2155.594238,3.647854,0.000000,0.000000,-180.481762762,0,-1,-1);
+	CreateDynamicObject(18242,5469.824707,-2160.101318,3.618221,0.000000,0.000000,0.000000,0,-1,-1);
+	CreateDynamicObject(8411,5459.702637,-2246.978760,-4.706079,0.000000,0.000000,269.003684814,0,-1,-1);
+	CreateDynamicObject(11469,5454.044922,-2203.271240,3.821796,0.000000,0.000000,-180.481762762,0,-1,-1);
+	CreateDynamicObject(17554,5429.922363,-2164.577148,20.805017,0.000000,0.000000,0.000000,0,-1,-1);
+	CreateDynamicObject(752,5435.420410,-2180.333984,4.098986,0.000000,0.000000,0.000000,0,-1,-1);
+	CreateDynamicObject(752,5433.668945,-2182.010498,3.098986,0.000000,0.000000,0.000000,0,-1,-1);
+	CreateDynamicObject(752,5431.922363,-2179.811768,4.406843,0.000000,0.000000,0.000000,0,-1,-1);
+	CreateDynamicObject(752,5431.172363,-2182.811768,2.906843,0.000000,0.000000,0.000000,0,-1,-1);
+	CreateDynamicObject(752,5431.172363,-2182.061768,4.406843,0.000000,0.000000,0.000000,0,-1,-1);
+	CreateDynamicObject(752,5430.292969,-2184.887451,4.098986,0.000000,0.000000,0.000000,0,-1,-1);
+	CreateDynamicObject(752,5429.757324,-2186.151367,3.841192,0.000000,0.000000,0.000000,0,-1,-1);
+	CreateDynamicObject(752,5429.762207,-2189.022461,3.098986,0.000000,0.000000,0.000000,0,-1,-1);
+	CreateDynamicObject(752,5465.246094,-2175.709717,4.057716,0.000000,0.000000,-73.0521188792,0,-1,-1);
+	CreateDynamicObject(752,5464.521484,-2181.657715,3.723984,0.000000,0.000000,-73.0521188792,0,-1,-1);
+	CreateDynamicObject(752,5462.516113,-2185.352295,3.748988,0.000000,0.000000,-103.991839816,0,-1,-1);
+	CreateDynamicObject(752,5460.447754,-2188.213867,3.723984,0.000000,0.000000,-123.758941044,0,-1,-1);
+	CreateDynamicObject(752,5457.112305,-2190.482178,3.598986,0.000000,0.000000,-123.758941044,0,-1,-1);
+	CreateDynamicObject(752,5455.247070,-2192.581055,3.402205,0.000000,0.000000,-123.758941044,0,-1,-1);
+	CreateDynamicObject(792,5430.370117,-2196.584473,3.792508,0.000000,0.000000,0.000000,0,-1,-1);
+	CreateDynamicObject(1363,5446.286621,-2215.073486,4.582850,0.000000,0.000000,0.000000,0,-1,-1);
+	CreateDynamicObject(8229,5438.612305,-2285.496826,6.322718,0.000000,0.000000,-176.184579299,0,-1,-1);
+	CreateDynamicObject(8229,5447.099121,-2274.031006,6.181022,0.000000,0.000000,-88.5219793477,0,-1,-1);
+	CreateDynamicObject(17030,5445.883301,-2128.457520,-4.160812,0.000000,0.000000,-71.3332454938,0,-1,-1);
+	CreateDynamicObject(906,5465.105469,-2142.103271,5.392971,0.000000,0.000000,0.000000,0,-1,-1);
+	CreateDynamicObject(906,5465.043945,-2138.368408,4.395511,0.000000,0.000000,0.000000,0,-1,-1);
+	CreateDynamicObject(906,5465.535645,-2134.678223,4.398927,0.000000,0.000000,0.000000,0,-1,-1);
+	CreateDynamicObject(906,5462.199219,-2121.329102,5.631088,0.000000,0.000000,81.6464858061,0,-1,-1);
+	CreateDynamicObject(906,5465.265137,-2121.016846,1.492989,0.000000,0.000000,81.6464858061,0,-1,-1);
+	CreateDynamicObject(906,5465.969238,-2120.648193,5.302791,0.000000,0.000000,81.6464858061,0,-1,-1);
+	CreateDynamicObject(906,5466.330566,-2145.585449,4.482656,0.000000,0.000000,0.000000,0,-1,-1);
+	CreateDynamicObject(906,5465.938965,-2172.745605,4.129441,0.000000,0.000000,0.000000,0,-1,-1);
+	CreateDynamicObject(5191,5525.109863,-2117.198730,-2.132280,0.000000,0.000000,98.8352196601,0,-1,-1);
+	CreateDynamicObject(17596,5650.027344,-2098.114258,3.707829,0.000000,0.000000,-81.6464858061,0,-1,-1);
+	CreateDynamicObject(3516,5580.964844,-2110.997559,7.132761,0.000000,0.000000,-79.9276124207,0,-1,-1);
+	CreateDynamicObject(1226,5511.287598,-2125.739258,6.859327,0.000000,0.000000,-85.9436692696,0,-1,-1);
+	CreateDynamicObject(17537,5603.460938,-2122.269775,14.928219,0.000000,0.000000,-172.746889824,0,-1,-1);
+	CreateDynamicObject(17526,5599.983398,-2086.468506,6.404025,0.000000,0.000000,-81.6464858061,0,-1,-1);
+	CreateDynamicObject(17529,5637.112793,-2084.035400,7.835511,0.000000,0.000000,-81.6464858061,0,-1,-1);
+	CreateDynamicObject(17522,5663.352051,-2079.400635,5.719702,0.000000,0.000000,-171.887395835,0,-1,-1);
+	CreateDynamicObject(17521,5690.280273,-2072.811768,7.051445,0.000000,0.000000,8.59436692696,0,-1,-1);
+	CreateDynamicObject(16475,5627.861816,-2119.379883,3.656466,0.000000,0.000000,10.3132403124,0,-1,-1);
+	CreateDynamicObject(13013,5677.546387,-2112.288574,7.284744,0.000000,0.000000,-82.5059224988,0,-1,-1);
+	CreateDynamicObject(971,5710.449219,-2113.753662,5.254663,0.000000,0.000000,-81.6464858061,0,-1,-1);
+	CreateDynamicObject(1267,5707.410156,-2113.253906,8.599438,0.000000,0.000000,-22.3453540101,0,-1,-1);
+	CreateDynamicObject(8530,5446.442871,-2219.388916,8.760754,0.000000,0.000000,0.000000,0,-1,-1);
+	CreateDynamicObject(3468,5615.503418,-2095.399414,4.496579,0.000000,0.000000,-83.3653591915,0,-1,-1);
+	CreateDynamicObject(1234,5430.562988,-2212.000732,4.631169,0.000000,0.000000,0.000000,0,-1,-1);
+	CreateDynamicObject(1215,5408.707520,-2214.701660,4.509254,0.000000,0.000000,0.000000,0,-1,-1);
+	CreateDynamicObject(1215,5409.004395,-2268.677979,4.509540,0.000000,0.000000,0.000000,0,-1,-1);
+	CreateDynamicObject(955,5401.232422,-2278.707275,3.933664,0.000000,0.000000,-177.044015991,0,-1,-1);
+	CreateDynamicObject(1776,5409.025391,-2278.623291,4.649897,0.000000,0.000000,-183.919509533,0,-1,-1);
+	CreateDynamicObject(1211,5428.822266,-2218.396729,4.357294,0.000000,0.000000,0.000000,0,-1,-1);
+	CreateDynamicObject(983,5709.074219,-2099.269775,4.469528,0.000000,0.000000,98.8352769558,0,-1,-1);
+	CreateDynamicObject(1231,5640.506348,-2106.152100,6.524159,0.000000,0.000000,0.000000,0,-1,-1);
+	CreateDynamicObject(1231,5655.740723,-2090.623047,6.404798,0.000000,0.000000,0.000000,0,-1,-1);
+	CreateDynamicObject(1283,5709.412109,-2090.349121,6.862814,0.000000,0.000000,-73.9115555719,0,-1,-1);
+	CreateDynamicObject(17596,5771.339355,-2080.273926,3.693110,0.000000,0.000000,-81.6464285104,0,-1,-1);
+	CreateDynamicObject(4176,5726.144531,-2065.840820,9.336946,0.000000,0.000000,7.73493023427,0,-1,-1);
+	CreateDynamicObject(4683,5762.858398,-2106.000000,10.517022,0.000000,0.000000,8.59436692696,0,-1,-1);
+	CreateDynamicObject(4894,5769.186523,-2056.099609,10.550310,0.000000,0.000000,-171.027959142,0,-1,-1);
+	CreateDynamicObject(643,5780.713379,-2062.330322,4.243747,0.000000,0.000000,0.000000,0,-1,-1);
+	CreateDynamicObject(643,5790.758789,-2059.968506,4.243572,0.000000,0.000000,0.000000,0,-1,-1);
+	CreateDynamicObject(643,5784.166016,-2056.550293,4.244648,0.000000,0.000000,0.000000,0,-1,-1);
+	CreateDynamicObject(643,5785.979004,-2062.569824,4.243127,0.000000,0.000000,0.000000,0,-1,-1);
+	CreateDynamicObject(643,5790.317383,-2055.612305,4.245002,0.000000,0.000000,0.000000,0,-1,-1);
+	CreateDynamicObject(643,5779.636230,-2057.684082,4.244900,0.000000,0.000000,0.000000,0,-1,-1);
+	CreateDynamicObject(1215,5790.109863,-2067.919678,4.343370,0.000000,0.000000,0.000000,0,-1,-1);
+	CreateDynamicObject(1215,5783.867188,-2068.882813,4.343370,0.000000,0.000000,0.000000,0,-1,-1);
+	CreateDynamicObject(3468,5790.829590,-2068.753174,4.481859,0.000000,0.000000,3.43774677078,0,-1,-1);
+	CreateDynamicObject(6986,5609.311035,-2113.408203,22.564306,0.000000,0.000000,94.5380361966,0,-1,-1);
+	CreateDynamicObject(8408,5704.173828,-2076.584473,14.047625,0.000000,0.000000,-47.2690180983,0,-1,-1);
+	CreateDynamicObject(8581,5823.911621,-2099.965576,8.887544,0.000000,0.000000,-81.6464858061,0,-1,-1);
+	CreateDynamicObject(12944,5818.681152,-2056.889893,3.768826,0.000000,0.000000,98.8352196601,0,-1,-1);
+	CreateDynamicObject(1553,5826.794922,-2060.763184,4.668683,0.000000,0.000000,10.3132403124,0,-1,-1);
+	CreateDynamicObject(717,5795.394531,-2069.614990,3.926156,0.000000,0.000000,0.000000,0,-1,-1);
+	CreateDynamicObject(5184,5887.190430,-2051.029297,22.488825,0.000000,0.000000,7.73493023427,0,-1,-1);
+	CreateDynamicObject(3753,5877.993164,-2081.740967,-5.732483,0.000000,0.000000,-171.887395835,0,-1,-1);
+	CreateDynamicObject(10830,5914.436035,-2035.674683,11.812511,0.000000,0.000000,-38.6746511713,0,-1,-1);
+	CreateDynamicObject(3255,5836.431641,-2033.117798,3.611010,0.000000,0.000000,1.71887338539,0,-1,-1);
+	CreateDynamicObject(3470,5850.520508,-2080.129150,2.085672,0.000000,1.71887338539,189.076129689,0,-1,-1);
+	CreateDynamicObject(17020,5932.836914,-2035.495605,7.601662,0.000000,0.000000,6.87549354157,0,-1,-1);
+	CreateDynamicObject(3569,5877.355957,-2015.951660,6.219629,0.000000,0.000000,0.000000,0,-1,-1);
+	CreateDynamicObject(3570,5866.628906,-2024.548462,4.953953,0.000000,0.000000,0.000000,0,-1,-1);
+	CreateDynamicObject(3571,5867.005371,-2019.915527,4.953953,0.000000,0.000000,0.000000,0,-1,-1);
+	CreateDynamicObject(3573,5864.702148,-2014.096680,6.297704,0.000000,0.000000,7.73493023427,0,-1,-1);
+	CreateDynamicObject(1383,5849.482422,-2020.264404,36.136314,0.000000,0.000000,6.01605684887,0,-1,-1);
+	CreateDynamicObject(1384,5849.388672,-2020.277344,68.233406,0.000000,0.000000,0.000000,0,-1,-1);
+	CreateDynamicObject(16337,5857.346680,-2025.250244,4.490728,0.000000,0.000000,98.8352196601,0,-1,-1);
+	CreateDynamicObject(8263,5880.998047,-2005.539307,6.707039,0.000000,0.000000,7.73493023427,0,-1,-1);
+	CreateDynamicObject(8210,5926.344727,-2066.681641,6.707039,0.000000,0.000000,8.59436692696,0,-1,-1);
+	CreateDynamicObject(8210,5949.902832,-2036.748535,6.607039,0.000000,0.000000,97.1163462747,0,-1,-1);
+	CreateDynamicObject(8210,5822.482422,-2035.381592,6.707037,0.000000,0.000000,90.2408527331,0,-1,-1);
+	CreateDynamicObject(1437,5878.357422,-2027.693726,4.593243,-25.7831007809,0.000000,0.000000,0,-1,-1);
+	CreateDynamicObject(16082,5873.703613,-2033.303589,7.653520,0.000000,0.000000,0.000000,0,-1,-1);
+	CreateDynamicObject(17596,5846.596191,-2136.437500,3.676864,0.000000,0.000000,-171.887338539,0,-1,-1);
+	CreateDynamicObject(8390,5920.870605,-2119.320313,23.025623,0.000000,0.000000,-82.5059224988,0,-1,-1);
+	CreateDynamicObject(18240,5863.683594,-2182.323242,3.758660,0.000000,0.000000,-81.6464858061,0,-1,-1);
+	CreateDynamicObject(4048,5829.506348,-2145.191162,15.627405,0.000000,0.000000,98.8352196601,0,-1,-1);
+	CreateDynamicObject(4848,5838.826172,-2184.024658,7.134173,0.000000,0.000000,98.8352196601,0,-1,-1);
+	CreateDynamicObject(972,5852.890625,-2191.794922,1.453416,0.000000,0.000000,-67.0361193261,0,-1,-1);
+	CreateDynamicObject(3264,5842.810059,-2074.288330,3.606012,0.000000,0.000000,-81.6464858061,0,-1,-1);
+	CreateDynamicObject(3265,5842.811035,-2073.194092,3.606012,0.000000,0.000000,-85.9436692696,0,-1,-1);
+	CreateDynamicObject(1682,5831.813965,-2051.912842,9.363436,0.000000,0.000000,-68.7549354157,0,-1,-1);
+	CreateDynamicObject(3881,5844.488770,-2069.516846,5.457577,0.000000,0.000000,6.01605684887,0,-1,-1);
+	CreateDynamicObject(3882,5844.612305,-2068.852295,4.603809,0.000000,0.000000,-83.3653591915,0,-1,-1);
+	CreateDynamicObject(4874,5933.101074,-1971.827759,6.821972,0.000000,0.000000,-81.6464858061,0,-1,-1);
+	CreateDynamicObject(966,5841.534668,-2065.902588,3.606012,0.000000,0.000000,6.01605684887,0,-1,-1);
+	CreateDynamicObject(968,5834.626953,-2066.619141,4.363664,85.9436692696,0.000000,92.8191628112,0,-1,-1);
+	CreateDynamicObject(971,5831.356445,-2063.550537,6.925930,0.000000,0.000000,-42.9718346348,0,-1,-1);
+	CreateDynamicObject(971,5848.579102,-2075.299072,2.557717,0.000000,0.000000,-67.8955560188,0,-1,-1);
 	
 	// SFA Stunts by Doshka (Improved)
     CreateDynamicObject(18779, -1448.16797, -118.11297, 22.99723,   0.00000, 0.00000, 155.08009);
@@ -46032,405 +45997,405 @@ public BuildObjects()
     
 	// twister (Hitman)
 	
-	CreateDynamicObject(18450, 553.5003, -82.5913, 437.7818, 0.0000, 36.9558, 0.0000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18450, 616.5524, -82.6003, 390.3616, 0.0000, 36.9558, 0.0000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18450, 680.1129, -82.6018, 342.5417, 0.0000, 36.9558, 0.0000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18450, 735.1129, -82.5996, 330.5417, 0.0000, 0.0000, 0.0000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18450, 742.9346, -82.7075, 331.1572, 0.1509, 351.0000, 359.0474,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18450, 750.5638, -83.0305, 332.9888, 0.5961, 342.0000, 358.1654,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18450, 757.8124, -83.5667, 335.9913, 1.3136, 333.0000, 357.4219,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18450, 764.5022, -84.3127, 340.0908, 2.2677, 324.0000, 356.8788,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18450, 770.4683, -85.2639, 345.1863, 3.4100, 315.0000, 356.5900,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18450, 775.5638, -86.4143, 351.1524, 4.6818, 306.0000, 356.5985,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18450, 779.6633, -87.7573, 357.8421, 6.0157, 297.0000, 356.9348,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18450, 782.6658, -89.2839, 365.0908, 7.3384, 288.0000, 357.6156,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18450, 784.4973, -90.9854, 372.7199, 8.5736, 279.0000, 358.6421,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18450, 785.1129, -92.8508, 380.5417, 9.6450, 270.0000, 0.0000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18450, 784.4973, -94.8689, 388.3634, 10.4789, 261.0000, 1.6597,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18450, 782.6657, -97.0273, 395.9925, 11.0076, 252.0000, 3.5766,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18450, 779.6633, -99.3120, 403.2412, 11.1719, 243.0000, 5.6924,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18450, 775.5638, -101.7100, 409.9309, 10.9242, 234.0000, 7.9369,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18450, 770.4683, -104.2056, 415.8970, 10.2301, 225.0000, 10.2301,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18450, 764.5022, -106.7842, 420.9925, 9.0707, 216.0000, 12.4848,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18450, 757.8124, -109.4292, 425.0920, 7.4439, 207.0000, 14.6094,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18450, 750.5638, -112.1245, 428.0945, 5.3648, 198.0000, 16.5113,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18450, 742.9346, -114.8535, 429.9261, 2.8667, 189.0000, 18.0999,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18450, 735.1129, -117.5996, 430.5417, 0.0000, 180.0000, 19.2901,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18450, 727.2912, -120.3457, 429.9261, 357.1333, 171.0000, 18.0999,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18450, 719.6620, -123.0747, 428.0945, 354.6352, 162.0000, 16.5113,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18450, 712.4134, -125.7700, 425.0920, 352.5561, 153.0000, 14.6094,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18450, 705.7236, -128.4150, 420.9925, 350.9293, 144.0000, 12.4848,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18450, 699.7576, -130.9937, 415.8970, 349.7699, 135.0000, 10.2301,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18450, 694.6620, -133.4893, 409.9309, 349.0758, 126.0000, 7.9369,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18450, 690.5626, -135.8872, 403.2412, 348.8281, 117.0000, 5.6924,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18450, 687.5601, -138.1719, 395.9925, 348.9924, 108.0000, 3.5766,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18450, 685.7285, -140.3301, 388.3634, 349.5211, 99.0000, 1.6597,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18450, 685.1129, -142.3481, 380.5417, 350.3550, 90.0000, 0.0000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18450, 685.7285, -144.2139, 372.7199, 351.4264, 81.0000, 358.6421,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18450, 687.5601, -145.9150, 365.0908, 352.6616, 72.0000, 357.6156,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18450, 690.5626, -147.4419, 357.8421, 353.9843, 63.0000, 356.9348,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18450, 694.6620, -148.7847, 351.1524, 355.3182, 54.0000, 356.5985,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18450, 699.7576, -149.9355, 345.1863, 356.5900, 45.0000, 356.5900,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18450, 705.7236, -150.8867, 340.0908, 357.7323, 36.0000, 356.8788,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18450, 712.4134, -151.6323, 335.9913, 358.6864, 27.0000, 357.4219,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18450, 719.6620, -152.1689, 332.9888, 359.4039, 18.0000, 358.1654,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18450, 727.2912, -152.4917, 331.1572, 359.8491, 9.0000, 359.0474,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18450, 697.7601, -82.6326, 336.7147, 0.0000, 16.3293, 0.0000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18450, 718.7543, -82.6394, 331.7536, 0.0000, 7.7349, 0.0000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18450, 676.1064, -82.6167, 345.8299, 0.0000, 24.0642, 0.0000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18450, 677.3790, -82.6135, 345.6038, 0.0000, 28.3614, 0.0000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18450, 707.7369, -82.6375, 333.9504, 0.0000, 12.0321, 0.0000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18450, 675.0910, -82.6252, 346.9226, 0.0000, 30.9397, 0.0000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18450, 692.8816, -82.6294, 338.5391, 0.0000, 19.7670, 0.0000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18450, 675.2898, -82.6199, 346.7725, 0.0000, 32.6586, 0.0000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18450, 489.9696, -82.5801, 485.5832, 0.0000, 36.9558, 0.0000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18450, 426.7872, -82.5884, 533.1097, 0.0000, 36.9558, 0.0000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18450, 355.0431, -82.5830, 557.0816, 0.0000, 0.0000, 0.0000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18450, 804.9330, -153.8135, 318.8557, 359.8491, 9.0000, 359.0474,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18450, 804.9330, -153.8135, 318.8557, 0.0000, 0.0000, 0.0000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18450, 809.9463, -153.8232, 319.1711, 0.0179, 352.8000, 359.8581,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18450, 814.8806, -153.8530, 320.1124, 0.0712, 345.6000, 359.7229,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18450, 819.6580, -153.9019, 321.6647, 0.1580, 338.4000, 359.6010,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18450, 824.2031, -153.9707, 323.8035, 0.2756, 331.2000, 359.4985,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18450, 828.4444, -154.0581, 326.4951, 0.4204, 324.0000, 359.4213,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18450, 832.3149, -154.1646, 329.6970, 0.5876, 316.8000, 359.3743,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18450, 835.7535, -154.2896, 333.3588, 0.7715, 309.6000, 359.3617,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18450, 838.7061, -154.4321, 337.4227, 0.9663, 302.4000, 359.3868,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18450, 841.1260, -154.5918, 341.8246, 1.1649, 295.2000, 359.4518,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18450, 842.9752, -154.7686, 346.4951, 1.3605, 288.0000, 359.5580,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18450, 844.2245, -154.9609, 351.3605, 1.5457, 280.8000, 359.7052,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3095, 855.9197, -152.5977, 390.2198, 1.7189, 0.0000, 0.0000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3095, 855.9330, -159.5430, 390.0218, 1.7189, 0.0000, 0.0000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18450, 874.5787, -156.8101, 353.1491, 0.0000, 68.7549, 0.0000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18450, 916.4086, -156.3423, 255.1765, 356.1113, 54.0000, 357.1747,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18450, 921.5041, -157.1094, 249.2354, 356.5012, 45.0000, 356.5012,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18450, 927.4702, -157.8823, 244.1399, 357.0085, 36.0000, 355.8826,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18450, 934.1599, -158.6606, 240.0404, 357.6253, 27.0000, 355.3393,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18450, 941.4086, -159.4419, 237.0379, 358.3399, 18.0000, 354.8907,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18450, 949.0377, -160.2261, 235.2063, 359.1375, 9.0000, 354.5543,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18450, 956.8594, -161.0112, 234.5908, 0.0000, 0.0000, 354.3450,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18450, 964.6812, -161.7964, 235.2063, 0.8625, 351.0000, 354.5543,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18450, 972.3103, -162.5806, 237.0379, 1.6601, 342.0000, 354.8907,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18450, 979.5590, -163.3618, 240.0404, 2.3747, 333.0000, 355.3393,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18450, 986.2487, -164.1401, 244.1399, 2.9915, 324.0000, 355.8826,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18450, 992.2148, -164.9131, 249.2354, 3.4988, 315.0000, 356.5012,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18450, 997.3103, -165.6802, 255.2015, 3.8887, 306.0000, 357.1747,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18450, 1001.4098, -166.4399, 261.8912, 4.1569, 297.0000, 357.8820,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18450, 1004.4123, -167.1914, 269.1399, 4.3026, 288.0000, 358.6020,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18450, 1006.2438, -167.9336, 276.7690, 4.3286, 279.0000, 359.3144,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18450, 1006.8594, -168.6650, 284.5908, 4.2412, 270.0000, 0.0000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18450, 1006.2438, -169.3843, 292.4125, 4.0494, 261.0000, 0.6414,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18450, 1004.4122, -170.0908, 300.0416, 3.7647, 252.0000, 1.2233,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18450, 1001.4098, -170.7837, 307.2903, 3.4011, 243.0000, 1.7329,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18450, 997.3103, -171.4614, 313.9800, 2.9737, 234.0000, 2.1605,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18450, 992.2148, -172.1226, 319.9461, 2.4992, 225.0000, 2.4992,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18450, 986.2487, -172.7671, 325.0416, 1.9944, 216.0000, 2.7450,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18450, 904.5354, -156.5425, 280.8014, 0.0000, 66.1766, 0.8594,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18450, 937.0660, -174.0830, 315.6768, 0.0000, 347.1084, 359.1406,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18450, 889.9211, -174.2622, 302.9003, 357.2414, 128.0914, 1.2981,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18450, 887.5974, -174.7700, 301.2982, 357.3796, 100.8000, 0.4998,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18450, 887.1252, -175.2280, 293.7931, 357.7180, 86.4000, 359.8564,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18450, 888.5343, -175.6279, 286.4063, 358.1878, 72.0000, 359.4112,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18450, 891.7361, -175.9644, 279.6020, 358.7129, 57.6000, 359.1832,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18450, 896.5295, -176.2319, 273.8077, 359.2174, 43.2000, 359.1666,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18450, 902.6133, -176.4258, 269.3876, 359.6328, 28.8000, 359.3321,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18450, 909.6053, -176.5435, 266.6193, 359.9052, 14.4000, 359.6309,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18450, 933.2430, -178.1240, 264.5322, 0.0000, 3.4377, 355.7028,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18450, 978.4335, -181.3286, 262.1100, 0.0000, 0.8594, 357.4217,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18450, 1037.5753, -183.0098, 262.2126, 0.0000, 358.2811, 0.0000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18450, 1180.5320, -183.3281, 228.9525, 0.0000, 18.9076, 0.0000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18450, 1254.5227, -183.3042, 203.6059, 0.0000, 18.9076, 0.0000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18450, 1328.4685, -183.2905, 178.2718, 0.0000, 18.9076, 0.0000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18450, 1400.7626, -183.8584, 153.5043, 0.0000, 18.9076, 359.1406,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18450, 1391.7327, -183.7959, 157.6969, 358.5001, 15.0000, 359.4021,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18450, 1396.2087, -183.8931, 156.8038, 359.2271, 7.5000, 359.1293,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18450, 1400.7626, -183.9839, 156.5043, 0.0000, 0.0000, 358.9526,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18450, 1405.3164, -184.0747, 156.8038, 0.7729, 352.5000, 359.1293,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18450, 1409.7925, -184.1719, 157.6969, 1.4999, 345.0000, 359.4021,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18450, 1414.1140, -184.2813, 159.1685, 2.1696, 337.5000, 359.7622,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18450, 1418.2074, -184.4092, 161.1935, 2.7717, 330.0000, 0.1993,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18450, 1422.0023, -184.5610, 163.7370, 3.2979, 322.5000, 0.7020,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18450, 1425.4341, -184.7422, 166.7556, 3.7416, 315.0000, 1.2584,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18450, 1428.4441, -184.9570, 170.1977, 4.0980, 307.5000, 1.8555,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18450, 1430.9807, -185.2095, 174.0043, 4.3643, 300.0000, 2.4803,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18450, 1433.0006, -185.5034, 178.1104, 4.5395, 292.5000, 3.1197,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18450, 1434.4694, -185.8408, 182.4457, 4.6244, 285.0000, 3.7609,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18450, 1435.3618, -186.2231, 186.9359, 4.6216, 277.5000, 4.3915,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18450, 1435.6627, -186.6519, 191.5043, 4.5355, 270.0000, 5.0000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18450, 1435.3671, -187.1265, 196.0728, 4.3718, 262.5000, 5.5756,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18450, 1434.4799, -187.6465, 200.5630, 4.1376, 255.0000, 6.1086,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18450, 1433.0164, -188.2095, 204.8982, 3.8411, 247.5000, 6.5910,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18450, 1431.0017, -188.8135, 209.0043, 3.4914, 240.0000, 7.0158,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18450, 1428.4703, -189.4546, 212.8110, 3.0985, 232.5000, 7.3776,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18450, 1425.4656, -190.1289, 216.2531, 2.6726, 225.0000, 7.6726,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18450, 1422.0389, -190.8306, 219.2717, 2.2242, 217.5000, 7.8986,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18450, 1418.2490, -191.5552, 221.8152, 1.7638, 210.0000, 8.0550,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18450, 1414.1608, -192.2964, 223.8401, 1.3018, 202.5000, 8.1427,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18450, 1409.8442, -193.0469, 225.3117, 0.8478, 195.0000, 8.1641,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18450, 1405.3732, -193.8008, 226.2049, 0.4111, 187.5000, 8.1227,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18450, 1400.8242, -194.5503, 226.5043, 0.0000, 180.0000, 8.0237,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18450, 1396.2751, -195.2886, 226.2049, 359.6218, 172.5000, 7.8729,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18450, 1391.8038, -196.0083, 225.3117, 359.2826, 165.0000, 7.6773,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18450, 1387.4869, -196.7021, 223.8401, 358.9875, 157.5000, 7.4443,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18450, 1383.3983, -197.3643, 221.8152, 358.7401, 150.0000, 7.1821,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18450, 1379.6079, -197.9873, 219.2717, 358.5428, 142.5000, 6.8991,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18450, 1376.1804, -198.5654, 216.2531, 358.3965, 135.0000, 6.6036,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18450, 1373.1749, -199.0938, 212.8110, 358.3008, 127.5000, 6.3039,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18450, 1370.6425, -199.5664, 209.0043, 358.2543, 120.0000, 6.0079,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18450, 1368.6267, -199.9805, 204.8983, 358.2540, 112.5000, 5.7232,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18450, 1367.1620, -200.3325, 200.5630, 358.2963, 105.0000, 5.4565,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18450, 1366.2734, -200.6191, 196.0728, 358.3762, 97.5000, 5.2138,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18450, 1365.9763, -200.8398, 191.5043, 358.4881, 90.0000, 5.0000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18450, 1366.2756, -200.9937, 186.9359, 358.6260, 82.5000, 4.8191,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18450, 1367.1664, -201.0801, 182.4457, 358.7830, 75.0000, 4.6739,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18450, 1368.6332, -201.1016, 178.1104, 358.9524, 67.5000, 4.5661,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18450, 1399.1293, -199.9961, 106.0779, 358.9524, 66.6405, 4.5661,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18450, 1422.4006, -199.9336, 57.2685, 358.6856, 63.0000, 1.3302,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18450, 1425.9048, -200.0088, 51.9167, 358.7703, 54.0000, 1.1066,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18450, 1429.9801, -200.0581, 47.1438, 358.8936, 45.0000, 0.8936,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18450, 1434.7513, -200.0850, 43.0674, 359.0540, 36.0000, 0.6980,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18450, 1440.1012, -200.0923, 39.7878, 359.2491, 27.0000, 0.5262,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18450, 1445.8981, -200.0854, 37.3858, 359.4751, 18.0000, 0.3844,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18450, 1451.9990, -200.0679, 35.9205, 359.7273, 9.0000, 0.2780,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18450, 1458.2539, -200.0459, 35.4281, 0.0000, 0.0000, 0.2118,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18450, 1464.5088, -200.0239, 35.9205, 0.2727, 351.0000, 0.2780,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18450, 1470.6097, -200.0063, 37.3858, 0.5249, 342.0000, 0.3844,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18450, 1476.4066, -199.9995, 39.7878, 0.7509, 333.0000, 0.5262,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18450, 1481.7565, -200.0068, 43.0674, 0.9460, 324.0000, 0.6980,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18450, 1486.5277, -200.0337, 47.1438, 1.1064, 315.0000, 0.8936,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18450, 1490.6030, -200.0830, 51.9167, 1.2297, 306.0000, 1.1066,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18450, 1493.8820, -200.1582, 57.2685, 1.3144, 297.0000, 1.3302,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18450, 1496.2838, -200.2622, 63.0674, 1.3605, 288.0000, 1.5579,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18450, 1497.7495, -200.3965, 69.1707, 1.3688, 279.0000, 1.7832,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18450, 1503.0677, -200.3877, 75.4281, 1.3411, 270.0000, 2.0000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1225, 1502.7780, -201.3359, 115.8307, 0.0000, 0.0000, 0.0000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1225, 1503.0697, -206.9048, 115.7001, 0.0000, 0.0000, 0.0000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1225, 1502.6503, -195.7656, 115.9611, 0.0000, 0.0000, 0.0000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1225, 1502.6545, -198.4053, 115.8828, 0.0000, 0.0000, 0.0000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1225, 1502.8709, -204.2427, 115.7626, 0.0000, 0.0000, 0.0000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1225, 1502.8073, -202.7759, 115.7925, 0.0000, 0.0000, 0.0000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1225, 1502.7211, -199.9233, 115.8638, 0.0000, 0.0000, 0.0000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1225, 1502.6077, -197.0635, 115.9155, 0.0000, 0.0000, 0.0000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1225, 1502.9508, -205.6172, 115.7304, 0.0000, 0.0000, 0.0000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18450, 352.5808, -82.5942, 559.9935, 0.0000, 269.7591, 180.4818,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18450, 355.0443, -87.4009, 565.2955, 240.5383, 0.0000, 0.0000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18450, 355.0446, -77.8848, 565.2695, 120.3212, 0.0000, 0.0000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3461, 394.8508, -88.8179, 559.2024, 0.0000, 0.0000, 0.0000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3461, 394.8649, -76.4055, 559.2024, 0.0000, 0.0000, 0.0000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1217, 391.3192, -88.9509, 558.0488, 0.0000, 0.0000, 0.0000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1217, 369.9450, -76.1333, 558.0488, 0.0000, 0.0000, 111.7268,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1634, -1341.979126, -2023.818115, 7.599393, 0.0000, 0.0000, 22.5000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1260, -1352.668823, -1999.702515, 8.362857, 0.0000, 0.0000, 22.5000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18367, -1357.698486, -1988.745239, 10.271055, 0.0000, 0.0000, 202.5000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1634, -1368.848633, -1963.047729, 14.045984, 0.0000, 353.9839, 22.5000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1634, -1370.109253, -1961.196899, 15.507805, 14.6104, 341.9518, 34.5321,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1634, -1371.786743, -1959.747314, 18.248894, 43.8313, 330.7792, 38.8293,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1634, -1373.218262, -1959.780884, 20.463421, 50.7067, 317.0282, 60.4699,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(984, -1349.032959, -2002.911865, 11.304787, 0.0000, 0.0000, 22.5000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(984, -1352.385742, -1994.869507, 11.304787, 0.0000, 0.0000, 22.5000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(984, -1352.069702, -2003.619507, 11.304787, 0.0000, 0.0000, 22.5000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(5189, -1390.451416, -1972.348877, 13.529857, 0.0000, 0.0000, 33.7500,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18367, -1370.042969, -2004.153931, -2.199245, 323.9037, 357.4217, 209.3756,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(4848, -1373.605347, -2003.387085, -3.207672, 0.0000, 0.0000, 300.3896,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1634, -1375.200317, -2015.153564, 1.318170, 0.0000, 0.0000, 123.7500,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(4141, -1394.294067, -2039.453979, 2.964079, 0.0000, 0.0000, 213.7500,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(897, -1378.132446, -1973.969849, 17.950712, 0.0000, 0.0000, 0.0000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(17071, -1399.276611, -1980.747314, 19.804813, 0.0000, 0.0000, 56.2500,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(647, -1393.883179, -1979.307129, 21.043346, 0.0000, 0.0000, 0.0000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(728, -1395.060913, -1977.473145, 20.545986, 0.0000, 0.0000, 0.0000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(762, -1395.186646, -1983.521362, 22.078814, 0.0000, 0.0000, 0.0000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1634, -1389.350586, -2018.575562, 7.298540, 0.0000, 0.0000, 67.5000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1634, -1392.641968, -2018.134521, 9.920675, 17.1887, 352.2651, 83.9066,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1634, -1394.838379, -2018.653442, 12.798766, 31.7992, 335.0763, 95.9386,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(975, -1399.680176, -2030.741699, 15.927584, 0.0000, 0.0000, 303.7500,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(975, -1395.088257, -2037.575928, 15.929564, 0.0000, 0.0000, 303.7500,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(975, -1390.203247, -2044.869019, 15.922012, 0.0000, 0.0000, 303.7500,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(975, -1387.317383, -2049.229736, 15.920019, 0.0000, 0.0000, 303.7500,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(13666, -1391.114014, -2043.795776, 19.110136, 0.0000, 0.0000, 38.0473,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1634, -1395.186157, -2040.938477, 15.153923, 0.0000, 0.0000, 29.4528,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1634, -1396.710693, -2038.112183, 17.767622, 23.2048, 1.7189, 29.4528,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(13666, -1416.867310, -2033.999023, 34.031418, 0.0000, 341.9518, 207.2522,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(13666, -1420.261719, -2035.163940, 35.129578, 0.0000, 341.9518, 207.2522,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(13666, -1423.641235, -2036.309937, 36.265648, 0.0000, 341.9518, 207.2522,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(13666, -1426.954102, -2037.468018, 37.335335, 0.0000, 341.9518, 207.2522,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(13666, -1430.467773, -2038.666992, 38.476498, 0.0000, 341.9518, 207.2522,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(13666, -1433.805908, -2039.757446, 39.635185, 0.0000, 341.9518, 207.2522,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(13666, -1437.087646, -2040.841919, 40.745441, 0.0000, 341.9518, 207.2522,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(13666, -1440.468872, -2041.946167, 41.893753, 0.0000, 341.9518, 207.2522,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(13666, -1443.825562, -2043.054688, 43.047981, 0.0000, 341.9518, 207.2522,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3406, -1449.221313, -2038.036377, 36.781628, 0.0000, 0.0000, 112.5000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3406, -1452.392700, -2030.302246, 36.755451, 0.0000, 0.0000, 112.5000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3615, -1456.869141, -2024.775635, 39.852066, 0.0000, 0.0000, 21.5632,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18367, -1457.504028, -2024.889038, 38.989117, 337.6546, 1.7189, 300.1577,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3406, -1485.191284, -2040.719238, 52.163368, 0.0000, 0.0000, 206.8745,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3406, -1492.418579, -2044.369019, 52.137115, 0.0000, 0.0000, 206.8745,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(4113, -1505.782104, -2024.069336, 18.097473, 0.0000, 0.0000, 129.8433,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(4113, -1531.578125, -2036.758789, 18.253225, 0.0000, 359.1406, 129.8433,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(976, -1504.302124, -2036.694946, 54.289001, 0.0000, 0.0000, 25.0783,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(976, -1504.249268, -2036.975952, 54.289124, 0.0000, 0.0000, 292.5000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(976, -1496.326782, -2032.978638, 54.290100, 0.0000, 0.0000, 25.0783,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(13666, -1493.589111, -2031.612427, 58.978714, 0.0000, 0.0000, 301.9539,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(975, -1490.576538, -2025.446045, 55.803413, 0.0000, 0.0000, 299.3755,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(976, -1501.762329, -2043.302002, 54.015110, 29.2208, 0.0000, 340.1557,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(17565, -1520.504639, -2035.294067, 55.941605, 0.0000, 0.0000, 295.0783,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(976, -1518.828369, -2044.039185, 54.243675, 0.0000, 0.0000, 295.0783,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(976, -1522.080566, -2036.550659, 54.361557, 0.0000, 0.0000, 295.0783,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(976, -1525.370728, -2029.268799, 54.372475, 0.0000, 0.0000, 295.0783,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(976, -1528.970825, -2021.580444, 54.397598, 0.0000, 0.0000, 295.0783,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(976, -1531.593994, -2016.272339, 54.278290, 0.0000, 0.0000, 295.0783,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(17071, -1520.783203, -2035.954468, 53.170959, 0.0000, 0.0000, 22.5000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(762, -1519.162964, -2041.435425, 55.147514, 0.0000, 0.0000, 0.0000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3406, -1528.903564, -2064.390137, 59.650589, 0.0000, 0.0000, 296.8745,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3406, -1525.614990, -2070.896973, 59.666985, 0.0000, 0.0000, 296.8745,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3406, -1522.080322, -2077.888428, 59.608498, 0.0000, 0.0000, 296.8745,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(13593, -1519.943359, -2082.248047, 62.247162, 0.0000, 0.0000, 204.2961,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(16640, -1510.295288, -2090.484131, 67.056953, 0.0000, 0.0000, 295.1557,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3375, -1510.509277, -2062.440186, 66.113495, 0.0000, 0.0000, 112.5000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(10009, -1533.057983, -2055.926758, 58.412109, 0.0000, 0.0000, 292.5000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3375, -1526.068237, -2024.116333, 66.362946, 0.0000, 0.0000, 112.5000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(4882, -1546.830322, -2026.426880, 68.741997, 5.1566, 0.0000, 202.5000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(980, -1562.268799, -2045.744263, 65.583290, 272.3375, 0.0000, 297.7340,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(980, -1556.447021, -2056.400391, 63.256142, 272.3375, 0.0000, 297.7340,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(980, -1551.478882, -2065.779053, 60.796173, 272.3375, 0.0000, 297.7340,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(980, -1546.236206, -2075.834473, 58.653275, 272.3375, 0.0000, 297.7340,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(10009, -1546.784180, -2080.181641, 63.152832, 0.0000, 0.0000, 67.5001,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(10009, -1542.088501, -2077.390625, 70.682312, 0.0000, 0.0000, 191.2501,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(976, -1553.061035, -2077.190430, 73.578239, 49.8473, 0.8594, 227.6557,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3406, -1554.837891, -2083.437744, 71.820602, 0.0000, 0.0000, 118.7481,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(4564, -1569.028809, -2118.620117, 30.456724, 0.0000, 0.0000, 299.3755,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1634, -1568.137451, -2101.102783, 74.797768, 0.0000, 0.0000, 123.7499,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1634, -1678.613770, -2175.921631, 139.020615, 29.2208, 359.1406, 123.7499,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1634, -1678.932129, -2176.298584, 144.489380, 69.6143, 0.8594, 123.7499,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1634, -1676.165527, -2174.360352, 151.221222, 110.8672, 0.8594, 123.7499,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1634, -1671.174683, -2171.409180, 154.277267, 139.2288, 0.8594, 123.7499,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(8661, -1654.996216, -2155.416748, 147.285675, 0.0000, 0.0000, 28.5934,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(13666, -1654.933594, -2154.779053, 152.166214, 0.0000, 0.0000, 115.9379,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(976, -1657.352173, -2156.114258, 147.222641, 0.0000, 0.0000, 26.7972,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(976, -1665.102905, -2160.026855, 147.272629, 0.0000, 0.0000, 26.7972,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(976, -1672.851440, -2164.088135, 147.248123, 0.0000, 0.0000, 26.7972,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(976, -1649.888916, -2152.181885, 147.297867, 0.0000, 0.0000, 26.7972,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(976, -1642.857544, -2147.828613, 148.697403, 0.0000, 0.0000, 26.7972,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(9946, -1331.581665, -2042.190918, 8.694613, 353.1245, 0.0000, 19.8443,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3494, -1344.322021, -2027.219482, 10.606881, 0.0000, 0.0000, 18.9849,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3494, -1336.509155, -2024.489502, 10.617052, 0.0000, 0.0000, 21.4859,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(2780, -1356.561401, -2039.115234, 1.891328, 0.0000, 0.0000, 0.0000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(2780, -1319.739258, -2024.941650, 1.540995, 0.0000, 0.0000, 0.0000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(622, -1358.242310, -2040.015869, 7.670699, 0.0000, 0.0000, 0.0000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(622, -1319.536743, -2022.683960, 7.289242, 0.0000, 0.0000, 67.5000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(624, -1355.402344, -2041.707153, 7.147227, 0.0000, 0.0000, 0.0000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(620, -1315.840820, -2031.641724, 9.440929, 0.0000, 0.0000, 0.0000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(620, -1358.073975, -2034.344360, 6.905462, 0.0000, 0.0000, 0.0000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(620, -1416.350220, -2024.968628, 27.812489, 0.0000, 0.0000, 0.0000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(620, -1514.189087, -2008.337402, 54.195881, 0.0000, 0.0000, 0.0000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(762, -1318.293091, -2025.005859, 7.181517, 0.0000, 0.0000, 0.0000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(762, -1355.276733, -2038.481689, 9.433815, 0.0000, 0.0000, 0.0000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1634, -1641.134399, -2142.153076, 148.207901, 5.1566, 358.2811, 295.1556,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3873, -1618.000488, -2128.569336, 134.933838, 0.0000, 0.0000, 0.0000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3279, -1620.592285, -2133.072998, 152.357452, 0.0000, 0.0000, 202.5000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(5153, -1616.200317, -2131.389893, 169.283371, 359.1406, 18.0482, 21.6406,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(12912, -1608.912476, -2129.057617, 158.631546, 0.0000, 0.0000, 110.7038,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(2653, -1610.451050, -2128.858154, 169.165283, 0.0000, 0.0000, 292.5000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(5153, -1624.771729, -2116.215576, 151.216568, 0.0000, 0.0000, 297.7340,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(5153, -1631.947754, -2128.503662, 151.266556, 0.0000, 0.0000, 5.2340,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3406, -1601.967285, -2125.888184, 165.206223, 0.0000, 34.3775, 17.4981,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3406, -1595.212036, -2123.753906, 160.386490, 0.0000, 34.3775, 17.4981,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3406, -1588.418457, -2121.593750, 155.504272, 0.0000, 34.3775, 17.4981,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3406, -1584.375366, -2120.325195, 153.599213, 0.0000, 20.6265, 17.4981,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3406, -1581.107544, -2119.312744, 153.359695, 0.0000, 5.1566, 17.4981,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3406, -1581.761719, -2119.505127, 153.535187, 0.0000, 353.9839, 17.4981,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3406, -1579.551636, -2118.816162, 153.600616, 0.0000, 342.8113, 17.4981,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(17071, -1581.638916, -2124.708008, 140.225525, 0.0000, 0.0000, 315.0000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(880, -1614.096313, -2142.449463, 152.115601, 0.0000, 0.0000, 337.5000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(896, -1606.484497, -2132.934082, 149.617599, 0.0000, 0.0000, 292.5000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(880, -1640.714600, -2155.922119, 155.461914, 0.0000, 0.0000, 0.0000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(898, -1640.607666, -2150.562988, 147.446335, 0.0000, 0.0000, 0.0000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(623, -1562.012817, -2104.718750, 140.019089, 0.0000, 0.0000, 135.0000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(623, -1567.600098, -2128.908691, 140.019089, 0.0000, 0.0000, 326.2500,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(624, -1560.652832, -2106.692139, 139.110275, 0.0000, 0.0000, 0.0000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(624, -1585.910767, -2131.616455, 143.458145, 0.0000, 0.0000, 0.0000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(624, -1610.760376, -2141.274170, 150.282700, 0.0000, 0.0000, 0.0000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(624, -1605.483765, -2132.541992, 154.667450, 0.0000, 0.0000, 78.7500,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(800, -1610.604980, -2141.548584, 154.817062, 0.0000, 0.0000, 0.0000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(762, -1604.086304, -2136.823975, 153.874847, 0.0000, 0.0000, 0.0000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(762, -1585.034424, -2128.164795, 142.198639, 0.0000, 0.0000, 0.0000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(762, -1639.098633, -2152.051025, 154.971603, 0.0000, 0.0000, 0.0000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(2780, -1551.459351, -2117.143066, 136.991211, 0.0000, 0.0000, 0.0000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3461, -1556.065063, -2121.650635, 141.320801, 0.0000, 0.0000, 0.0000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3461, -1546.592285, -2111.846680, 141.316223, 0.0000, 0.0000, 0.0000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3461, -1544.879150, -2105.171631, 141.320801, 0.0000, 0.0000, 0.0000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3461, -1551.914185, -2103.127930, 141.316223, 0.0000, 0.0000, 0.0000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3461, -1559.132813, -2104.546143, 141.316223, 0.0000, 0.0000, 0.0000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(8483, -1580.585205, -2122.835449, 145.288361, 0.0000, 0.0000, 19.1396,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3461, -1573.837280, -2123.950195, 146.507980, 359.1406, 91.9597, 24.0642,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3461, -1575.244019, -2119.900391, 146.682770, 22.3454, 109.1485, 12.8916,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(3528, -1576.596680, -2122.867676, 141.567642, 0.0000, 315.3093, 22.5000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(9833, -1560.728760, -2111.782471, 136.198334, 0.0000, 0.0000, 11.2500,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(5153, -1549.538086, -2018.435425, 72.197731, 0.0000, 351.4056, 292.5000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(11495, -1555.425415, -2078.655273, 73.643959, 0.0000, 0.0000, 92.3553,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1634, -1602.510376, -2121.224609, 74.872772, 0.0000, 0.0000, 123.7499,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(4006, -1624.975342, -2155.349854, 46.568546, 0.0000, 0.0000, 213.7500,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(4006, -1624.781006, -2155.000977, 69.756241, 0.0000, 0.0000, 213.7500,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18367, -1624.372803, -2141.514160, 74.648460, 7.7349, 0.8594, 23.3595,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(13666, -1607.099487, -2159.204590, 80.700615, 344.5301, 0.0000, 295.0785,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1634, -1611.158447, -2163.009766, 77.956627, 20.6265, 0.0000, 115.1555,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1634, -1627.460938, -2153.312256, 83.955078, 20.6265, 345.3896, 33.8272,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1634, -1629.370483, -2151.672607, 87.286255, 42.9718, 332.4980, 44.9999,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1634, -1631.359131, -2152.082031, 92.126976, 61.0199, 313.5905, 70.0008,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(10948, -1709.069580, -2177.804932, 98.811829, 0.0000, 0.0000, 123.7499,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1634, -1647.198853, -2164.747070, 92.335686, 8.5944, 359.1406, 123.8272,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(9578, -1713.177856, -2203.152588, 99.849884, 0.0000, 0.0000, 303.7500,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1634, -1669.383667, -2182.325439, 100.459702, 8.5944, 359.1406, 123.8272,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1634, -1684.587036, -2193.760010, 104.631577, 8.5944, 359.1406, 123.8272,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1634, -1699.396362, -2204.022461, 107.990952, 8.5944, 359.1406, 123.8272,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1634, -1715.827271, -2214.591797, 110.342514, 8.5944, 359.1406, 123.8272,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1634, -1736.849365, -2211.424805, 114.051895, 8.5944, 359.1406, 303.8272,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(987, -1737.689331, -2222.775391, 117.162529, 0.0000, 0.0000, 303.7500,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(987, -1744.437256, -2212.724121, 117.164772, 0.0000, 0.0000, 303.7500,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(987, -1720.576416, -2224.655518, 113.404572, 0.0000, 0.0000, 213.7500,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1634, -1704.693848, -2151.648926, 118.515358, 4.2972, 359.1406, 33.8272,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1634, -1707.393555, -2148.834229, 122.334076, 34.3775, 359.1406, 33.8272,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1634, -1708.697510, -2147.814209, 126.628654, 60.1605, 0.0000, 33.8272,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1634, -1708.875244, -2148.898926, 132.208359, 91.9597, 0.0000, 33.8272,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1634, -1708.183960, -2151.015137, 135.660339, 107.4295, 0.0000, 33.8272,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1634, -1706.733032, -2154.008789, 138.361465, 130.6344, 0.0000, 33.8272,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1634, -1704.432251, -2158.161865, 139.857437, 146.9638, 0.0000, 33.8272,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1634, -1701.697388, -2163.579590, 139.262863, 174.4660, 357.4217, 33.8272,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1634, -1700.763428, -2166.522705, 137.618011, 191.6548, 357.4217, 33.8272,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1634, -1699.902100, -2169.524414, 134.753677, 210.5626, 357.4217, 33.8272,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1634, -1699.906006, -2171.594482, 128.372894, 244.9400, 358.2811, 33.8272,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1634, -1701.464233, -2171.008057, 124.657585, 271.5823, 358.2811, 33.8272,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1634, -1703.803345, -2168.854492, 121.845032, 293.0680, 358.2811, 33.8272,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1634, -1707.285889, -2165.175537, 119.744827, 319.7103, 358.2811, 33.8272,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1634, -1710.032959, -2161.879150, 120.254372, 346.3526, 358.2811, 33.8272,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1634, -1713.409180, -2158.137939, 122.527458, 9.5574, 358.2811, 33.8272,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1634, -1715.285278, -2156.167725, 125.839859, 35.3404, 358.2811, 33.8272,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1634, -1716.920532, -2154.989502, 131.249176, 52.5292, 358.2811, 33.8272,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1634, -1718.092041, -2155.193359, 137.462936, 62.8424, 326.4820, 63.0480,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(987, -1724.640259, -2200.378174, 117.293045, 0.0000, 0.0000, 213.7500,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(987, -1715.134888, -2194.554932, 117.293045, 0.0000, 0.0000, 213.7500,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(987, -1706.158447, -2188.837402, 117.400078, 0.0000, 0.0000, 213.7500,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(987, -1697.564697, -2182.898926, 117.293045, 0.0000, 0.0000, 213.7500,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(11495, -1679.702393, -2190.466309, 117.059990, 0.0000, 0.0000, 33.7500,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(17068, -1681.098633, -2191.379395, 117.065552, 0.0000, 0.0000, 213.7500,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(17068, -1681.902832, -2202.411865, 117.099648, 0.0000, 0.0000, 303.7500,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(17068, -1692.190796, -2203.793945, 117.163742, 0.0000, 0.0000, 215.2284,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(987, -1692.004028, -2190.255859, 117.293045, 0.0000, 0.0000, 123.7500,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(1634, -1716.745850, -2166.047852, 142.390366, 4.2972, 359.1406, 303.8272,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(8661, -1690.924561, -2142.035156, 142.317963, 0.0000, 0.0000, 302.1085,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(11495, -1668.229492, -2170.144043, 135.537659, 0.0000, 0.0000, 303.7500,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(17068, -1669.189087, -2168.666748, 135.534760, 0.0000, 0.0000, 123.7499,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(8661, -1691.716553, -2142.644287, 139.465866, 92.8192, 0.0000, 302.1085,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(8661, -1689.895752, -2146.201416, 139.103638, 91.1003, 0.0000, 117.2610,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(13666, -1692.705688, -2140.970703, 148.134171, 0.0000, 0.0000, 210.3124,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(11495, -1666.861084, -2146.014648, 142.161499, 0.0000, 0.0000, 300.3123,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(11495, -1667.751709, -2144.594727, 142.261780, 0.0000, 0.0000, 120.3122,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18367, -1659.091431, -2140.460205, 141.996902, 356.5623, 347.9679, 121.0943,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18367, -1649.728271, -2134.511963, 143.927917, 23.2048, 347.9679, 31.0943,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(18367, -1643.227051, -2146.451172, 139.572586, 16.3293, 12.0321, 315.0000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(744, -1645.376099, -2134.568359, 143.884338, 0.0000, 0.0000, 0.0000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(744, -1640.772217, -2151.395264, 139.242249, 0.0000, 0.0000, 0.0000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(896, -1684.483887, -2157.383789, 143.026215, 0.0000, 0.0000, 315.0000,0,-1,-1,STREAMER_OBJECT_DD);
-	CreateDynamicObject(762, -1684.048096, -2154.963135, 145.790512, 0.0000, 0.0000, 292.9639,0,-1,-1,STREAMER_OBJECT_DD);
+	CreateDynamicObject(18450, 553.5003, -82.5913, 437.7818, 0.0000, 36.9558, 0.0000,0,-1,-1);
+	CreateDynamicObject(18450, 616.5524, -82.6003, 390.3616, 0.0000, 36.9558, 0.0000,0,-1,-1);
+	CreateDynamicObject(18450, 680.1129, -82.6018, 342.5417, 0.0000, 36.9558, 0.0000,0,-1,-1);
+	CreateDynamicObject(18450, 735.1129, -82.5996, 330.5417, 0.0000, 0.0000, 0.0000,0,-1,-1);
+	CreateDynamicObject(18450, 742.9346, -82.7075, 331.1572, 0.1509, 351.0000, 359.0474,0,-1,-1);
+	CreateDynamicObject(18450, 750.5638, -83.0305, 332.9888, 0.5961, 342.0000, 358.1654,0,-1,-1);
+	CreateDynamicObject(18450, 757.8124, -83.5667, 335.9913, 1.3136, 333.0000, 357.4219,0,-1,-1);
+	CreateDynamicObject(18450, 764.5022, -84.3127, 340.0908, 2.2677, 324.0000, 356.8788,0,-1,-1);
+	CreateDynamicObject(18450, 770.4683, -85.2639, 345.1863, 3.4100, 315.0000, 356.5900,0,-1,-1);
+	CreateDynamicObject(18450, 775.5638, -86.4143, 351.1524, 4.6818, 306.0000, 356.5985,0,-1,-1);
+	CreateDynamicObject(18450, 779.6633, -87.7573, 357.8421, 6.0157, 297.0000, 356.9348,0,-1,-1);
+	CreateDynamicObject(18450, 782.6658, -89.2839, 365.0908, 7.3384, 288.0000, 357.6156,0,-1,-1);
+	CreateDynamicObject(18450, 784.4973, -90.9854, 372.7199, 8.5736, 279.0000, 358.6421,0,-1,-1);
+	CreateDynamicObject(18450, 785.1129, -92.8508, 380.5417, 9.6450, 270.0000, 0.0000,0,-1,-1);
+	CreateDynamicObject(18450, 784.4973, -94.8689, 388.3634, 10.4789, 261.0000, 1.6597,0,-1,-1);
+	CreateDynamicObject(18450, 782.6657, -97.0273, 395.9925, 11.0076, 252.0000, 3.5766,0,-1,-1);
+	CreateDynamicObject(18450, 779.6633, -99.3120, 403.2412, 11.1719, 243.0000, 5.6924,0,-1,-1);
+	CreateDynamicObject(18450, 775.5638, -101.7100, 409.9309, 10.9242, 234.0000, 7.9369,0,-1,-1);
+	CreateDynamicObject(18450, 770.4683, -104.2056, 415.8970, 10.2301, 225.0000, 10.2301,0,-1,-1);
+	CreateDynamicObject(18450, 764.5022, -106.7842, 420.9925, 9.0707, 216.0000, 12.4848,0,-1,-1);
+	CreateDynamicObject(18450, 757.8124, -109.4292, 425.0920, 7.4439, 207.0000, 14.6094,0,-1,-1);
+	CreateDynamicObject(18450, 750.5638, -112.1245, 428.0945, 5.3648, 198.0000, 16.5113,0,-1,-1);
+	CreateDynamicObject(18450, 742.9346, -114.8535, 429.9261, 2.8667, 189.0000, 18.0999,0,-1,-1);
+	CreateDynamicObject(18450, 735.1129, -117.5996, 430.5417, 0.0000, 180.0000, 19.2901,0,-1,-1);
+	CreateDynamicObject(18450, 727.2912, -120.3457, 429.9261, 357.1333, 171.0000, 18.0999,0,-1,-1);
+	CreateDynamicObject(18450, 719.6620, -123.0747, 428.0945, 354.6352, 162.0000, 16.5113,0,-1,-1);
+	CreateDynamicObject(18450, 712.4134, -125.7700, 425.0920, 352.5561, 153.0000, 14.6094,0,-1,-1);
+	CreateDynamicObject(18450, 705.7236, -128.4150, 420.9925, 350.9293, 144.0000, 12.4848,0,-1,-1);
+	CreateDynamicObject(18450, 699.7576, -130.9937, 415.8970, 349.7699, 135.0000, 10.2301,0,-1,-1);
+	CreateDynamicObject(18450, 694.6620, -133.4893, 409.9309, 349.0758, 126.0000, 7.9369,0,-1,-1);
+	CreateDynamicObject(18450, 690.5626, -135.8872, 403.2412, 348.8281, 117.0000, 5.6924,0,-1,-1);
+	CreateDynamicObject(18450, 687.5601, -138.1719, 395.9925, 348.9924, 108.0000, 3.5766,0,-1,-1);
+	CreateDynamicObject(18450, 685.7285, -140.3301, 388.3634, 349.5211, 99.0000, 1.6597,0,-1,-1);
+	CreateDynamicObject(18450, 685.1129, -142.3481, 380.5417, 350.3550, 90.0000, 0.0000,0,-1,-1);
+	CreateDynamicObject(18450, 685.7285, -144.2139, 372.7199, 351.4264, 81.0000, 358.6421,0,-1,-1);
+	CreateDynamicObject(18450, 687.5601, -145.9150, 365.0908, 352.6616, 72.0000, 357.6156,0,-1,-1);
+	CreateDynamicObject(18450, 690.5626, -147.4419, 357.8421, 353.9843, 63.0000, 356.9348,0,-1,-1);
+	CreateDynamicObject(18450, 694.6620, -148.7847, 351.1524, 355.3182, 54.0000, 356.5985,0,-1,-1);
+	CreateDynamicObject(18450, 699.7576, -149.9355, 345.1863, 356.5900, 45.0000, 356.5900,0,-1,-1);
+	CreateDynamicObject(18450, 705.7236, -150.8867, 340.0908, 357.7323, 36.0000, 356.8788,0,-1,-1);
+	CreateDynamicObject(18450, 712.4134, -151.6323, 335.9913, 358.6864, 27.0000, 357.4219,0,-1,-1);
+	CreateDynamicObject(18450, 719.6620, -152.1689, 332.9888, 359.4039, 18.0000, 358.1654,0,-1,-1);
+	CreateDynamicObject(18450, 727.2912, -152.4917, 331.1572, 359.8491, 9.0000, 359.0474,0,-1,-1);
+	CreateDynamicObject(18450, 697.7601, -82.6326, 336.7147, 0.0000, 16.3293, 0.0000,0,-1,-1);
+	CreateDynamicObject(18450, 718.7543, -82.6394, 331.7536, 0.0000, 7.7349, 0.0000,0,-1,-1);
+	CreateDynamicObject(18450, 676.1064, -82.6167, 345.8299, 0.0000, 24.0642, 0.0000,0,-1,-1);
+	CreateDynamicObject(18450, 677.3790, -82.6135, 345.6038, 0.0000, 28.3614, 0.0000,0,-1,-1);
+	CreateDynamicObject(18450, 707.7369, -82.6375, 333.9504, 0.0000, 12.0321, 0.0000,0,-1,-1);
+	CreateDynamicObject(18450, 675.0910, -82.6252, 346.9226, 0.0000, 30.9397, 0.0000,0,-1,-1);
+	CreateDynamicObject(18450, 692.8816, -82.6294, 338.5391, 0.0000, 19.7670, 0.0000,0,-1,-1);
+	CreateDynamicObject(18450, 675.2898, -82.6199, 346.7725, 0.0000, 32.6586, 0.0000,0,-1,-1);
+	CreateDynamicObject(18450, 489.9696, -82.5801, 485.5832, 0.0000, 36.9558, 0.0000,0,-1,-1);
+	CreateDynamicObject(18450, 426.7872, -82.5884, 533.1097, 0.0000, 36.9558, 0.0000,0,-1,-1);
+	CreateDynamicObject(18450, 355.0431, -82.5830, 557.0816, 0.0000, 0.0000, 0.0000,0,-1,-1);
+	CreateDynamicObject(18450, 804.9330, -153.8135, 318.8557, 359.8491, 9.0000, 359.0474,0,-1,-1);
+	CreateDynamicObject(18450, 804.9330, -153.8135, 318.8557, 0.0000, 0.0000, 0.0000,0,-1,-1);
+	CreateDynamicObject(18450, 809.9463, -153.8232, 319.1711, 0.0179, 352.8000, 359.8581,0,-1,-1);
+	CreateDynamicObject(18450, 814.8806, -153.8530, 320.1124, 0.0712, 345.6000, 359.7229,0,-1,-1);
+	CreateDynamicObject(18450, 819.6580, -153.9019, 321.6647, 0.1580, 338.4000, 359.6010,0,-1,-1);
+	CreateDynamicObject(18450, 824.2031, -153.9707, 323.8035, 0.2756, 331.2000, 359.4985,0,-1,-1);
+	CreateDynamicObject(18450, 828.4444, -154.0581, 326.4951, 0.4204, 324.0000, 359.4213,0,-1,-1);
+	CreateDynamicObject(18450, 832.3149, -154.1646, 329.6970, 0.5876, 316.8000, 359.3743,0,-1,-1);
+	CreateDynamicObject(18450, 835.7535, -154.2896, 333.3588, 0.7715, 309.6000, 359.3617,0,-1,-1);
+	CreateDynamicObject(18450, 838.7061, -154.4321, 337.4227, 0.9663, 302.4000, 359.3868,0,-1,-1);
+	CreateDynamicObject(18450, 841.1260, -154.5918, 341.8246, 1.1649, 295.2000, 359.4518,0,-1,-1);
+	CreateDynamicObject(18450, 842.9752, -154.7686, 346.4951, 1.3605, 288.0000, 359.5580,0,-1,-1);
+	CreateDynamicObject(18450, 844.2245, -154.9609, 351.3605, 1.5457, 280.8000, 359.7052,0,-1,-1);
+	CreateDynamicObject(3095, 855.9197, -152.5977, 390.2198, 1.7189, 0.0000, 0.0000,0,-1,-1);
+	CreateDynamicObject(3095, 855.9330, -159.5430, 390.0218, 1.7189, 0.0000, 0.0000,0,-1,-1);
+	CreateDynamicObject(18450, 874.5787, -156.8101, 353.1491, 0.0000, 68.7549, 0.0000,0,-1,-1);
+	CreateDynamicObject(18450, 916.4086, -156.3423, 255.1765, 356.1113, 54.0000, 357.1747,0,-1,-1);
+	CreateDynamicObject(18450, 921.5041, -157.1094, 249.2354, 356.5012, 45.0000, 356.5012,0,-1,-1);
+	CreateDynamicObject(18450, 927.4702, -157.8823, 244.1399, 357.0085, 36.0000, 355.8826,0,-1,-1);
+	CreateDynamicObject(18450, 934.1599, -158.6606, 240.0404, 357.6253, 27.0000, 355.3393,0,-1,-1);
+	CreateDynamicObject(18450, 941.4086, -159.4419, 237.0379, 358.3399, 18.0000, 354.8907,0,-1,-1);
+	CreateDynamicObject(18450, 949.0377, -160.2261, 235.2063, 359.1375, 9.0000, 354.5543,0,-1,-1);
+	CreateDynamicObject(18450, 956.8594, -161.0112, 234.5908, 0.0000, 0.0000, 354.3450,0,-1,-1);
+	CreateDynamicObject(18450, 964.6812, -161.7964, 235.2063, 0.8625, 351.0000, 354.5543,0,-1,-1);
+	CreateDynamicObject(18450, 972.3103, -162.5806, 237.0379, 1.6601, 342.0000, 354.8907,0,-1,-1);
+	CreateDynamicObject(18450, 979.5590, -163.3618, 240.0404, 2.3747, 333.0000, 355.3393,0,-1,-1);
+	CreateDynamicObject(18450, 986.2487, -164.1401, 244.1399, 2.9915, 324.0000, 355.8826,0,-1,-1);
+	CreateDynamicObject(18450, 992.2148, -164.9131, 249.2354, 3.4988, 315.0000, 356.5012,0,-1,-1);
+	CreateDynamicObject(18450, 997.3103, -165.6802, 255.2015, 3.8887, 306.0000, 357.1747,0,-1,-1);
+	CreateDynamicObject(18450, 1001.4098, -166.4399, 261.8912, 4.1569, 297.0000, 357.8820,0,-1,-1);
+	CreateDynamicObject(18450, 1004.4123, -167.1914, 269.1399, 4.3026, 288.0000, 358.6020,0,-1,-1);
+	CreateDynamicObject(18450, 1006.2438, -167.9336, 276.7690, 4.3286, 279.0000, 359.3144,0,-1,-1);
+	CreateDynamicObject(18450, 1006.8594, -168.6650, 284.5908, 4.2412, 270.0000, 0.0000,0,-1,-1);
+	CreateDynamicObject(18450, 1006.2438, -169.3843, 292.4125, 4.0494, 261.0000, 0.6414,0,-1,-1);
+	CreateDynamicObject(18450, 1004.4122, -170.0908, 300.0416, 3.7647, 252.0000, 1.2233,0,-1,-1);
+	CreateDynamicObject(18450, 1001.4098, -170.7837, 307.2903, 3.4011, 243.0000, 1.7329,0,-1,-1);
+	CreateDynamicObject(18450, 997.3103, -171.4614, 313.9800, 2.9737, 234.0000, 2.1605,0,-1,-1);
+	CreateDynamicObject(18450, 992.2148, -172.1226, 319.9461, 2.4992, 225.0000, 2.4992,0,-1,-1);
+	CreateDynamicObject(18450, 986.2487, -172.7671, 325.0416, 1.9944, 216.0000, 2.7450,0,-1,-1);
+	CreateDynamicObject(18450, 904.5354, -156.5425, 280.8014, 0.0000, 66.1766, 0.8594,0,-1,-1);
+	CreateDynamicObject(18450, 937.0660, -174.0830, 315.6768, 0.0000, 347.1084, 359.1406,0,-1,-1);
+	CreateDynamicObject(18450, 889.9211, -174.2622, 302.9003, 357.2414, 128.0914, 1.2981,0,-1,-1);
+	CreateDynamicObject(18450, 887.5974, -174.7700, 301.2982, 357.3796, 100.8000, 0.4998,0,-1,-1);
+	CreateDynamicObject(18450, 887.1252, -175.2280, 293.7931, 357.7180, 86.4000, 359.8564,0,-1,-1);
+	CreateDynamicObject(18450, 888.5343, -175.6279, 286.4063, 358.1878, 72.0000, 359.4112,0,-1,-1);
+	CreateDynamicObject(18450, 891.7361, -175.9644, 279.6020, 358.7129, 57.6000, 359.1832,0,-1,-1);
+	CreateDynamicObject(18450, 896.5295, -176.2319, 273.8077, 359.2174, 43.2000, 359.1666,0,-1,-1);
+	CreateDynamicObject(18450, 902.6133, -176.4258, 269.3876, 359.6328, 28.8000, 359.3321,0,-1,-1);
+	CreateDynamicObject(18450, 909.6053, -176.5435, 266.6193, 359.9052, 14.4000, 359.6309,0,-1,-1);
+	CreateDynamicObject(18450, 933.2430, -178.1240, 264.5322, 0.0000, 3.4377, 355.7028,0,-1,-1);
+	CreateDynamicObject(18450, 978.4335, -181.3286, 262.1100, 0.0000, 0.8594, 357.4217,0,-1,-1);
+	CreateDynamicObject(18450, 1037.5753, -183.0098, 262.2126, 0.0000, 358.2811, 0.0000,0,-1,-1);
+	CreateDynamicObject(18450, 1180.5320, -183.3281, 228.9525, 0.0000, 18.9076, 0.0000,0,-1,-1);
+	CreateDynamicObject(18450, 1254.5227, -183.3042, 203.6059, 0.0000, 18.9076, 0.0000,0,-1,-1);
+	CreateDynamicObject(18450, 1328.4685, -183.2905, 178.2718, 0.0000, 18.9076, 0.0000,0,-1,-1);
+	CreateDynamicObject(18450, 1400.7626, -183.8584, 153.5043, 0.0000, 18.9076, 359.1406,0,-1,-1);
+	CreateDynamicObject(18450, 1391.7327, -183.7959, 157.6969, 358.5001, 15.0000, 359.4021,0,-1,-1);
+	CreateDynamicObject(18450, 1396.2087, -183.8931, 156.8038, 359.2271, 7.5000, 359.1293,0,-1,-1);
+	CreateDynamicObject(18450, 1400.7626, -183.9839, 156.5043, 0.0000, 0.0000, 358.9526,0,-1,-1);
+	CreateDynamicObject(18450, 1405.3164, -184.0747, 156.8038, 0.7729, 352.5000, 359.1293,0,-1,-1);
+	CreateDynamicObject(18450, 1409.7925, -184.1719, 157.6969, 1.4999, 345.0000, 359.4021,0,-1,-1);
+	CreateDynamicObject(18450, 1414.1140, -184.2813, 159.1685, 2.1696, 337.5000, 359.7622,0,-1,-1);
+	CreateDynamicObject(18450, 1418.2074, -184.4092, 161.1935, 2.7717, 330.0000, 0.1993,0,-1,-1);
+	CreateDynamicObject(18450, 1422.0023, -184.5610, 163.7370, 3.2979, 322.5000, 0.7020,0,-1,-1);
+	CreateDynamicObject(18450, 1425.4341, -184.7422, 166.7556, 3.7416, 315.0000, 1.2584,0,-1,-1);
+	CreateDynamicObject(18450, 1428.4441, -184.9570, 170.1977, 4.0980, 307.5000, 1.8555,0,-1,-1);
+	CreateDynamicObject(18450, 1430.9807, -185.2095, 174.0043, 4.3643, 300.0000, 2.4803,0,-1,-1);
+	CreateDynamicObject(18450, 1433.0006, -185.5034, 178.1104, 4.5395, 292.5000, 3.1197,0,-1,-1);
+	CreateDynamicObject(18450, 1434.4694, -185.8408, 182.4457, 4.6244, 285.0000, 3.7609,0,-1,-1);
+	CreateDynamicObject(18450, 1435.3618, -186.2231, 186.9359, 4.6216, 277.5000, 4.3915,0,-1,-1);
+	CreateDynamicObject(18450, 1435.6627, -186.6519, 191.5043, 4.5355, 270.0000, 5.0000,0,-1,-1);
+	CreateDynamicObject(18450, 1435.3671, -187.1265, 196.0728, 4.3718, 262.5000, 5.5756,0,-1,-1);
+	CreateDynamicObject(18450, 1434.4799, -187.6465, 200.5630, 4.1376, 255.0000, 6.1086,0,-1,-1);
+	CreateDynamicObject(18450, 1433.0164, -188.2095, 204.8982, 3.8411, 247.5000, 6.5910,0,-1,-1);
+	CreateDynamicObject(18450, 1431.0017, -188.8135, 209.0043, 3.4914, 240.0000, 7.0158,0,-1,-1);
+	CreateDynamicObject(18450, 1428.4703, -189.4546, 212.8110, 3.0985, 232.5000, 7.3776,0,-1,-1);
+	CreateDynamicObject(18450, 1425.4656, -190.1289, 216.2531, 2.6726, 225.0000, 7.6726,0,-1,-1);
+	CreateDynamicObject(18450, 1422.0389, -190.8306, 219.2717, 2.2242, 217.5000, 7.8986,0,-1,-1);
+	CreateDynamicObject(18450, 1418.2490, -191.5552, 221.8152, 1.7638, 210.0000, 8.0550,0,-1,-1);
+	CreateDynamicObject(18450, 1414.1608, -192.2964, 223.8401, 1.3018, 202.5000, 8.1427,0,-1,-1);
+	CreateDynamicObject(18450, 1409.8442, -193.0469, 225.3117, 0.8478, 195.0000, 8.1641,0,-1,-1);
+	CreateDynamicObject(18450, 1405.3732, -193.8008, 226.2049, 0.4111, 187.5000, 8.1227,0,-1,-1);
+	CreateDynamicObject(18450, 1400.8242, -194.5503, 226.5043, 0.0000, 180.0000, 8.0237,0,-1,-1);
+	CreateDynamicObject(18450, 1396.2751, -195.2886, 226.2049, 359.6218, 172.5000, 7.8729,0,-1,-1);
+	CreateDynamicObject(18450, 1391.8038, -196.0083, 225.3117, 359.2826, 165.0000, 7.6773,0,-1,-1);
+	CreateDynamicObject(18450, 1387.4869, -196.7021, 223.8401, 358.9875, 157.5000, 7.4443,0,-1,-1);
+	CreateDynamicObject(18450, 1383.3983, -197.3643, 221.8152, 358.7401, 150.0000, 7.1821,0,-1,-1);
+	CreateDynamicObject(18450, 1379.6079, -197.9873, 219.2717, 358.5428, 142.5000, 6.8991,0,-1,-1);
+	CreateDynamicObject(18450, 1376.1804, -198.5654, 216.2531, 358.3965, 135.0000, 6.6036,0,-1,-1);
+	CreateDynamicObject(18450, 1373.1749, -199.0938, 212.8110, 358.3008, 127.5000, 6.3039,0,-1,-1);
+	CreateDynamicObject(18450, 1370.6425, -199.5664, 209.0043, 358.2543, 120.0000, 6.0079,0,-1,-1);
+	CreateDynamicObject(18450, 1368.6267, -199.9805, 204.8983, 358.2540, 112.5000, 5.7232,0,-1,-1);
+	CreateDynamicObject(18450, 1367.1620, -200.3325, 200.5630, 358.2963, 105.0000, 5.4565,0,-1,-1);
+	CreateDynamicObject(18450, 1366.2734, -200.6191, 196.0728, 358.3762, 97.5000, 5.2138,0,-1,-1);
+	CreateDynamicObject(18450, 1365.9763, -200.8398, 191.5043, 358.4881, 90.0000, 5.0000,0,-1,-1);
+	CreateDynamicObject(18450, 1366.2756, -200.9937, 186.9359, 358.6260, 82.5000, 4.8191,0,-1,-1);
+	CreateDynamicObject(18450, 1367.1664, -201.0801, 182.4457, 358.7830, 75.0000, 4.6739,0,-1,-1);
+	CreateDynamicObject(18450, 1368.6332, -201.1016, 178.1104, 358.9524, 67.5000, 4.5661,0,-1,-1);
+	CreateDynamicObject(18450, 1399.1293, -199.9961, 106.0779, 358.9524, 66.6405, 4.5661,0,-1,-1);
+	CreateDynamicObject(18450, 1422.4006, -199.9336, 57.2685, 358.6856, 63.0000, 1.3302,0,-1,-1);
+	CreateDynamicObject(18450, 1425.9048, -200.0088, 51.9167, 358.7703, 54.0000, 1.1066,0,-1,-1);
+	CreateDynamicObject(18450, 1429.9801, -200.0581, 47.1438, 358.8936, 45.0000, 0.8936,0,-1,-1);
+	CreateDynamicObject(18450, 1434.7513, -200.0850, 43.0674, 359.0540, 36.0000, 0.6980,0,-1,-1);
+	CreateDynamicObject(18450, 1440.1012, -200.0923, 39.7878, 359.2491, 27.0000, 0.5262,0,-1,-1);
+	CreateDynamicObject(18450, 1445.8981, -200.0854, 37.3858, 359.4751, 18.0000, 0.3844,0,-1,-1);
+	CreateDynamicObject(18450, 1451.9990, -200.0679, 35.9205, 359.7273, 9.0000, 0.2780,0,-1,-1);
+	CreateDynamicObject(18450, 1458.2539, -200.0459, 35.4281, 0.0000, 0.0000, 0.2118,0,-1,-1);
+	CreateDynamicObject(18450, 1464.5088, -200.0239, 35.9205, 0.2727, 351.0000, 0.2780,0,-1,-1);
+	CreateDynamicObject(18450, 1470.6097, -200.0063, 37.3858, 0.5249, 342.0000, 0.3844,0,-1,-1);
+	CreateDynamicObject(18450, 1476.4066, -199.9995, 39.7878, 0.7509, 333.0000, 0.5262,0,-1,-1);
+	CreateDynamicObject(18450, 1481.7565, -200.0068, 43.0674, 0.9460, 324.0000, 0.6980,0,-1,-1);
+	CreateDynamicObject(18450, 1486.5277, -200.0337, 47.1438, 1.1064, 315.0000, 0.8936,0,-1,-1);
+	CreateDynamicObject(18450, 1490.6030, -200.0830, 51.9167, 1.2297, 306.0000, 1.1066,0,-1,-1);
+	CreateDynamicObject(18450, 1493.8820, -200.1582, 57.2685, 1.3144, 297.0000, 1.3302,0,-1,-1);
+	CreateDynamicObject(18450, 1496.2838, -200.2622, 63.0674, 1.3605, 288.0000, 1.5579,0,-1,-1);
+	CreateDynamicObject(18450, 1497.7495, -200.3965, 69.1707, 1.3688, 279.0000, 1.7832,0,-1,-1);
+	CreateDynamicObject(18450, 1503.0677, -200.3877, 75.4281, 1.3411, 270.0000, 2.0000,0,-1,-1);
+	CreateDynamicObject(1225, 1502.7780, -201.3359, 115.8307, 0.0000, 0.0000, 0.0000,0,-1,-1);
+	CreateDynamicObject(1225, 1503.0697, -206.9048, 115.7001, 0.0000, 0.0000, 0.0000,0,-1,-1);
+	CreateDynamicObject(1225, 1502.6503, -195.7656, 115.9611, 0.0000, 0.0000, 0.0000,0,-1,-1);
+	CreateDynamicObject(1225, 1502.6545, -198.4053, 115.8828, 0.0000, 0.0000, 0.0000,0,-1,-1);
+	CreateDynamicObject(1225, 1502.8709, -204.2427, 115.7626, 0.0000, 0.0000, 0.0000,0,-1,-1);
+	CreateDynamicObject(1225, 1502.8073, -202.7759, 115.7925, 0.0000, 0.0000, 0.0000,0,-1,-1);
+	CreateDynamicObject(1225, 1502.7211, -199.9233, 115.8638, 0.0000, 0.0000, 0.0000,0,-1,-1);
+	CreateDynamicObject(1225, 1502.6077, -197.0635, 115.9155, 0.0000, 0.0000, 0.0000,0,-1,-1);
+	CreateDynamicObject(1225, 1502.9508, -205.6172, 115.7304, 0.0000, 0.0000, 0.0000,0,-1,-1);
+	CreateDynamicObject(18450, 352.5808, -82.5942, 559.9935, 0.0000, 269.7591, 180.4818,0,-1,-1);
+	CreateDynamicObject(18450, 355.0443, -87.4009, 565.2955, 240.5383, 0.0000, 0.0000,0,-1,-1);
+	CreateDynamicObject(18450, 355.0446, -77.8848, 565.2695, 120.3212, 0.0000, 0.0000,0,-1,-1);
+	CreateDynamicObject(3461, 394.8508, -88.8179, 559.2024, 0.0000, 0.0000, 0.0000,0,-1,-1);
+	CreateDynamicObject(3461, 394.8649, -76.4055, 559.2024, 0.0000, 0.0000, 0.0000,0,-1,-1);
+	CreateDynamicObject(1217, 391.3192, -88.9509, 558.0488, 0.0000, 0.0000, 0.0000,0,-1,-1);
+	CreateDynamicObject(1217, 369.9450, -76.1333, 558.0488, 0.0000, 0.0000, 111.7268,0,-1,-1);
+	CreateDynamicObject(1634, -1341.979126, -2023.818115, 7.599393, 0.0000, 0.0000, 22.5000,0,-1,-1);
+	CreateDynamicObject(1260, -1352.668823, -1999.702515, 8.362857, 0.0000, 0.0000, 22.5000,0,-1,-1);
+	CreateDynamicObject(18367, -1357.698486, -1988.745239, 10.271055, 0.0000, 0.0000, 202.5000,0,-1,-1);
+	CreateDynamicObject(1634, -1368.848633, -1963.047729, 14.045984, 0.0000, 353.9839, 22.5000,0,-1,-1);
+	CreateDynamicObject(1634, -1370.109253, -1961.196899, 15.507805, 14.6104, 341.9518, 34.5321,0,-1,-1);
+	CreateDynamicObject(1634, -1371.786743, -1959.747314, 18.248894, 43.8313, 330.7792, 38.8293,0,-1,-1);
+	CreateDynamicObject(1634, -1373.218262, -1959.780884, 20.463421, 50.7067, 317.0282, 60.4699,0,-1,-1);
+	CreateDynamicObject(984, -1349.032959, -2002.911865, 11.304787, 0.0000, 0.0000, 22.5000,0,-1,-1);
+	CreateDynamicObject(984, -1352.385742, -1994.869507, 11.304787, 0.0000, 0.0000, 22.5000,0,-1,-1);
+	CreateDynamicObject(984, -1352.069702, -2003.619507, 11.304787, 0.0000, 0.0000, 22.5000,0,-1,-1);
+	CreateDynamicObject(5189, -1390.451416, -1972.348877, 13.529857, 0.0000, 0.0000, 33.7500,0,-1,-1);
+	CreateDynamicObject(18367, -1370.042969, -2004.153931, -2.199245, 323.9037, 357.4217, 209.3756,0,-1,-1);
+	CreateDynamicObject(4848, -1373.605347, -2003.387085, -3.207672, 0.0000, 0.0000, 300.3896,0,-1,-1);
+	CreateDynamicObject(1634, -1375.200317, -2015.153564, 1.318170, 0.0000, 0.0000, 123.7500,0,-1,-1);
+	CreateDynamicObject(4141, -1394.294067, -2039.453979, 2.964079, 0.0000, 0.0000, 213.7500,0,-1,-1);
+	CreateDynamicObject(897, -1378.132446, -1973.969849, 17.950712, 0.0000, 0.0000, 0.0000,0,-1,-1);
+	CreateDynamicObject(17071, -1399.276611, -1980.747314, 19.804813, 0.0000, 0.0000, 56.2500,0,-1,-1);
+	CreateDynamicObject(647, -1393.883179, -1979.307129, 21.043346, 0.0000, 0.0000, 0.0000,0,-1,-1);
+	CreateDynamicObject(728, -1395.060913, -1977.473145, 20.545986, 0.0000, 0.0000, 0.0000,0,-1,-1);
+	CreateDynamicObject(762, -1395.186646, -1983.521362, 22.078814, 0.0000, 0.0000, 0.0000,0,-1,-1);
+	CreateDynamicObject(1634, -1389.350586, -2018.575562, 7.298540, 0.0000, 0.0000, 67.5000,0,-1,-1);
+	CreateDynamicObject(1634, -1392.641968, -2018.134521, 9.920675, 17.1887, 352.2651, 83.9066,0,-1,-1);
+	CreateDynamicObject(1634, -1394.838379, -2018.653442, 12.798766, 31.7992, 335.0763, 95.9386,0,-1,-1);
+	CreateDynamicObject(975, -1399.680176, -2030.741699, 15.927584, 0.0000, 0.0000, 303.7500,0,-1,-1);
+	CreateDynamicObject(975, -1395.088257, -2037.575928, 15.929564, 0.0000, 0.0000, 303.7500,0,-1,-1);
+	CreateDynamicObject(975, -1390.203247, -2044.869019, 15.922012, 0.0000, 0.0000, 303.7500,0,-1,-1);
+	CreateDynamicObject(975, -1387.317383, -2049.229736, 15.920019, 0.0000, 0.0000, 303.7500,0,-1,-1);
+	CreateDynamicObject(13666, -1391.114014, -2043.795776, 19.110136, 0.0000, 0.0000, 38.0473,0,-1,-1);
+	CreateDynamicObject(1634, -1395.186157, -2040.938477, 15.153923, 0.0000, 0.0000, 29.4528,0,-1,-1);
+	CreateDynamicObject(1634, -1396.710693, -2038.112183, 17.767622, 23.2048, 1.7189, 29.4528,0,-1,-1);
+	CreateDynamicObject(13666, -1416.867310, -2033.999023, 34.031418, 0.0000, 341.9518, 207.2522,0,-1,-1);
+	CreateDynamicObject(13666, -1420.261719, -2035.163940, 35.129578, 0.0000, 341.9518, 207.2522,0,-1,-1);
+	CreateDynamicObject(13666, -1423.641235, -2036.309937, 36.265648, 0.0000, 341.9518, 207.2522,0,-1,-1);
+	CreateDynamicObject(13666, -1426.954102, -2037.468018, 37.335335, 0.0000, 341.9518, 207.2522,0,-1,-1);
+	CreateDynamicObject(13666, -1430.467773, -2038.666992, 38.476498, 0.0000, 341.9518, 207.2522,0,-1,-1);
+	CreateDynamicObject(13666, -1433.805908, -2039.757446, 39.635185, 0.0000, 341.9518, 207.2522,0,-1,-1);
+	CreateDynamicObject(13666, -1437.087646, -2040.841919, 40.745441, 0.0000, 341.9518, 207.2522,0,-1,-1);
+	CreateDynamicObject(13666, -1440.468872, -2041.946167, 41.893753, 0.0000, 341.9518, 207.2522,0,-1,-1);
+	CreateDynamicObject(13666, -1443.825562, -2043.054688, 43.047981, 0.0000, 341.9518, 207.2522,0,-1,-1);
+	CreateDynamicObject(3406, -1449.221313, -2038.036377, 36.781628, 0.0000, 0.0000, 112.5000,0,-1,-1);
+	CreateDynamicObject(3406, -1452.392700, -2030.302246, 36.755451, 0.0000, 0.0000, 112.5000,0,-1,-1);
+	CreateDynamicObject(3615, -1456.869141, -2024.775635, 39.852066, 0.0000, 0.0000, 21.5632,0,-1,-1);
+	CreateDynamicObject(18367, -1457.504028, -2024.889038, 38.989117, 337.6546, 1.7189, 300.1577,0,-1,-1);
+	CreateDynamicObject(3406, -1485.191284, -2040.719238, 52.163368, 0.0000, 0.0000, 206.8745,0,-1,-1);
+	CreateDynamicObject(3406, -1492.418579, -2044.369019, 52.137115, 0.0000, 0.0000, 206.8745,0,-1,-1);
+	CreateDynamicObject(4113, -1505.782104, -2024.069336, 18.097473, 0.0000, 0.0000, 129.8433,0,-1,-1);
+	CreateDynamicObject(4113, -1531.578125, -2036.758789, 18.253225, 0.0000, 359.1406, 129.8433,0,-1,-1);
+	CreateDynamicObject(976, -1504.302124, -2036.694946, 54.289001, 0.0000, 0.0000, 25.0783,0,-1,-1);
+	CreateDynamicObject(976, -1504.249268, -2036.975952, 54.289124, 0.0000, 0.0000, 292.5000,0,-1,-1);
+	CreateDynamicObject(976, -1496.326782, -2032.978638, 54.290100, 0.0000, 0.0000, 25.0783,0,-1,-1);
+	CreateDynamicObject(13666, -1493.589111, -2031.612427, 58.978714, 0.0000, 0.0000, 301.9539,0,-1,-1);
+	CreateDynamicObject(975, -1490.576538, -2025.446045, 55.803413, 0.0000, 0.0000, 299.3755,0,-1,-1);
+	CreateDynamicObject(976, -1501.762329, -2043.302002, 54.015110, 29.2208, 0.0000, 340.1557,0,-1,-1);
+	CreateDynamicObject(17565, -1520.504639, -2035.294067, 55.941605, 0.0000, 0.0000, 295.0783,0,-1,-1);
+	CreateDynamicObject(976, -1518.828369, -2044.039185, 54.243675, 0.0000, 0.0000, 295.0783,0,-1,-1);
+	CreateDynamicObject(976, -1522.080566, -2036.550659, 54.361557, 0.0000, 0.0000, 295.0783,0,-1,-1);
+	CreateDynamicObject(976, -1525.370728, -2029.268799, 54.372475, 0.0000, 0.0000, 295.0783,0,-1,-1);
+	CreateDynamicObject(976, -1528.970825, -2021.580444, 54.397598, 0.0000, 0.0000, 295.0783,0,-1,-1);
+	CreateDynamicObject(976, -1531.593994, -2016.272339, 54.278290, 0.0000, 0.0000, 295.0783,0,-1,-1);
+	CreateDynamicObject(17071, -1520.783203, -2035.954468, 53.170959, 0.0000, 0.0000, 22.5000,0,-1,-1);
+	CreateDynamicObject(762, -1519.162964, -2041.435425, 55.147514, 0.0000, 0.0000, 0.0000,0,-1,-1);
+	CreateDynamicObject(3406, -1528.903564, -2064.390137, 59.650589, 0.0000, 0.0000, 296.8745,0,-1,-1);
+	CreateDynamicObject(3406, -1525.614990, -2070.896973, 59.666985, 0.0000, 0.0000, 296.8745,0,-1,-1);
+	CreateDynamicObject(3406, -1522.080322, -2077.888428, 59.608498, 0.0000, 0.0000, 296.8745,0,-1,-1);
+	CreateDynamicObject(13593, -1519.943359, -2082.248047, 62.247162, 0.0000, 0.0000, 204.2961,0,-1,-1);
+	CreateDynamicObject(16640, -1510.295288, -2090.484131, 67.056953, 0.0000, 0.0000, 295.1557,0,-1,-1);
+	CreateDynamicObject(3375, -1510.509277, -2062.440186, 66.113495, 0.0000, 0.0000, 112.5000,0,-1,-1);
+	CreateDynamicObject(10009, -1533.057983, -2055.926758, 58.412109, 0.0000, 0.0000, 292.5000,0,-1,-1);
+	CreateDynamicObject(3375, -1526.068237, -2024.116333, 66.362946, 0.0000, 0.0000, 112.5000,0,-1,-1);
+	CreateDynamicObject(4882, -1546.830322, -2026.426880, 68.741997, 5.1566, 0.0000, 202.5000,0,-1,-1);
+	CreateDynamicObject(980, -1562.268799, -2045.744263, 65.583290, 272.3375, 0.0000, 297.7340,0,-1,-1);
+	CreateDynamicObject(980, -1556.447021, -2056.400391, 63.256142, 272.3375, 0.0000, 297.7340,0,-1,-1);
+	CreateDynamicObject(980, -1551.478882, -2065.779053, 60.796173, 272.3375, 0.0000, 297.7340,0,-1,-1);
+	CreateDynamicObject(980, -1546.236206, -2075.834473, 58.653275, 272.3375, 0.0000, 297.7340,0,-1,-1);
+	CreateDynamicObject(10009, -1546.784180, -2080.181641, 63.152832, 0.0000, 0.0000, 67.5001,0,-1,-1);
+	CreateDynamicObject(10009, -1542.088501, -2077.390625, 70.682312, 0.0000, 0.0000, 191.2501,0,-1,-1);
+	CreateDynamicObject(976, -1553.061035, -2077.190430, 73.578239, 49.8473, 0.8594, 227.6557,0,-1,-1);
+	CreateDynamicObject(3406, -1554.837891, -2083.437744, 71.820602, 0.0000, 0.0000, 118.7481,0,-1,-1);
+	CreateDynamicObject(4564, -1569.028809, -2118.620117, 30.456724, 0.0000, 0.0000, 299.3755,0,-1,-1);
+	CreateDynamicObject(1634, -1568.137451, -2101.102783, 74.797768, 0.0000, 0.0000, 123.7499,0,-1,-1);
+	CreateDynamicObject(1634, -1678.613770, -2175.921631, 139.020615, 29.2208, 359.1406, 123.7499,0,-1,-1);
+	CreateDynamicObject(1634, -1678.932129, -2176.298584, 144.489380, 69.6143, 0.8594, 123.7499,0,-1,-1);
+	CreateDynamicObject(1634, -1676.165527, -2174.360352, 151.221222, 110.8672, 0.8594, 123.7499,0,-1,-1);
+	CreateDynamicObject(1634, -1671.174683, -2171.409180, 154.277267, 139.2288, 0.8594, 123.7499,0,-1,-1);
+	CreateDynamicObject(8661, -1654.996216, -2155.416748, 147.285675, 0.0000, 0.0000, 28.5934,0,-1,-1);
+	CreateDynamicObject(13666, -1654.933594, -2154.779053, 152.166214, 0.0000, 0.0000, 115.9379,0,-1,-1);
+	CreateDynamicObject(976, -1657.352173, -2156.114258, 147.222641, 0.0000, 0.0000, 26.7972,0,-1,-1);
+	CreateDynamicObject(976, -1665.102905, -2160.026855, 147.272629, 0.0000, 0.0000, 26.7972,0,-1,-1);
+	CreateDynamicObject(976, -1672.851440, -2164.088135, 147.248123, 0.0000, 0.0000, 26.7972,0,-1,-1);
+	CreateDynamicObject(976, -1649.888916, -2152.181885, 147.297867, 0.0000, 0.0000, 26.7972,0,-1,-1);
+	CreateDynamicObject(976, -1642.857544, -2147.828613, 148.697403, 0.0000, 0.0000, 26.7972,0,-1,-1);
+	CreateDynamicObject(9946, -1331.581665, -2042.190918, 8.694613, 353.1245, 0.0000, 19.8443,0,-1,-1);
+	CreateDynamicObject(3494, -1344.322021, -2027.219482, 10.606881, 0.0000, 0.0000, 18.9849,0,-1,-1);
+	CreateDynamicObject(3494, -1336.509155, -2024.489502, 10.617052, 0.0000, 0.0000, 21.4859,0,-1,-1);
+	CreateDynamicObject(2780, -1356.561401, -2039.115234, 1.891328, 0.0000, 0.0000, 0.0000,0,-1,-1);
+	CreateDynamicObject(2780, -1319.739258, -2024.941650, 1.540995, 0.0000, 0.0000, 0.0000,0,-1,-1);
+	CreateDynamicObject(622, -1358.242310, -2040.015869, 7.670699, 0.0000, 0.0000, 0.0000,0,-1,-1);
+	CreateDynamicObject(622, -1319.536743, -2022.683960, 7.289242, 0.0000, 0.0000, 67.5000,0,-1,-1);
+	CreateDynamicObject(624, -1355.402344, -2041.707153, 7.147227, 0.0000, 0.0000, 0.0000,0,-1,-1);
+	CreateDynamicObject(620, -1315.840820, -2031.641724, 9.440929, 0.0000, 0.0000, 0.0000,0,-1,-1);
+	CreateDynamicObject(620, -1358.073975, -2034.344360, 6.905462, 0.0000, 0.0000, 0.0000,0,-1,-1);
+	CreateDynamicObject(620, -1416.350220, -2024.968628, 27.812489, 0.0000, 0.0000, 0.0000,0,-1,-1);
+	CreateDynamicObject(620, -1514.189087, -2008.337402, 54.195881, 0.0000, 0.0000, 0.0000,0,-1,-1);
+	CreateDynamicObject(762, -1318.293091, -2025.005859, 7.181517, 0.0000, 0.0000, 0.0000,0,-1,-1);
+	CreateDynamicObject(762, -1355.276733, -2038.481689, 9.433815, 0.0000, 0.0000, 0.0000,0,-1,-1);
+	CreateDynamicObject(1634, -1641.134399, -2142.153076, 148.207901, 5.1566, 358.2811, 295.1556,0,-1,-1);
+	CreateDynamicObject(3873, -1618.000488, -2128.569336, 134.933838, 0.0000, 0.0000, 0.0000,0,-1,-1);
+	CreateDynamicObject(3279, -1620.592285, -2133.072998, 152.357452, 0.0000, 0.0000, 202.5000,0,-1,-1);
+	CreateDynamicObject(5153, -1616.200317, -2131.389893, 169.283371, 359.1406, 18.0482, 21.6406,0,-1,-1);
+	CreateDynamicObject(12912, -1608.912476, -2129.057617, 158.631546, 0.0000, 0.0000, 110.7038,0,-1,-1);
+	CreateDynamicObject(2653, -1610.451050, -2128.858154, 169.165283, 0.0000, 0.0000, 292.5000,0,-1,-1);
+	CreateDynamicObject(5153, -1624.771729, -2116.215576, 151.216568, 0.0000, 0.0000, 297.7340,0,-1,-1);
+	CreateDynamicObject(5153, -1631.947754, -2128.503662, 151.266556, 0.0000, 0.0000, 5.2340,0,-1,-1);
+	CreateDynamicObject(3406, -1601.967285, -2125.888184, 165.206223, 0.0000, 34.3775, 17.4981,0,-1,-1);
+	CreateDynamicObject(3406, -1595.212036, -2123.753906, 160.386490, 0.0000, 34.3775, 17.4981,0,-1,-1);
+	CreateDynamicObject(3406, -1588.418457, -2121.593750, 155.504272, 0.0000, 34.3775, 17.4981,0,-1,-1);
+	CreateDynamicObject(3406, -1584.375366, -2120.325195, 153.599213, 0.0000, 20.6265, 17.4981,0,-1,-1);
+	CreateDynamicObject(3406, -1581.107544, -2119.312744, 153.359695, 0.0000, 5.1566, 17.4981,0,-1,-1);
+	CreateDynamicObject(3406, -1581.761719, -2119.505127, 153.535187, 0.0000, 353.9839, 17.4981,0,-1,-1);
+	CreateDynamicObject(3406, -1579.551636, -2118.816162, 153.600616, 0.0000, 342.8113, 17.4981,0,-1,-1);
+	CreateDynamicObject(17071, -1581.638916, -2124.708008, 140.225525, 0.0000, 0.0000, 315.0000,0,-1,-1);
+	CreateDynamicObject(880, -1614.096313, -2142.449463, 152.115601, 0.0000, 0.0000, 337.5000,0,-1,-1);
+	CreateDynamicObject(896, -1606.484497, -2132.934082, 149.617599, 0.0000, 0.0000, 292.5000,0,-1,-1);
+	CreateDynamicObject(880, -1640.714600, -2155.922119, 155.461914, 0.0000, 0.0000, 0.0000,0,-1,-1);
+	CreateDynamicObject(898, -1640.607666, -2150.562988, 147.446335, 0.0000, 0.0000, 0.0000,0,-1,-1);
+	CreateDynamicObject(623, -1562.012817, -2104.718750, 140.019089, 0.0000, 0.0000, 135.0000,0,-1,-1);
+	CreateDynamicObject(623, -1567.600098, -2128.908691, 140.019089, 0.0000, 0.0000, 326.2500,0,-1,-1);
+	CreateDynamicObject(624, -1560.652832, -2106.692139, 139.110275, 0.0000, 0.0000, 0.0000,0,-1,-1);
+	CreateDynamicObject(624, -1585.910767, -2131.616455, 143.458145, 0.0000, 0.0000, 0.0000,0,-1,-1);
+	CreateDynamicObject(624, -1610.760376, -2141.274170, 150.282700, 0.0000, 0.0000, 0.0000,0,-1,-1);
+	CreateDynamicObject(624, -1605.483765, -2132.541992, 154.667450, 0.0000, 0.0000, 78.7500,0,-1,-1);
+	CreateDynamicObject(800, -1610.604980, -2141.548584, 154.817062, 0.0000, 0.0000, 0.0000,0,-1,-1);
+	CreateDynamicObject(762, -1604.086304, -2136.823975, 153.874847, 0.0000, 0.0000, 0.0000,0,-1,-1);
+	CreateDynamicObject(762, -1585.034424, -2128.164795, 142.198639, 0.0000, 0.0000, 0.0000,0,-1,-1);
+	CreateDynamicObject(762, -1639.098633, -2152.051025, 154.971603, 0.0000, 0.0000, 0.0000,0,-1,-1);
+	CreateDynamicObject(2780, -1551.459351, -2117.143066, 136.991211, 0.0000, 0.0000, 0.0000,0,-1,-1);
+	CreateDynamicObject(3461, -1556.065063, -2121.650635, 141.320801, 0.0000, 0.0000, 0.0000,0,-1,-1);
+	CreateDynamicObject(3461, -1546.592285, -2111.846680, 141.316223, 0.0000, 0.0000, 0.0000,0,-1,-1);
+	CreateDynamicObject(3461, -1544.879150, -2105.171631, 141.320801, 0.0000, 0.0000, 0.0000,0,-1,-1);
+	CreateDynamicObject(3461, -1551.914185, -2103.127930, 141.316223, 0.0000, 0.0000, 0.0000,0,-1,-1);
+	CreateDynamicObject(3461, -1559.132813, -2104.546143, 141.316223, 0.0000, 0.0000, 0.0000,0,-1,-1);
+	CreateDynamicObject(8483, -1580.585205, -2122.835449, 145.288361, 0.0000, 0.0000, 19.1396,0,-1,-1);
+	CreateDynamicObject(3461, -1573.837280, -2123.950195, 146.507980, 359.1406, 91.9597, 24.0642,0,-1,-1);
+	CreateDynamicObject(3461, -1575.244019, -2119.900391, 146.682770, 22.3454, 109.1485, 12.8916,0,-1,-1);
+	CreateDynamicObject(3528, -1576.596680, -2122.867676, 141.567642, 0.0000, 315.3093, 22.5000,0,-1,-1);
+	CreateDynamicObject(9833, -1560.728760, -2111.782471, 136.198334, 0.0000, 0.0000, 11.2500,0,-1,-1);
+	CreateDynamicObject(5153, -1549.538086, -2018.435425, 72.197731, 0.0000, 351.4056, 292.5000,0,-1,-1);
+	CreateDynamicObject(11495, -1555.425415, -2078.655273, 73.643959, 0.0000, 0.0000, 92.3553,0,-1,-1);
+	CreateDynamicObject(1634, -1602.510376, -2121.224609, 74.872772, 0.0000, 0.0000, 123.7499,0,-1,-1);
+	CreateDynamicObject(4006, -1624.975342, -2155.349854, 46.568546, 0.0000, 0.0000, 213.7500,0,-1,-1);
+	CreateDynamicObject(4006, -1624.781006, -2155.000977, 69.756241, 0.0000, 0.0000, 213.7500,0,-1,-1);
+	CreateDynamicObject(18367, -1624.372803, -2141.514160, 74.648460, 7.7349, 0.8594, 23.3595,0,-1,-1);
+	CreateDynamicObject(13666, -1607.099487, -2159.204590, 80.700615, 344.5301, 0.0000, 295.0785,0,-1,-1);
+	CreateDynamicObject(1634, -1611.158447, -2163.009766, 77.956627, 20.6265, 0.0000, 115.1555,0,-1,-1);
+	CreateDynamicObject(1634, -1627.460938, -2153.312256, 83.955078, 20.6265, 345.3896, 33.8272,0,-1,-1);
+	CreateDynamicObject(1634, -1629.370483, -2151.672607, 87.286255, 42.9718, 332.4980, 44.9999,0,-1,-1);
+	CreateDynamicObject(1634, -1631.359131, -2152.082031, 92.126976, 61.0199, 313.5905, 70.0008,0,-1,-1);
+	CreateDynamicObject(10948, -1709.069580, -2177.804932, 98.811829, 0.0000, 0.0000, 123.7499,0,-1,-1);
+	CreateDynamicObject(1634, -1647.198853, -2164.747070, 92.335686, 8.5944, 359.1406, 123.8272,0,-1,-1);
+	CreateDynamicObject(9578, -1713.177856, -2203.152588, 99.849884, 0.0000, 0.0000, 303.7500,0,-1,-1);
+	CreateDynamicObject(1634, -1669.383667, -2182.325439, 100.459702, 8.5944, 359.1406, 123.8272,0,-1,-1);
+	CreateDynamicObject(1634, -1684.587036, -2193.760010, 104.631577, 8.5944, 359.1406, 123.8272,0,-1,-1);
+	CreateDynamicObject(1634, -1699.396362, -2204.022461, 107.990952, 8.5944, 359.1406, 123.8272,0,-1,-1);
+	CreateDynamicObject(1634, -1715.827271, -2214.591797, 110.342514, 8.5944, 359.1406, 123.8272,0,-1,-1);
+	CreateDynamicObject(1634, -1736.849365, -2211.424805, 114.051895, 8.5944, 359.1406, 303.8272,0,-1,-1);
+	CreateDynamicObject(987, -1737.689331, -2222.775391, 117.162529, 0.0000, 0.0000, 303.7500,0,-1,-1);
+	CreateDynamicObject(987, -1744.437256, -2212.724121, 117.164772, 0.0000, 0.0000, 303.7500,0,-1,-1);
+	CreateDynamicObject(987, -1720.576416, -2224.655518, 113.404572, 0.0000, 0.0000, 213.7500,0,-1,-1);
+	CreateDynamicObject(1634, -1704.693848, -2151.648926, 118.515358, 4.2972, 359.1406, 33.8272,0,-1,-1);
+	CreateDynamicObject(1634, -1707.393555, -2148.834229, 122.334076, 34.3775, 359.1406, 33.8272,0,-1,-1);
+	CreateDynamicObject(1634, -1708.697510, -2147.814209, 126.628654, 60.1605, 0.0000, 33.8272,0,-1,-1);
+	CreateDynamicObject(1634, -1708.875244, -2148.898926, 132.208359, 91.9597, 0.0000, 33.8272,0,-1,-1);
+	CreateDynamicObject(1634, -1708.183960, -2151.015137, 135.660339, 107.4295, 0.0000, 33.8272,0,-1,-1);
+	CreateDynamicObject(1634, -1706.733032, -2154.008789, 138.361465, 130.6344, 0.0000, 33.8272,0,-1,-1);
+	CreateDynamicObject(1634, -1704.432251, -2158.161865, 139.857437, 146.9638, 0.0000, 33.8272,0,-1,-1);
+	CreateDynamicObject(1634, -1701.697388, -2163.579590, 139.262863, 174.4660, 357.4217, 33.8272,0,-1,-1);
+	CreateDynamicObject(1634, -1700.763428, -2166.522705, 137.618011, 191.6548, 357.4217, 33.8272,0,-1,-1);
+	CreateDynamicObject(1634, -1699.902100, -2169.524414, 134.753677, 210.5626, 357.4217, 33.8272,0,-1,-1);
+	CreateDynamicObject(1634, -1699.906006, -2171.594482, 128.372894, 244.9400, 358.2811, 33.8272,0,-1,-1);
+	CreateDynamicObject(1634, -1701.464233, -2171.008057, 124.657585, 271.5823, 358.2811, 33.8272,0,-1,-1);
+	CreateDynamicObject(1634, -1703.803345, -2168.854492, 121.845032, 293.0680, 358.2811, 33.8272,0,-1,-1);
+	CreateDynamicObject(1634, -1707.285889, -2165.175537, 119.744827, 319.7103, 358.2811, 33.8272,0,-1,-1);
+	CreateDynamicObject(1634, -1710.032959, -2161.879150, 120.254372, 346.3526, 358.2811, 33.8272,0,-1,-1);
+	CreateDynamicObject(1634, -1713.409180, -2158.137939, 122.527458, 9.5574, 358.2811, 33.8272,0,-1,-1);
+	CreateDynamicObject(1634, -1715.285278, -2156.167725, 125.839859, 35.3404, 358.2811, 33.8272,0,-1,-1);
+	CreateDynamicObject(1634, -1716.920532, -2154.989502, 131.249176, 52.5292, 358.2811, 33.8272,0,-1,-1);
+	CreateDynamicObject(1634, -1718.092041, -2155.193359, 137.462936, 62.8424, 326.4820, 63.0480,0,-1,-1);
+	CreateDynamicObject(987, -1724.640259, -2200.378174, 117.293045, 0.0000, 0.0000, 213.7500,0,-1,-1);
+	CreateDynamicObject(987, -1715.134888, -2194.554932, 117.293045, 0.0000, 0.0000, 213.7500,0,-1,-1);
+	CreateDynamicObject(987, -1706.158447, -2188.837402, 117.400078, 0.0000, 0.0000, 213.7500,0,-1,-1);
+	CreateDynamicObject(987, -1697.564697, -2182.898926, 117.293045, 0.0000, 0.0000, 213.7500,0,-1,-1);
+	CreateDynamicObject(11495, -1679.702393, -2190.466309, 117.059990, 0.0000, 0.0000, 33.7500,0,-1,-1);
+	CreateDynamicObject(17068, -1681.098633, -2191.379395, 117.065552, 0.0000, 0.0000, 213.7500,0,-1,-1);
+	CreateDynamicObject(17068, -1681.902832, -2202.411865, 117.099648, 0.0000, 0.0000, 303.7500,0,-1,-1);
+	CreateDynamicObject(17068, -1692.190796, -2203.793945, 117.163742, 0.0000, 0.0000, 215.2284,0,-1,-1);
+	CreateDynamicObject(987, -1692.004028, -2190.255859, 117.293045, 0.0000, 0.0000, 123.7500,0,-1,-1);
+	CreateDynamicObject(1634, -1716.745850, -2166.047852, 142.390366, 4.2972, 359.1406, 303.8272,0,-1,-1);
+	CreateDynamicObject(8661, -1690.924561, -2142.035156, 142.317963, 0.0000, 0.0000, 302.1085,0,-1,-1);
+	CreateDynamicObject(11495, -1668.229492, -2170.144043, 135.537659, 0.0000, 0.0000, 303.7500,0,-1,-1);
+	CreateDynamicObject(17068, -1669.189087, -2168.666748, 135.534760, 0.0000, 0.0000, 123.7499,0,-1,-1);
+	CreateDynamicObject(8661, -1691.716553, -2142.644287, 139.465866, 92.8192, 0.0000, 302.1085,0,-1,-1);
+	CreateDynamicObject(8661, -1689.895752, -2146.201416, 139.103638, 91.1003, 0.0000, 117.2610,0,-1,-1);
+	CreateDynamicObject(13666, -1692.705688, -2140.970703, 148.134171, 0.0000, 0.0000, 210.3124,0,-1,-1);
+	CreateDynamicObject(11495, -1666.861084, -2146.014648, 142.161499, 0.0000, 0.0000, 300.3123,0,-1,-1);
+	CreateDynamicObject(11495, -1667.751709, -2144.594727, 142.261780, 0.0000, 0.0000, 120.3122,0,-1,-1);
+	CreateDynamicObject(18367, -1659.091431, -2140.460205, 141.996902, 356.5623, 347.9679, 121.0943,0,-1,-1);
+	CreateDynamicObject(18367, -1649.728271, -2134.511963, 143.927917, 23.2048, 347.9679, 31.0943,0,-1,-1);
+	CreateDynamicObject(18367, -1643.227051, -2146.451172, 139.572586, 16.3293, 12.0321, 315.0000,0,-1,-1);
+	CreateDynamicObject(744, -1645.376099, -2134.568359, 143.884338, 0.0000, 0.0000, 0.0000,0,-1,-1);
+	CreateDynamicObject(744, -1640.772217, -2151.395264, 139.242249, 0.0000, 0.0000, 0.0000,0,-1,-1);
+	CreateDynamicObject(896, -1684.483887, -2157.383789, 143.026215, 0.0000, 0.0000, 315.0000,0,-1,-1);
+	CreateDynamicObject(762, -1684.048096, -2154.963135, 145.790512, 0.0000, 0.0000, 292.9639,0,-1,-1);
 
 
 	//PlayazMansion

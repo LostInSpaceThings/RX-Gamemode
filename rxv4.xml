@@ -1866,7 +1866,6 @@
 			<referrer name="cmd_aotv"/>
 			<referrer name="GetTotalCreatedObjects"/>
 			<referrer name="GetVIPTotalCreatedObjects"/>
-			<referrer name="DestroyDerbyObjects"/>
 			<referrer name="cmd_gmlo"/>
 			<referrer name="cmd_gmo"/>
 			<referrer name="cmd_myobjects"/>
@@ -2167,7 +2166,7 @@
 			<referrer name="Iter_YieldReturn"/>
 			<library>y_emit</library>  <remarks>  The JIT plugin address translation register value for use in <c>LCTRL</c>  and <c>SCTRL</c>.  </remarks> 
 		</member>
-		<member name="C:__line" value="51763">
+		<member name="C:__line" value="51728">
 			<referrer name="cmd_version"/>
 			<referrer name="cmd_dsbfp"/>
 			<referrer name="cmd_egmfp"/>
@@ -2633,9 +2632,11 @@
 			<referrer name="PGodTimer"/>
 			<referrer name="DerbyTimer"/>
 			<referrer name="Anticheat_Update"/>
+			<referrer name="GetPlayerCount"/>
 			<referrer name="Iter_OnRconLoginAttempt"/>
 			<referrer name="DCMD_players"/>
 			<referrer name="cmd_report"/>
+			<referrer name="cmd_drift"/>
 			<referrer name="CTFTimeout"/>
 			<referrer name="StartSurvival"/>
 			<referrer name="StartDerby"/>
@@ -3348,9 +3349,10 @@
 			<referrer name="cmd_login"/>
 			<referrer name="cmd_bb"/>
 			<referrer name="cmd_pier69"/>
-			<referrer name="cmd_m1"/>
 			<referrer name="cmd_m2"/>
+			<referrer name="cmd_m1"/>
 			<referrer name="cmd_m3"/>
+			<referrer name="cmd_mc"/>
 			<referrer name="cmd_da"/>
 			<referrer name="cmd_lva"/>
 			<referrer name="cmd_runwayls"/>
@@ -4089,6 +4091,7 @@
 			<referrer name="cmd_cb"/>
 			<referrer name="RandomMinigame"/>
 			<referrer name="cmd_race"/>
+			<referrer name="GoGoRace"/>
 			<referrer name="OnPlayerEnterRaceCheckpoint"/>
 		</member>
 		<member name="F:DCLookups">
@@ -4640,6 +4643,7 @@
 			<referrer name="PGodTimer"/>
 			<referrer name="DerbyTimer"/>
 			<referrer name="Anticheat_Update"/>
+			<referrer name="GetPlayerCount"/>
 			<referrer name="Iter_OnRconLoginAttempt"/>
 			<referrer name="DCMD_players"/>
 			<referrer name="cmd_report"/>
@@ -4735,6 +4739,7 @@
 			<referrer name="Iter_VehicleDo"/>
 			<referrer name="RandomMessages"/>
 			<referrer name="Anticheat_Update"/>
+			<referrer name="cmd_drift"/>
 			<referrer name="Race_Rotation"/>
 		</member>
 		<member name="F:Iterator@VehicleDriver">
@@ -5092,9 +5097,10 @@
 			<referrer name="cmd_pier69"/>
 			<referrer name="cmd_libertycity"/>
 			<referrer name="cmd_cage"/>
-			<referrer name="cmd_m1"/>
 			<referrer name="cmd_m2"/>
+			<referrer name="cmd_m1"/>
 			<referrer name="cmd_m3"/>
+			<referrer name="cmd_mc"/>
 			<referrer name="cmd_da"/>
 			<referrer name="cmd_lva"/>
 			<referrer name="cmd_runwayls"/>
@@ -5640,6 +5646,7 @@
 			<referrer name="LoadRace"/>
 			<referrer name="RaceDetails"/>
 			<referrer name="RaceCountDown"/>
+			<referrer name="GoGoRace"/>
 			<referrer name="Check_IfMadeRecord"/>
 			<referrer name="Race_Rotation"/>
 			<referrer name="OnPlayerEnterRaceCheckpoint"/>
@@ -7913,6 +7920,7 @@
 			<referrer name="cmd_acceptpms"/>
 			<referrer name="cmd_denypms"/>
 			<referrer name="cmd_login"/>
+			<referrer name="cmd_mc"/>
 			<referrer name="cmd_da"/>
 			<referrer name="cmd_lva"/>
 			<referrer name="cmd_lsa"/>
@@ -8215,6 +8223,7 @@
 			<referrer name="GetRaceID"/>
 			<referrer name="RaceDetails"/>
 			<referrer name="RaceCountDown"/>
+			<referrer name="GoGoRace"/>
 			<referrer name="Race_Timing"/>
 			<referrer name="Check_IfMadeRecord"/>
 			<referrer name="OnPlayerEnterDynamicCP"/>
@@ -12256,7 +12265,6 @@
 		<member name="M:AutoNewsChange" syntax="AutoNewsChange(a)">
 			<stacksize value="138"/>
 			<referrer name="zcmd_OnGameModeInit"/>
-			<referrer name="MP_OPC"/>
 			<referrer name="Anticheat_Update"/>
 			<dependency name="Deaths"/>
 			<dependency name="Iterator@Player"/>
@@ -13172,7 +13180,6 @@
 			<referrer name="cmd_daso"/>
 			<referrer name="GetTotalCreatedObjects"/>
 			<referrer name="GetVIPTotalCreatedObjects"/>
-			<referrer name="DestroyDerbyObjects"/>
 			<referrer name="cmd_gmlo"/>
 			<referrer name="cmd_myobjects"/>
 			<referrer name="cmd_glo"/>
@@ -14133,6 +14140,7 @@
 			<referrer name="RandomMinigame"/>
 			<referrer name="cmd_ban"/>
 			<referrer name="cmd_race"/>
+			<referrer name="GoGoRace"/>
 			<referrer name="OnPlayerEnterRaceCheckpoint"/>
 			<param name="channel">
 				<paraminfo>DCC_Channel </paraminfo>
@@ -14621,7 +14629,6 @@
 			<dependency name="DerbyTime"/>
 			<dependency name="DerbyVehicle"/>
 			<dependency name="DerbyZ"/>
-			<dependency name="DestroyDerbyObjects"/>
 			<dependency name="DestroyDynamicPickup"/>
 			<dependency name="GameTextForPlayer"/>
 			<dependency name="GetPlayerPos"/>
@@ -14674,17 +14681,6 @@
 			<dependency name="PlayerTextDrawHide"/>
 			<param name="playerid">
 			</param>
-		</member>
-		<member name="M:DestroyDerbyObjects" syntax="DestroyDerbyObjects()">
-			<stacksize value="7"/>
-			<referrer name="DerbyTimer"/>
-			<referrer name="StartDerby"/>
-			<referrer name="cmd_unloadderby"/>
-			<referrer name="cmd_startderby"/>
-			<dependency name="CountDynamicObjects"/>
-			<dependency name="DestroyDynamicObject"/>
-			<dependency name="E_STREAMER_EXTRA_ID"/>
-			<dependency name="Streamer_GetIntData"/>
 		</member>
 		<member name="M:DestroyDynamic3DTextLabel" syntax="DestroyDynamic3DTextLabel(id)">
 			<attribute name="native"/>
@@ -14739,7 +14735,6 @@
 			<referrer name="cmd_dobj"/>
 			<referrer name="cmd_dsor"/>
 			<referrer name="OnPlayerSelectDynamicObject"/>
-			<referrer name="DestroyDerbyObjects"/>
 			<referrer name="cmd_dano"/>
 			<referrer name="cmd_dmao"/>
 			<referrer name="Unwash"/>
@@ -15824,9 +15819,10 @@
 			<referrer name="cmd_pier69"/>
 			<referrer name="cmd_libertycity"/>
 			<referrer name="cmd_cage"/>
-			<referrer name="cmd_m1"/>
 			<referrer name="cmd_m2"/>
+			<referrer name="cmd_m1"/>
 			<referrer name="cmd_m3"/>
+			<referrer name="cmd_mc"/>
 			<referrer name="cmd_da"/>
 			<referrer name="cmd_lva"/>
 			<referrer name="cmd_runwayls"/>
@@ -16635,10 +16631,10 @@
 			<library>omp_player</library>  <summary>Gets the colour of the player's name and radar marker.  Only works after <a href="#SetPlayerColor">SetPlayerColor</a>.</summary>    <seealso name="SetPlayerColor" />  <seealso name="ChangeVehicleColor" />  <remarks>GetPlayerColor will return <b><c>0</c></b> unless <a href="#SetPlayerColor">SetPlayerColor</a>  has been used first.</remarks>  <returns>The player's colour. <b><c>0</c></b> if no colour set or player not connected.</returns> 
 		</member>
 		<member name="M:GetPlayerCount" syntax="GetPlayerCount()">
-			<stacksize value="5"/>
-			<referrer name="MP_OPC"/>
+			<stacksize value="3"/>
 			<referrer name="Race_Rotation"/>
-			<dependency name="IsPlayerConnected"/>
+			<dependency name="Iterator@Player"/>
+			<dependency name="cellmax"/>
 		</member>
 		<member name="M:GetPlayerCountExNPC" syntax="GetPlayerCountExNPC()">
 			<stacksize value="5"/>
@@ -17693,7 +17689,6 @@
 		<member name="M:GetUserID" syntax="GetUserID(playerid)">
 			<attribute name="public"/>
 			<stacksize value="7"/>
-			<referrer name="MP_OPC"/>
 			<referrer name="LoadKeys"/>
 			<referrer name="SaveKeys"/>
 			<referrer name="Duel_End"/>
@@ -18285,6 +18280,8 @@
 			<dependency name="CPs"/>
 			<dependency name="CPsize"/>
 			<dependency name="CreateDynamic3DTextLabel"/>
+			<dependency name="DCC_SendChannelMessage"/>
+			<dependency name="DCGen"/>
 			<dependency name="GetMyColor"/>
 			<dependency name="GetTickCount"/>
 			<dependency name="IsPlayerConnected"/>
@@ -18293,6 +18290,7 @@
 			<dependency name="MyRank"/>
 			<dependency name="Players"/>
 			<dependency name="Players"/>
+			<dependency name="R_Name"/>
 			<dependency name="RaceTick"/>
 			<dependency name="RaceTime"/>
 			<dependency name="RacesJoined"/>
@@ -18303,11 +18301,13 @@
 			<dependency name="cellmax"/>
 			<dependency name="eTimer"/>
 			<dependency name="false"/>
+			<dependency name="formatex"/>
 			<dependency name="position"/>
 			<dependency name="rTimer"/>
 			<dependency name="racelabel"/>
 			<dependency name="tickcount"/>
 			<dependency name="true"/>
+			<dependency name="xstring"/>
 		</member>
 		<member name="M:GotoPosition" syntax="GotoPosition(playerid, X, Y, Z, bringcar)">
 			<attribute name="public"/>
@@ -18331,9 +18331,10 @@
 			<referrer name="cmd_pier69"/>
 			<referrer name="cmd_libertycity"/>
 			<referrer name="cmd_cage"/>
-			<referrer name="cmd_m1"/>
 			<referrer name="cmd_m2"/>
+			<referrer name="cmd_m1"/>
 			<referrer name="cmd_m3"/>
+			<referrer name="cmd_mc"/>
 			<referrer name="cmd_da"/>
 			<referrer name="cmd_lva"/>
 			<referrer name="cmd_runwayls"/>
@@ -19004,7 +19005,6 @@
 		</member>
 		<member name="M:IntBool" syntax="IntBool(thebool)">
 			<stacksize value="1"/>
-			<referrer name="Save"/>
 			<dependency name="true"/>
 			<param name="thebool">
 				<paraminfo>bool </paraminfo>
@@ -19902,7 +19902,6 @@
 			<referrer name="GetPlayerMostCTF"/>
 			<referrer name="GetPlayerMostScore"/>
 			<referrer name="GetPlayerCountExNPC"/>
-			<referrer name="GetPlayerCount"/>
 			<referrer name="Iter_OnRconLoginAttempt"/>
 			<referrer name="cmd_leaveptp"/>
 			<referrer name="IsNameConnected"/>
@@ -22748,7 +22747,6 @@
 		<member name="M:LoadDerbyMap" syntax="LoadDerbyMap(mapname[])">
 			<stacksize value="51"/>
 			<referrer name="OnDialogResponse"/>
-			<referrer name="RandomMinigame"/>
 			<referrer name="cmd_loadderby"/>
 			<dependency name="CreateDynamicObject"/>
 			<dependency name="E_STREAMER_EXTRA_ID"/>
@@ -22768,7 +22766,7 @@
 		<member name="M:LoadEasterEggs" syntax="LoadEasterEggs(playerid)">
 			<attribute name="public"/>
 			<stacksize value="20"/>
-			<referrer name="MP_OPC"/>
+			<referrer name="Login"/>
 			<dependency name="GetUserID"/>
 			<dependency name="MyEggs"/>
 			<dependency name="MyEggs"/>
@@ -22829,6 +22827,7 @@
 		</member>
 		<member name="M:LoadProperties" syntax="LoadProperties()">
 			<stacksize value="36"/>
+			<referrer name="zcmd_OnGameModeInit"/>
 			<referrer name="OnDialogResponse"/>
 			<dependency name="operator+(Float:,Float:)"/>
 			<dependency name="Float:operator=(_:)"/>
@@ -22947,6 +22946,7 @@
 			<dependency name="IsValidDynamic3DTextLabel"/>
 			<dependency name="Kick2"/>
 			<dependency name="Kills"/>
+			<dependency name="LoadEasterEggs"/>
 			<dependency name="LoadKeys"/>
 			<dependency name="Logged"/>
 			<dependency name="Money"/>
@@ -23029,7 +23029,6 @@
 			<dependency name="AddPlayerBan"/>
 			<dependency name="AdminLvl"/>
 			<dependency name="AnnText"/>
-			<dependency name="AutoNewsChange"/>
 			<dependency name="BanEx"/>
 			<dependency name="Banned"/>
 			<dependency name="BuildInitial"/>
@@ -23061,13 +23060,11 @@
 			<dependency name="Earnings"/>
 			<dependency name="GameTextForPlayer"/>
 			<dependency name="GangZoneShowForPlayer"/>
-			<dependency name="GetPlayerCount"/>
 			<dependency name="GetPlayerCountExNPC"/>
 			<dependency name="GetPlayerIp"/>
 			<dependency name="GetPlayerName"/>
 			<dependency name="GetTickCount"/>
 			<dependency name="GetTotalCreatedObjects"/>
-			<dependency name="GetUserID"/>
 			<dependency name="HO2"/>
 			<dependency name="HO2"/>
 			<dependency name="HTTP"/>
@@ -23079,7 +23076,6 @@
 			<dependency name="IsPlayerNPC"/>
 			<dependency name="IsValidDynamic3DTextLabel"/>
 			<dependency name="Kick"/>
-			<dependency name="LoadEasterEggs"/>
 			<dependency name="Login"/>
 			<dependency name="MyEggs"/>
 			<dependency name="MyEggs"/>
@@ -23167,7 +23163,6 @@
 			<dependency name="precord"/>
 			<dependency name="print"/>
 			<dependency name="racelabel"/>
-			<dependency name="random"/>
 			<dependency name="score"/>
 			<dependency name="spawnZones"/>
 			<dependency name="strcmp"/>
@@ -26946,7 +26941,6 @@
 			<dependency name="PropertiesAmount"/>
 			<dependency name="RandomMSG"/>
 			<dependency name="RandomMSG"/>
-			<dependency name="Save"/>
 			<dependency name="SendClientMessage"/>
 			<dependency name="SendClientMessageToAll"/>
 			<dependency name="Token"/>
@@ -27032,7 +27026,6 @@
 			<dependency name="DerbyZ"/>
 			<dependency name="E_STREAMER_EXTRA_ID"/>
 			<dependency name="KillTimer"/>
-			<dependency name="LoadDerbyMap"/>
 			<dependency name="PlaySoundForAll"/>
 			<dependency name="SQL"/>
 			<dependency name="SVLoaded"/>
@@ -27048,7 +27041,6 @@
 			<dependency name="formatex"/>
 			<dependency name="mysql_query"/>
 			<dependency name="random"/>
-			<dependency name="strlen"/>
 			<dependency name="true"/>
 			<dependency name="xstring"/>
 		</member>
@@ -28606,7 +28598,6 @@
 			<stacksize value="98"/>
 			<referrer name="ScriptInit_OnGameModeExit"/>
 			<referrer name="SSCANF_OnPlayerDisconnect"/>
-			<referrer name="RandomMessages"/>
 			<referrer name="OnPlayerModelSelection"/>
 			<referrer name="Anticheat_Update"/>
 			<referrer name="cmd_register"/>
@@ -28625,7 +28616,6 @@
 			<dependency name="GPCI"/>
 			<dependency name="GetPVarString"/>
 			<dependency name="IPLookups"/>
-			<dependency name="IntBool"/>
 			<dependency name="Logged"/>
 			<dependency name="Money"/>
 			<dependency name="MyCar"/>
@@ -29485,9 +29475,10 @@
 			<referrer name="cmd_pier69"/>
 			<referrer name="cmd_libertycity"/>
 			<referrer name="cmd_cage"/>
-			<referrer name="cmd_m1"/>
 			<referrer name="cmd_m2"/>
+			<referrer name="cmd_m1"/>
 			<referrer name="cmd_m3"/>
+			<referrer name="cmd_mc"/>
 			<referrer name="cmd_da"/>
 			<referrer name="cmd_lva"/>
 			<referrer name="cmd_runwayls"/>
@@ -30558,6 +30549,7 @@
 		<member name="M:SendTeleMessageToAdmins" syntax="SendTeleMessageToAdmins(color, level, string[])">
 			<stacksize value="6"/>
 			<referrer name="OnDialogResponse"/>
+			<referrer name="cmd_mc"/>
 			<referrer name="cmd_da"/>
 			<referrer name="cmd_lva"/>
 			<referrer name="cmd_lsa"/>
@@ -31023,6 +31015,7 @@
 			<referrer name="cmd_playduel"/>
 			<referrer name="cmd_duel"/>
 			<referrer name="cmd_dm"/>
+			<referrer name="cmd_mc"/>
 			<referrer name="cmd_da"/>
 			<referrer name="cmd_lva"/>
 			<referrer name="cmd_lsa"/>
@@ -31623,6 +31616,7 @@
 			<referrer name="cmd_ammo2"/>
 			<referrer name="cmd_playduel"/>
 			<referrer name="Duel_SetPlayerPos"/>
+			<referrer name="cmd_mc"/>
 			<referrer name="cmd_da"/>
 			<referrer name="cmd_lva"/>
 			<referrer name="cmd_lsa"/>
@@ -31840,9 +31834,10 @@
 			<referrer name="cmd_bb"/>
 			<referrer name="cmd_libertycity"/>
 			<referrer name="cmd_cage"/>
-			<referrer name="cmd_m1"/>
 			<referrer name="cmd_m2"/>
+			<referrer name="cmd_m1"/>
 			<referrer name="cmd_m3"/>
+			<referrer name="cmd_mc"/>
 			<referrer name="cmd_da"/>
 			<referrer name="cmd_lva"/>
 			<referrer name="cmd_runwayls"/>
@@ -33407,7 +33402,6 @@
 			<dependency name="DerbyLoaded"/>
 			<dependency name="DerbyPlayers"/>
 			<dependency name="DerbyVehicle"/>
-			<dependency name="DestroyDerbyObjects"/>
 			<dependency name="GivePlayerWeapon"/>
 			<dependency name="IsPlayerConnected"/>
 			<dependency name="Iterator@Player"/>
@@ -33640,7 +33634,6 @@
 			<referrer name="cmd_aotv"/>
 			<referrer name="GetTotalCreatedObjects"/>
 			<referrer name="GetVIPTotalCreatedObjects"/>
-			<referrer name="DestroyDerbyObjects"/>
 			<referrer name="cmd_gmlo"/>
 			<referrer name="cmd_gmo"/>
 			<referrer name="cmd_myobjects"/>
@@ -33763,6 +33756,7 @@
 			<referrer name="OnPlayerModelSelectionEx"/>
 			<referrer name="OnDialogResponse"/>
 			<referrer name="DerbyTimer"/>
+			<referrer name="cmd_mc"/>
 			<referrer name="cmd_da"/>
 			<referrer name="cmd_lva"/>
 			<referrer name="cmd_runwayls"/>
@@ -41663,7 +41657,7 @@
 		</member>
 		<member name="M:cmd_drift" syntax="cmd_drift(playerid, params[])">
 			<attribute name="public"/>
-			<stacksize value="1211"/>
+			<stacksize value="1011"/>
 			<dependency name="AmBuilding"/>
 			<dependency name="AmRacing"/>
 			<dependency name="DIALOG_STYLE_LIST"/>
@@ -41678,6 +41672,7 @@
 			<dependency name="GetPlayerVehicleID"/>
 			<dependency name="GetPlayerVirtualWorld"/>
 			<dependency name="IsSeatTaken"/>
+			<dependency name="Iterator@Vehicle"/>
 			<dependency name="KillTimer"/>
 			<dependency name="Minigame"/>
 			<dependency name="PlayerDriftCancellation"/>
@@ -41703,6 +41698,7 @@
 			<dependency name="cache_get_value_name_float"/>
 			<dependency name="cache_get_value_name_int"/>
 			<dependency name="cache_num_rows"/>
+			<dependency name="cellmax"/>
 			<dependency name="eDriftTimer"/>
 			<dependency name="false"/>
 			<dependency name="formatex"/>
@@ -47851,6 +47847,29 @@
 			<dependency name="PutPlayerInVehicle"/>
 			<dependency name="RandomVehicleColor"/>
 			<dependency name="SendClientMessage"/>
+			<param name="playerid">
+			</param>
+			<param name="params">
+				<paraminfo> [] </paraminfo>
+			</param>
+		</member>
+		<member name="M:cmd_mc" syntax="cmd_mc(playerid, params[])">
+			<attribute name="public"/>
+			<stacksize value="11"/>
+			<dependency name="GameTextForPlayer"/>
+			<dependency name="GotoPosition"/>
+			<dependency name="Minigame"/>
+			<dependency name="Players"/>
+			<dependency name="SendClientMessage"/>
+			<dependency name="SendTeleMessageToAdmins"/>
+			<dependency name="SetCameraBehindPlayer"/>
+			<dependency name="SetPlayerFacingAngle"/>
+			<dependency name="SetPlayerInterior"/>
+			<dependency name="Streamer_UpdateEx"/>
+			<dependency name="formatex"/>
+			<dependency name="random"/>
+			<dependency name="true"/>
+			<dependency name="xstring"/>
 			<param name="playerid">
 			</param>
 			<param name="params">
@@ -54197,7 +54216,6 @@
 			<dependency name="DerbyLoaded"/>
 			<dependency name="DerbyPlayers"/>
 			<dependency name="DerbyVehicle"/>
-			<dependency name="DestroyDerbyObjects"/>
 			<dependency name="GameTextForPlayer"/>
 			<dependency name="GivePlayerWeapon"/>
 			<dependency name="IsPlayerAdminLevel"/>
@@ -55859,7 +55877,6 @@
 			<dependency name="DerbyTime"/>
 			<dependency name="DerbyVehicle"/>
 			<dependency name="DerbyZ"/>
-			<dependency name="DestroyDerbyObjects"/>
 			<dependency name="DestroyDynamicPickup"/>
 			<dependency name="IsPlayerConnected"/>
 			<dependency name="IsValidDynamicPickup"/>
@@ -57684,6 +57701,7 @@
 			<referrer name="cmd_denypms"/>
 			<referrer name="cmd_register"/>
 			<referrer name="cmd_login"/>
+			<referrer name="cmd_mc"/>
 			<referrer name="cmd_da"/>
 			<referrer name="cmd_lva"/>
 			<referrer name="cmd_lsa"/>
@@ -58044,6 +58062,7 @@
 			<referrer name="LoadRace"/>
 			<referrer name="RaceDetails"/>
 			<referrer name="RaceCountDown"/>
+			<referrer name="GoGoRace"/>
 			<referrer name="Race_Timing"/>
 			<referrer name="RaceMustEnd"/>
 			<referrer name="Check_IfMadeRecord"/>
@@ -59070,7 +59089,6 @@
 			<referrer name="zcmd_OnGameModeInit"/>
 			<referrer name="OnPlayerRequestSpawn"/>
 			<referrer name="OnPlayerSpawn"/>
-			<referrer name="MP_OPC"/>
 			<referrer name="RandomGame"/>
 			<referrer name="LooseWeapons"/>
 			<referrer name="RandomMessages"/>
@@ -59111,6 +59129,7 @@
 			<referrer name="cmd_pj"/>
 			<referrer name="cmd_nrg"/>
 			<referrer name="cmd_bb"/>
+			<referrer name="cmd_mc"/>
 			<referrer name="cmd_da"/>
 			<referrer name="cmd_lva"/>
 			<referrer name="cmd_lsa"/>
@@ -59458,7 +59477,6 @@
 			<referrer name="cmd_ssb"/>
 			<referrer name="cmd_cb"/>
 			<referrer name="cmd_plate"/>
-			<referrer name="RandomMinigame"/>
 			<referrer name="cmd_loadderby"/>
 			<referrer name="cmd_me"/>
 			<referrer name="cmd_obj"/>
@@ -59739,6 +59757,7 @@
 			<dependency name="KSpree"/>
 			<dependency name="LastCar"/>
 			<dependency name="LoadModelSelectionMenu"/>
+			<dependency name="LoadProperties"/>
 			<dependency name="Logged"/>
 			<dependency name="Minigame"/>
 			<dependency name="Money"/>
