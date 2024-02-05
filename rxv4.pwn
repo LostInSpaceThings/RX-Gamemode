@@ -31,7 +31,12 @@ CJ101 v5.0.5
 - Added /mc to teleport to mount Chiliad
 - Added NRGs around mount Chiliad
 - Fixed some crashes
-- 
+- Added internal server !banip command
+- Added new /parkour menu to show all parkour spots
+- Added /parajumps command to show all parachute parajumps
+- Added more parachute jump spots
+- Added /cjshouse teleport command
+- Added teleport /pershing
 -----------------------------------------------------------------------------------------
 
 */
@@ -5075,9 +5080,9 @@ public OnDialogResponse(playerid, dialogid, response, listitem, inputtext[])
 		{
 			if(!response) return 0;
 		    if(listitem == 0) ShowPlayerDialog(playerid,21,DIALOG_STYLE_LIST,"Teleports - Airports","Los Santos Airport\nSan Fierro Airport\nLas Venturas Airport\nDesert Airport\nArea 69 Airport","Teleport","Back");
-			if(listitem == 1) ShowPlayerDialog(playerid,22,DIALOG_STYLE_LIST,"Teleports - Parachuting","Parachute Jump Spot 1\nParachute Jump Spot 2\nParachute Jump Spot 3\nParachute Jump Spot 4\nParachute Jump Spot 5","Teleport","Back");
+			if(listitem == 1) ShowPlayerDialog(playerid,22,DIALOG_STYLE_LIST,"Teleports - Parachuting","Parachute Jump Spot 1\nParachute Jump Spot 2\nParachute Jump Spot 3\nParachute Jump Spot 4\nParachute Jump Spot 5\nParachute Jump Spot 6","Teleport","Back");
 		  	if(listitem == 2) ShowPlayerDialog(playerid,8,DIALOG_STYLE_LIST,"Drifting Menu","Drift Area 1\nDrift Area 2\nDrift Area 3\nDrift Area 4\nDrift Area 5\nDrift Area 6\nDrift City by ColdX","Ok","Cancel");
-			if(listitem == 3) ShowPlayerDialog(playerid,23,DIALOG_STYLE_LIST,"Teleports - Parkour","Parkour Spot 1\nParkour Spot 2\nParkour Spot 3\nParkour Spot 4","Teleport","Back");
+			if(listitem == 3) ShowPlayerDialog(playerid,23,DIALOG_STYLE_LIST,"Teleports - Parkour","Parkour Spot 1\nParkour Spot 2\nParkour Spot 3\nParkour Spot 4\nParkour Spot 5\nParkour Spot 6\nParkour Spot 7","Teleport","Back");
 			if(listitem == 4) ShowPlayerDialog(playerid,24,DIALOG_STYLE_LIST,"Teleports - Deathmatch Zones","Zone 1 (On top of building)\nZone 2 (Cargo Boat)\nZone 3\nZone 4\nZone 5 (Construction Site)\nZone 6 (Behind Houses)\nZone 7\nZone 8\nZone 9\n Zone 10","Teleport","Cancel");
 			if(listitem == 5) ShowPlayerDialog(playerid,12,DIALOG_STYLE_LIST,"Stunts List","Twister (By Hitman)\nNrgStunt2 By Hitman\nJump by DeathMaster\nQuarry By DeathMaster\nRafinha\nImpossible Challeges (By GTAFreak)\nTripZenX 1 (easy) (By YenX)\nTripZenX 2 (normal) (By YenX)\nTripZenX 3 (hard) (By YenX)\nBMX parkour By RaveN\nRace Track By RaveN\n","Ok","Cancel");
 			if(listitem == 6) ShowPlayerDialog(playerid,99,DIALOG_STYLE_LIST,"Interiors","{83BFBF}Sex Shop\nZeros RC Shop\nFour Dragons Casino\nCaligulas Casino\nRedsands Casino\nSF Garage\nWoozies Garage\nMichelles House\nGanton Bar\nWoozies House\nWorld of Coq\nGarage\nDJ ROOM\nBlastin Fools Records\nDenise's Room","Teleport","Cancel");
@@ -8184,38 +8189,63 @@ public OnDialogResponse(playerid, dialogid, response, listitem, inputtext[])
 	if(dialogid == 23) // parkour
 	{
 	    if(!response) return ShowPlayerDialog(playerid,20,DIALOG_STYLE_LIST,"Teleports","Airports\nParachuting Spots\nDrift Zones\nParkour Spots","Go","Cancel");
+		// Parkour Dialog
 		if(listitem == 0)
 		{
 			SetPlayerInterior(playerid,0);
-		 	Streamer_UpdateEx(playerid,-2366.8347,1124.8115,65.2344);
-		  	GotoPosition(playerid,-2366.8347,1124.8115,65.2344,true);
+		 	Streamer_UpdateEx(playerid,1172.6533,-2063.4160,432.7214);
+		  	GotoPosition(playerid,1172.6533,-2063.4160,432.7214,true);
 		   	GameTextForPlayer(playerid,"~w~Parkour",500,1);
 		}
 
 		if(listitem == 1)
 		{
 			SetPlayerInterior(playerid,0);
-		 	Streamer_UpdateEx(playerid,-2431.5259,1244.9174,41.9446);
-		  	GotoPosition(playerid,-2431.5259,1244.9174,41.9446,true);
+		 	Streamer_UpdateEx(playerid,2056.1323,2370.8943,150.4766);
+		  	GotoPosition(playerid,2056.1323,2370.8943,150.4766,true);
 		   	GameTextForPlayer(playerid,"~w~Parkour",500,1);
 		}
 
 		if(listitem == 2)
 		{
 			SetPlayerInterior(playerid,0);
-		 	Streamer_UpdateEx(playerid,-2782.9182,26.4002,13.9262);
-		  	GotoPosition(playerid,-2782.9182,26.4002,13.9262,true);
+		 	Streamer_UpdateEx(playerid,1543.4668,-1358.5482,329.4654);
+		  	GotoPosition(playerid,1543.4668,-1358.5482,329.4654,true);
 		   	GameTextForPlayer(playerid,"~w~Parkour",500,1);
 		}
 
 		if(listitem == 3)
 		{
 			SetPlayerInterior(playerid,0);
-		 	Streamer_UpdateEx(playerid,1835.3306,-1995.4010,18.8867);
-		  	GotoPosition(playerid,1835.3306,-1995.4010,18.8867,true);
+		 	Streamer_UpdateEx(playerid,-2366.8347,1124.8115,65.2344);
+		  	GotoPosition(playerid,-2366.8347,1124.8115,65.2344,true);
 		   	GameTextForPlayer(playerid,"~w~Parkour",500,1);
 		}
+		
+		if(listitem == 4)
+		{
+			SetPlayerInterior(playerid,0);
+		 	Streamer_UpdateEx(playerid,-2431.5259,1244.9174,41.9446);
+		  	GotoPosition(playerid,-2431.5259,1244.9174,41.9446,true);			
+			GameTextForPlayer(playerid,"~w~Parkour",500,1);
+		}
+		
+		if(listitem == 5)
+		{
+			SetPlayerInterior(playerid,0);
+		 	Streamer_UpdateEx(playerid,-2782.9182,26.4002,13.9262);
+		  	GotoPosition(playerid,-2782.9182,26.4002,13.9262,true);
+		   	GameTextForPlayer(playerid,"~w~Parkour",500,1);			
+		}
 
+		if(listitem == 6)
+		{
+			SetPlayerInterior(playerid,0);
+		 	Streamer_UpdateEx(playerid,1835.3306,-1995.4010,18.8867);
+		  	GotoPosition(playerid,1835.3306,-1995.4010,18.8867,true);
+		   	GameTextForPlayer(playerid,"~w~Parkour",500,1);			
+		}
+		
 	}
 
 	if(dialogid == 22) // paraspots
@@ -8257,6 +8287,13 @@ public OnDialogResponse(playerid, dialogid, response, listitem, inputtext[])
 			SetPlayerInterior(playerid,0);
 	  		GotoPosition(playerid,2269.0205,1669.6494,94.9219,true);
 	   		GameTextForPlayer(playerid,"~w~Parachute~n~Jump",500,1);
+		}
+		if(listitem == 5)
+		{
+			SetPlayerInterior(playerid,0);
+			SetPlayerFacingAngle(playerid,72.6498);
+		  	GotoPosition(playerid,1968.0500,1915.9108,130.9375,true);
+		   	GameTextForPlayer(playerid,"~w~Parachute~n~Jump",500,1);			
 		}
 		return 1;
 	}
@@ -12358,6 +12395,23 @@ IsValidDBWeapon(dbw)
 	    case 28,25,32: return true;
 	}
 	return false;
+}
+
+DCMD:lastban(user, channel,params[])
+{
+	mysql_query(SQL,"SELECT * FROM bans WHERE banID=(SELECT max(banID) from bans)");
+	new data[6][50];
+	if(cache_num_rows() > 0)
+	{
+		cache_get_value_name(0,"Username",data[0]);
+		cache_get_value_name(0,"Reason",data[1]);
+		cache_get_value_name(0,"AdminName",data[2]);
+		cache_get_value_name(0,"IPAddress",data[3]);
+		cache_get_value_name(0,"DateBanned",data[4]);
+		format(xstring, sizeof xstring,"**User:** %s **Admin:** %s **Reason:** %s",data[1],data[3],data[2]);
+		DCC_SendChannelMessage(channel, xstring);
+	}   else DCC_SendChannelMessage(channel,"No records found");
+	return 1;
 }
 
 
@@ -16561,6 +16615,13 @@ CMD:omfg(playerid,params[])
 	return 1;
 }
 
+CMD:fuckme(playerid,params[])
+{
+	format(xstring, sizeof xstring, "%p (ID:%d) Says: Fuck me!", playerid,playerid);
+	SendClientMessageToAll(COLOR_YELLOW,xstring);
+	return 1;
+}
+
 CMD:scratch(playerid,params[])
 {
 	format(xstring, sizeof xstring, "%p (ID:%d) Scratchestheirnuts. ;)", playerid,playerid);
@@ -18633,16 +18694,6 @@ CMD:club(playerid,params[])
 	return 1;
 }
 
-CMD:sws(playerid,params[])
-{
-	if(Players[playerid][Minigame] != 0) return SendClientMessage(playerid,COLOR_RED,"You cannot use commands in minigames (or in jail)");
-	SetPlayerInterior(playerid,0);
-	SetPlayerVirtualWorld(playerid,0);
-	GotoPosition(playerid,2322.7217,-1382.6199,675.5093,true);
- 	GameTextForPlayer(playerid,"SideWayz~n~ Stunt",500,1);
-	return 1;
-}
-
 CMD:twister(playerid,params[])
 {
 	if(Players[playerid][Minigame] != 0) return SendClientMessage(playerid,COLOR_RED,"You cannot use commands in minigames (or in jail)");
@@ -18657,8 +18708,9 @@ CMD:loopstunt(playerid,params[])
 {
 	if(Players[playerid][Minigame] != 0) return SendClientMessage(playerid,COLOR_RED,"You cannot use commands in minigames (or in jail)");
 	SetPlayerInterior(playerid,0);
- 	Streamer_UpdateEx(playerid,1459.8020,1798.4170,10.8125);
-  	GotoPosition(playerid,1459.8020,1798.4170,10.8125,true);
+	SetPlayerFacingAngle(playerid,347.3936);
+ 	Streamer_UpdateEx(playerid,1472.7451,1752.8064,10.5396);
+  	GotoPosition(playerid,1472.7451,1752.8064,10.5396,true);
    	GameTextForPlayer(playerid,"~g~ LoopStunt By ~n~Dollar",500,3);
    	return 1;
 }
@@ -18683,6 +18735,18 @@ CMD:quarry(playerid,params[])
  	Streamer_UpdateEx(playerid,814.360473,844.586486, 10.255514);
   	GotoPosition(playerid,814.360473,844.586486, 10.255514,true);
    	GameTextForPlayer(playerid,"~w~QuarryStunt~n~By [SG]DeathMaster",500,1);
+	return 1;
+}
+
+CMD:parajumps(playerid,params[])
+{
+	ShowPlayerDialog(playerid,22,DIALOG_STYLE_LIST,"Teleports - Parachuting","Parachute Jump Spot 1\nParachute Jump Spot 2\nParachute Jump Spot 3\nParachute Jump Spot 4\nParachute Jump Spot 5\nParachute Jump Spot 6","Teleport","Back");
+	return 1;	
+}
+
+CMD:parkour(playerid,params[])
+{
+	ShowPlayerDialog(playerid,23,DIALOG_STYLE_LIST,"Teleports - Parkour","Parkour Spot 1\nParkour Spot 2\nParkour Spot 3\nParkour Spot 4\nParkour Spot 5\nParkour Spot 6\nParkour Spot 7","Teleport","Back");	
 	return 1;
 }
 
@@ -18770,6 +18834,17 @@ CMD:parajump5(playerid,params[])
 	if(Players[playerid][Minigame] != 0) return SendClientMessage(playerid,COLOR_RED,"You cannot use commands in minigames (or in jail)");
 	SetPlayerInterior(playerid,0);
   	GotoPosition(playerid,2269.0205,1669.6494,94.9219,true);
+   	GameTextForPlayer(playerid,"~w~Parachute~n~Jump",500,1);
+	return 1;
+}
+
+
+CMD:parajump6(playerid,params[])
+{
+	if(Players[playerid][Minigame] != 0) return SendClientMessage(playerid,COLOR_RED,"You cannot use commands in minigames (or in jail)");
+	SetPlayerInterior(playerid,0);
+	SetPlayerFacingAngle(playerid,72.6498);
+  	GotoPosition(playerid,1968.0500,1915.9108,130.9375,true);
    	GameTextForPlayer(playerid,"~w~Parachute~n~Jump",500,1);
 	return 1;
 }
@@ -18983,6 +19058,39 @@ CMD:dmzone10(playerid,params)
 	GameTextForPlayer(playerid,"~G~Deathmatch~n~Zone 10",800,3);
 	return 1;
 }
+
+
+CMD:pershing(playerid,params[])
+{
+    if(Players[playerid][Minigame] != 0) return SendClientMessage(playerid,COLOR_RED,"You cannot use commands in minigames (or in jail)");
+	SetPlayerInterior(playerid,0);
+	switch(random(2))
+	{
+		case 0:
+		{
+			Streamer_UpdateEx(playerid,1461.0614,-1636.5927,14.0469);
+			SetPlayerFacingAngle(playerid,190.4465);
+			GotoPosition(playerid,1461.0614,-1636.5927,14.0469,true);
+		}
+		case 1:
+		{
+			Streamer_UpdateEx(playerid,1469.2418,-1677.0223,14.0469);
+			SetPlayerFacingAngle(playerid,214.2600);
+			GotoPosition(playerid,1469.2418,-1677.0223,14.0469,true);
+		}
+		case 2:
+		{
+			Streamer_UpdateEx(playerid,1497.5476,-1656.4945,14.0469);
+			SetPlayerFacingAngle(playerid,44.7684);
+			GotoPosition(playerid,1497.5476,-1656.4945,14.0469,true);
+		}
+	}
+ 	GameTextForPlayer(playerid,"~w~Pershing Square",500,3);
+ 	format(xstring, sizeof(xstring),"Player %p (ID:%d) teleported to Pershing Square (/pershing)",playerid,playerid);
+	SendTeleMessageToAdmins(COLOR_YELLOW,2,xstring);
+ 	return 1;
+}
+
 
 CMD:glenpark(playerid,params[])
 {
@@ -19370,6 +19478,8 @@ CMD:pirateship(playerid,params[])
 	SetPlayerInterior(playerid,0);
  	GotoPosition(playerid,2002.8772,1544.4443,13.5859,true);
   	GameTextForPlayer(playerid,"~g~Pirate's Ship",500,1);
+ 	format(xstring, sizeof(xstring),"Player %p (ID:%d) teleported to Pirate Ship (/pirateship)",playerid,playerid);
+	SendTeleMessageToAdmins(COLOR_YELLOW,2,xstring);
   	return 1;
 }
 CMD:underbase(playerid,params[])
@@ -19640,6 +19750,8 @@ CMD:assa(playerid,params[])
 	SetPlayerInterior(playerid,0);
  	GotoPosition(playerid,1288.4052,2530.3147,10.8203,true);
   	GameTextForPlayer(playerid,"~y~ Assa's ~g~House",500,4);
+ 	format(xstring, sizeof(xstring),"Player %p (ID:%d) teleported to /assa",playerid,playerid);
+	SendTeleMessageToAdmins(COLOR_YELLOW,2,xstring);
 	return 1;
 }
 
@@ -19649,6 +19761,8 @@ CMD:john(playerid,params[])
 	SetPlayerInterior(playerid,0);
  	GotoPosition(playerid,1330.1964,-625.7343,109.1349,true);
   	GameTextForPlayer(playerid,"~y~ john shepherds ~g~House",500,4);
+ 	format(xstring, sizeof(xstring),"Player %p (ID:%d) teleported to /john",playerid,playerid);
+	SendTeleMessageToAdmins(COLOR_YELLOW,2,xstring);
   	return 1;
 }
 
@@ -19658,6 +19772,8 @@ CMD:reham(playerid,params[])
 	SetPlayerInterior(playerid,0);
  	GotoPosition(playerid,-1504.54,1374.83,3.98,true);
   	GameTextForPlayer(playerid,"~y~ Reham ~g~Island",500,4);
+ 	format(xstring, sizeof(xstring),"Player %p (ID:%d) teleported to /reham",playerid,playerid);
+	SendTeleMessageToAdmins(COLOR_YELLOW,2,xstring);
   	return 1;
 }
 CMD:woa(playerid,params[])
@@ -19666,6 +19782,8 @@ CMD:woa(playerid,params[])
 	SetPlayerInterior(playerid,0);
  	GotoPosition(playerid,-2590.6575,165.6867,4.3281,true);
   	GameTextForPlayer(playerid,"~y~ The Wizard~n~Of ~g~Ass",500,4);
+ 	format(xstring, sizeof(xstring),"Player %p (ID:%d) teleported to /woa",playerid,playerid);
+	SendTeleMessageToAdmins(COLOR_YELLOW,2,xstring);
   	return 1;
 }
 
@@ -19852,9 +19970,7 @@ CMD:jayce(playerid,params[])
 	return 1;
 }
 
-
-
-/*CMD:punker(playerid,params[])
+CMD:punker(playerid,params[])
 {
 	if(Players[playerid][Minigame] != 0) return SendClientMessage(playerid,COLOR_RED,"You cannot use commands in minigames (or in jail)");
 	SetPlayerInterior(playerid,0);
@@ -19863,13 +19979,13 @@ CMD:jayce(playerid,params[])
 	Streamer_Update(playerid);
 	return 1;
 }
-*/
+
 CMD:saloun(playerid,params[])
 {
 	if(Players[playerid][Minigame] != 0) return SendClientMessage(playerid,COLOR_RED,"You cannot use commands in minigames (or in jail)");
 	SetPlayerInterior(playerid,0);
- 	GotoPosition(playerid,1138.5747,-2037.8699,69.0078,true);
- 	SetPlayerFacingAngle(playerid,66.3551);
+ 	GotoPosition(playerid,1143.8182,-2037.0565,68.7349,true);
+ 	SetPlayerFacingAngle(playerid,88.8299);
   	GameTextForPlayer(playerid,"~n~~n~~g~ Saloun's Mansion",500,4);
 	Streamer_Update(playerid);
 	format(xstring, sizeof(xstring),"Player %p (ID:%d) teleported to Saloun's Mansion (/saloun)",playerid,playerid);
@@ -19906,6 +20022,8 @@ CMD:peckers(playerid,params[])
  	SetPlayerInterior(playerid,0);
  	SetPlayerFacingAngle(playerid, 336.9672);
   	GotoPosition(playerid,-252.9883,2621.7688,62.9103,true);
+ 	format(xstring, sizeof(xstring),"Player %p (ID:%d) teleported to /peckers",playerid,playerid);
+	SendTeleMessageToAdmins(COLOR_YELLOW,2,xstring);
 	return 1;
 }
 
@@ -20181,6 +20299,19 @@ CMD:restaurant(playerid,params[])
   	return 1;
 }
 
+CMD:cjshouse(playerid,params[])
+{
+   	if(Players[playerid][Minigame] != 0) return SendClientMessage(playerid,COLOR_RED,"You cannot use commands in minigames (or in jail)");
+	SetPlayerInterior(playerid,3);
+	SetPlayerFacingAngle(playerid,180.0000);
+ 	GotoPosition(playerid,2496.0500,-1695.9155,1014.7422,true);
+  	GameTextForPlayer(playerid,"~w~CJ's House",500,1);
+  	
+	format(xstring, sizeof(xstring),"Player %p (ID:%d) teleported to /cjshouse",playerid,playerid);
+	SendTeleMessageToAdmins(COLOR_YELLOW,2,xstring);
+  	return 1;
+}
+
 CMD:sweets(playerid,params[])
 {
    	if(Players[playerid][Minigame] != 0) return SendClientMessage(playerid,COLOR_RED,"You cannot use commands in minigames (or in jail)");
@@ -20449,25 +20580,6 @@ CMD:icode(playerid,params[])
   	
 	format(xstring, sizeof(xstring),"Player %p (ID:%d) teleported to /icode",playerid,playerid);
 	SendTeleMessageToAdmins(COLOR_YELLOW,2,xstring);
-  	return 1;
-}
-
-
-CMD:launcher(playerid,params[])
-{
-	if(!IsPlayerInAnyVehicle(playerid)) return SendClientMessage(playerid,COLOR_RED,"Get in a vehicle first!");
-   	if(Players[playerid][Minigame] != 0) return SendClientMessage(playerid,COLOR_RED,"You cannot use commands in minigames (or in jail)");
-	SetPlayerInterior(playerid,0);
-	Streamer_UpdateEx(playerid,-4135.7363,1099.2023,63.2553);
-	SetPlayerFacingAngle(playerid,0.2533);
- 	GotoPosition(playerid,-4135.7363,1099.2023,63.2556,true);
-  	GameTextForPlayer(playerid,"~b~launcher",500,1);
-  	new Float:vx, Float:vy, Float:vz;
-	GetVehicleVelocity(GetPlayerVehicleID(playerid), vx, vy, vz);
-	if (floatabs(vx) < 3 && floatabs(vy) < 3 && floatabs(vz) < 3)
-	{
-		SetVehicleVelocity(GetPlayerVehicleID(playerid), vx * SpeedBoostMultiplier[playerid], vy * SpeedBoostMultiplier[playerid], vz * SpeedBoostMultiplier[playerid]);
-	}
   	return 1;
 }
 
@@ -30339,6 +30451,42 @@ CMD:unbanlast(playerid,params[])
 	return 1;
 }
 
+CMD:banip(playerid,params[])
+{
+	if(IsPlayerAdminLevel(playerid,6))
+	{
+		new rsn[15],nm[20],ip[16];
+	   	if(sscanf(params, "s[16]s[20]s[15]",ip,nm,rsn)) return SendClientMessage(playerid,COLOR_RED,"Usage: !banip <IP Address> <Optional: Name> <Optional: Reason>");
+		new str[156];
+ 		format(str, sizeof(str), "SELECT * FROM `bans` WHERE `Username` = '%s'", nm); //Selects the line where the playername is the player
+		mysql_query(SQL,str);
+		if(cache_num_rows() != 0)
+		{ 	// ip banned, show the info.
+		    format(str, sizeof(str), "SELECT * FROM `bans` WHERE `Username` = '%s' AND `IPAddress` = '%s'", nm, ip); //Selects the line where the playername is the player
+			mysql_query(SQL,str);
+			new data[5][50]; //The data strings
+			if(cache_num_rows() > 0)
+            {
+				cache_get_value_name(0,"Username",data[0]);
+				cache_get_value_name(0,"Reason",data[1]);
+				cache_get_value_name(0,"AdminName",data[2]);
+				cache_get_value_name(0,"IPAddress",data[3]);
+				cache_get_value_name(0,"DateBanned",data[4]);
+				format(str, sizeof str,"%s previously banned by %s for: %s",data[0],data[2],data[1]);
+				SendClientMessage(playerid,COLOR_RED,str);
+				format(str, sizeof str,"IP: %s - Date: %s",data[3],data[4]);
+				SendClientMessage(playerid,COLOR_RED,str);
+			}
+			return 1;
+		}
+		if(!IsIP(ip)) return SendClientMessage(playerid,COLOR_RED,"4That is not a valid IP Address.");
+		format(str, sizeof(str), "INSERT INTO `bans` (`Username`, `Reason`, `AdminName`, `DateBanned`, `IPAddress`) VALUES ('%s', '%s', '%p', 'CURDATE()', '%s')", nm, rsn, playerid, ip); //Insert string
+ 		mysql_query(SQL,str);
+        SendClientMessage(playerid,COLOR_RED,"IP Banned");
+	}
+	return 1;	
+}
+
 CMD:wash(playerid,params[]) return cmd_washplayer(playerid,params);
 CMD:washplayer(playerid,params[])
 {
@@ -37322,6 +37470,9 @@ stock CreateSentence(playerid,const text[], Float:x, Float:y, Float:z, Float:rZa
 forward BuildObjects();
 public BuildObjects()
 {
+	
+	// Racetrack Map 2
+	
 
 	// DRIFTCITY COLDx
 	CreateDynamicObject(7220, 1713.3438720703, -2501.5166015625, 45.469245910645, 0.000000, 0.000000, 105.56500244141); //

@@ -2166,7 +2166,7 @@
 			<referrer name="Iter_YieldReturn"/>
 			<library>y_emit</library>  <remarks>  The JIT plugin address translation register value for use in <c>LCTRL</c>  and <c>SCTRL</c>.  </remarks> 
 		</member>
-		<member name="C:__line" value="51728">
+		<member name="C:__line" value="51879">
 			<referrer name="cmd_version"/>
 			<referrer name="cmd_dsbfp"/>
 			<referrer name="cmd_egmfp"/>
@@ -2406,6 +2406,7 @@
 			<referrer name="cmd_kick"/>
 			<referrer name="cmd_unmute"/>
 			<referrer name="cmd_mute"/>
+			<referrer name="cmd_banip"/>
 			<referrer name="cmd_washplayer"/>
 			<referrer name="cmd_ban"/>
 			<referrer name="cmd_givejp"/>
@@ -3365,7 +3366,6 @@
 			<referrer name="cmd_tf"/>
 			<referrer name="cmd_lowrider"/>
 			<referrer name="cmd_waa"/>
-			<referrer name="cmd_sws"/>
 			<referrer name="cmd_twister"/>
 			<referrer name="cmd_loopstunt"/>
 			<referrer name="cmd_jump"/>
@@ -3378,6 +3378,7 @@
 			<referrer name="cmd_parajump2"/>
 			<referrer name="cmd_parajump4"/>
 			<referrer name="cmd_parajump5"/>
+			<referrer name="cmd_parajump6"/>
 			<referrer name="cmd_dmzone1"/>
 			<referrer name="cmd_dmzone2"/>
 			<referrer name="cmd_dmzone3"/>
@@ -3388,6 +3389,7 @@
 			<referrer name="cmd_dmzone8"/>
 			<referrer name="cmd_dmzone9"/>
 			<referrer name="cmd_dmzone10"/>
+			<referrer name="cmd_pershing"/>
 			<referrer name="cmd_glenpark"/>
 			<referrer name="cmd_sfa"/>
 			<referrer name="cmd_forcesfa"/>
@@ -3454,6 +3456,7 @@
 			<referrer name="cmd_east"/>
 			<referrer name="cmd_cvondz"/>
 			<referrer name="cmd_jayce"/>
+			<referrer name="cmd_punker"/>
 			<referrer name="cmd_saloun"/>
 			<referrer name="cmd_mehdi"/>
 			<referrer name="cmd_datower"/>
@@ -3484,6 +3487,7 @@
 			<referrer name="cmd_janitor"/>
 			<referrer name="cmd_woozie"/>
 			<referrer name="cmd_restaurant"/>
+			<referrer name="cmd_cjshouse"/>
 			<referrer name="cmd_sweets"/>
 			<referrer name="cmd_dam"/>
 			<referrer name="cmd_donuts"/>
@@ -3510,7 +3514,6 @@
 			<referrer name="cmd_beach2"/>
 			<referrer name="cmd_reefy"/>
 			<referrer name="cmd_icode"/>
-			<referrer name="cmd_launcher"/>
 			<referrer name="cmd_ask"/>
 			<referrer name="cmd_cars"/>
 			<referrer name="cmd_bikes"/>
@@ -5113,7 +5116,6 @@
 			<referrer name="cmd_lowrider"/>
 			<referrer name="cmd_waa"/>
 			<referrer name="cmd_club"/>
-			<referrer name="cmd_sws"/>
 			<referrer name="cmd_twister"/>
 			<referrer name="cmd_loopstunt"/>
 			<referrer name="cmd_jump"/>
@@ -5127,6 +5129,7 @@
 			<referrer name="cmd_parajump3"/>
 			<referrer name="cmd_parajump4"/>
 			<referrer name="cmd_parajump5"/>
+			<referrer name="cmd_parajump6"/>
 			<referrer name="cmd_dmzone1"/>
 			<referrer name="cmd_dmzone2"/>
 			<referrer name="cmd_dmzone3"/>
@@ -5137,6 +5140,7 @@
 			<referrer name="cmd_dmzone8"/>
 			<referrer name="cmd_dmzone9"/>
 			<referrer name="cmd_dmzone10"/>
+			<referrer name="cmd_pershing"/>
 			<referrer name="cmd_glenpark"/>
 			<referrer name="cmd_sfa"/>
 			<referrer name="cmd_forcesfa"/>
@@ -5202,6 +5206,7 @@
 			<referrer name="cmd_east"/>
 			<referrer name="cmd_cvondz"/>
 			<referrer name="cmd_jayce"/>
+			<referrer name="cmd_punker"/>
 			<referrer name="cmd_saloun"/>
 			<referrer name="cmd_mehdi"/>
 			<referrer name="cmd_datower"/>
@@ -5231,6 +5236,7 @@
 			<referrer name="cmd_janitor"/>
 			<referrer name="cmd_woozie"/>
 			<referrer name="cmd_restaurant"/>
+			<referrer name="cmd_cjshouse"/>
 			<referrer name="cmd_sweets"/>
 			<referrer name="cmd_dam"/>
 			<referrer name="cmd_donuts"/>
@@ -5257,7 +5263,6 @@
 			<referrer name="cmd_beach2"/>
 			<referrer name="cmd_reefy"/>
 			<referrer name="cmd_icode"/>
-			<referrer name="cmd_launcher"/>
 			<referrer name="cmd_teles"/>
 			<referrer name="cmd_teles2"/>
 			<referrer name="cmd_ask"/>
@@ -5794,6 +5799,7 @@
 			<referrer name="SaveKeys"/>
 			<referrer name="SaveSettings"/>
 			<referrer name="Save"/>
+			<referrer name="DCMD_lastban"/>
 			<referrer name="DCMD_stats"/>
 			<referrer name="cmd_setpropbuyable"/>
 			<referrer name="cmd_buy"/>
@@ -5850,6 +5856,7 @@
 			<referrer name="cmd_setname"/>
 			<referrer name="cmd_kick"/>
 			<referrer name="cmd_unbanlast"/>
+			<referrer name="cmd_banip"/>
 			<referrer name="cmd_updateraceangle"/>
 			<referrer name="cmd_deleterace"/>
 			<referrer name="cmd_undeleterace"/>
@@ -6023,7 +6030,6 @@
 			<referrer name="MP_OPC"/>
 			<referrer name="OnPlayerKeyStateChange"/>
 			<referrer name="cmd_ssb"/>
-			<referrer name="cmd_launcher"/>
 		</member>
 		<member name="F:Streamer_IncludeFileVersion">
 			<attribute name="public"/>
@@ -7221,6 +7227,7 @@
 			<referrer name="cmd_kick"/>
 			<referrer name="cmd_unmute"/>
 			<referrer name="cmd_mute"/>
+			<referrer name="cmd_banip"/>
 			<referrer name="cmd_washplayer"/>
 			<referrer name="cmd_ban"/>
 			<referrer name="cmd_givejp"/>
@@ -7833,6 +7840,7 @@
 			<referrer name="Save"/>
 			<referrer name="Iter_OnRconLoginAttempt"/>
 			<referrer name="IPInfoDB_Connect"/>
+			<referrer name="DCMD_lastban"/>
 			<referrer name="DCMD_stats"/>
 			<referrer name="DCMD_uptime"/>
 			<referrer name="cmd_uptime"/>
@@ -7888,6 +7896,7 @@
 			<referrer name="cmd_poop"/>
 			<referrer name="cmd_cheese"/>
 			<referrer name="cmd_omfg"/>
+			<referrer name="cmd_fuckme"/>
 			<referrer name="cmd_scratch"/>
 			<referrer name="cmd_fart"/>
 			<referrer name="cmd_allbugged"/>
@@ -7925,6 +7934,7 @@
 			<referrer name="cmd_lva"/>
 			<referrer name="cmd_lsa"/>
 			<referrer name="cmd_beach"/>
+			<referrer name="cmd_pershing"/>
 			<referrer name="cmd_glenpark"/>
 			<referrer name="cmd_sfa"/>
 			<referrer name="cmd_island"/>
@@ -7933,11 +7943,16 @@
 			<referrer name="cmd_grove"/>
 			<referrer name="cmd_underbridge"/>
 			<referrer name="cmd_carmods"/>
+			<referrer name="cmd_pirateship"/>
 			<referrer name="cmd_ufo"/>
 			<referrer name="cmd_playpen"/>
 			<referrer name="cmd_bar"/>
 			<referrer name="cmd_casino"/>
 			<referrer name="cmd_panzehir"/>
+			<referrer name="cmd_assa"/>
+			<referrer name="cmd_john"/>
+			<referrer name="cmd_reham"/>
+			<referrer name="cmd_woa"/>
 			<referrer name="cmd_police"/>
 			<referrer name="cmd_kjj"/>
 			<referrer name="cmd_maludadisco"/>
@@ -7951,6 +7966,7 @@
 			<referrer name="cmd_jayce"/>
 			<referrer name="cmd_saloun"/>
 			<referrer name="cmd_mehdi"/>
+			<referrer name="cmd_peckers"/>
 			<referrer name="cmd_city"/>
 			<referrer name="cmd_city2"/>
 			<referrer name="cmd_city3"/>
@@ -7958,6 +7974,7 @@
 			<referrer name="cmd_city5"/>
 			<referrer name="cmd_disco"/>
 			<referrer name="cmd_factory"/>
+			<referrer name="cmd_cjshouse"/>
 			<referrer name="cmd_sweets"/>
 			<referrer name="cmd_icode"/>
 			<referrer name="cmd_ask"/>
@@ -8702,7 +8719,6 @@
 			<referrer name="GetPlayerClosestStreamedObject"/>
 			<referrer name="GetPlayerClosestPlayer"/>
 			<referrer name="OnPlayerKeyStateChange"/>
-			<referrer name="cmd_launcher"/>
 			<referrer name="IsPointInRangeOfPoint"/>
 			<referrer name="ReturnTime"/>
 			<referrer name="GetXYInFrontOfPlayer"/>
@@ -9076,7 +9092,6 @@
 			<tagname value="bool"/>
 			<stacksize value="4"/>
 			<referrer name="OnPlayerKeyStateChange"/>
-			<referrer name="cmd_launcher"/>
 			<referrer name="AngleToPoint"/>
 			<referrer name="_B@Action"/>
 			<dependency name="float"/>
@@ -14130,6 +14145,7 @@
 			<referrer name="OnPlayerFloodControl"/>
 			<referrer name="Anticheat_Update"/>
 			<referrer name="IPInfoDB_Connect"/>
+			<referrer name="DCMD_lastban"/>
 			<referrer name="DCMD_players"/>
 			<referrer name="DCMD_stats"/>
 			<referrer name="DCMD_uptime"/>
@@ -14179,6 +14195,26 @@
 			<tagname value="DCC_Message"/>
 			<stacksize value="1"/>
 			<dependency name="g_DCMDMessageID"/>
+		</member>
+		<member name="M:DCMD_lastban" syntax="DCMD_lastban(user, channel, params[])">
+			<attribute name="public"/>
+			<stacksize value="315"/>
+			<dependency name="DCC_SendChannelMessage"/>
+			<dependency name="SQL"/>
+			<dependency name="cache_get_value_name"/>
+			<dependency name="cache_num_rows"/>
+			<dependency name="formatex"/>
+			<dependency name="mysql_query"/>
+			<dependency name="xstring"/>
+			<param name="user">
+				<paraminfo>DCC_User </paraminfo>
+			</param>
+			<param name="channel">
+				<paraminfo>DCC_Channel </paraminfo>
+			</param>
+			<param name="params">
+				<paraminfo> [] </paraminfo>
+			</param>
 		</member>
 		<member name="M:DCMD_players" syntax="DCMD_players(user, channel, params[])">
 			<attribute name="public"/>
@@ -15832,7 +15868,6 @@
 			<referrer name="cmd_lsajump"/>
 			<referrer name="cmd_beach"/>
 			<referrer name="cmd_club"/>
-			<referrer name="cmd_sws"/>
 			<referrer name="cmd_twister"/>
 			<referrer name="cmd_loopstunt"/>
 			<referrer name="cmd_jump"/>
@@ -15846,6 +15881,7 @@
 			<referrer name="cmd_parajump3"/>
 			<referrer name="cmd_parajump4"/>
 			<referrer name="cmd_parajump5"/>
+			<referrer name="cmd_parajump6"/>
 			<referrer name="cmd_dmzone1"/>
 			<referrer name="cmd_dmzone2"/>
 			<referrer name="cmd_dmzone3"/>
@@ -15856,6 +15892,7 @@
 			<referrer name="cmd_dmzone8"/>
 			<referrer name="cmd_dmzone9"/>
 			<referrer name="cmd_dmzone10"/>
+			<referrer name="cmd_pershing"/>
 			<referrer name="cmd_glenpark"/>
 			<referrer name="cmd_sfa"/>
 			<referrer name="cmd_ph"/>
@@ -15919,6 +15956,7 @@
 			<referrer name="cmd_doshka"/>
 			<referrer name="cmd_cvondz"/>
 			<referrer name="cmd_jayce"/>
+			<referrer name="cmd_punker"/>
 			<referrer name="cmd_saloun"/>
 			<referrer name="cmd_mehdi"/>
 			<referrer name="cmd_nrgstunt2"/>
@@ -15940,6 +15978,7 @@
 			<referrer name="cmd_janitor"/>
 			<referrer name="cmd_woozie"/>
 			<referrer name="cmd_restaurant"/>
+			<referrer name="cmd_cjshouse"/>
 			<referrer name="cmd_sweets"/>
 			<referrer name="cmd_dam"/>
 			<referrer name="cmd_donuts"/>
@@ -15965,7 +16004,6 @@
 			<referrer name="cmd_beach2"/>
 			<referrer name="cmd_reefy"/>
 			<referrer name="cmd_icode"/>
-			<referrer name="cmd_launcher"/>
 			<referrer name="cmd_normalfs"/>
 			<referrer name="cmd_kneehead"/>
 			<referrer name="cmd_kungfu"/>
@@ -17389,7 +17427,6 @@
 			<referrer name="cmd_bb"/>
 			<referrer name="cmd_lock"/>
 			<referrer name="cmd_unlock"/>
-			<referrer name="cmd_launcher"/>
 			<referrer name="cmd_cars"/>
 			<referrer name="cmd_bikes"/>
 			<referrer name="cmd_drift"/>
@@ -17935,7 +17972,6 @@
 			<attribute name="native"/>
 			<referrer name="Vehicle_Speed"/>
 			<referrer name="OnPlayerKeyStateChange"/>
-			<referrer name="cmd_launcher"/>
 			<referrer name="GetPlayerSpeed"/>
 			<referrer name="_B@Action"/>
 			<param name="vehicleid">
@@ -18347,7 +18383,6 @@
 			<referrer name="cmd_lowrider"/>
 			<referrer name="cmd_waa"/>
 			<referrer name="cmd_club"/>
-			<referrer name="cmd_sws"/>
 			<referrer name="cmd_twister"/>
 			<referrer name="cmd_loopstunt"/>
 			<referrer name="cmd_jump"/>
@@ -18360,6 +18395,7 @@
 			<referrer name="cmd_parajump2"/>
 			<referrer name="cmd_parajump4"/>
 			<referrer name="cmd_parajump5"/>
+			<referrer name="cmd_parajump6"/>
 			<referrer name="cmd_dmzone1"/>
 			<referrer name="cmd_dmzone2"/>
 			<referrer name="cmd_dmzone3"/>
@@ -18370,6 +18406,7 @@
 			<referrer name="cmd_dmzone8"/>
 			<referrer name="cmd_dmzone9"/>
 			<referrer name="cmd_dmzone10"/>
+			<referrer name="cmd_pershing"/>
 			<referrer name="cmd_glenpark"/>
 			<referrer name="cmd_sfa"/>
 			<referrer name="cmd_forcesfa"/>
@@ -18436,6 +18473,7 @@
 			<referrer name="cmd_east"/>
 			<referrer name="cmd_cvondz"/>
 			<referrer name="cmd_jayce"/>
+			<referrer name="cmd_punker"/>
 			<referrer name="cmd_saloun"/>
 			<referrer name="cmd_mehdi"/>
 			<referrer name="cmd_datower"/>
@@ -18466,6 +18504,7 @@
 			<referrer name="cmd_janitor"/>
 			<referrer name="cmd_woozie"/>
 			<referrer name="cmd_restaurant"/>
+			<referrer name="cmd_cjshouse"/>
 			<referrer name="cmd_sweets"/>
 			<referrer name="cmd_dam"/>
 			<referrer name="cmd_donuts"/>
@@ -18492,7 +18531,6 @@
 			<referrer name="cmd_beach2"/>
 			<referrer name="cmd_reefy"/>
 			<referrer name="cmd_icode"/>
-			<referrer name="cmd_launcher"/>
 			<referrer name="cmd_joinderby"/>
 			<referrer name="cmd_t"/>
 			<referrer name="cmd_tpos"/>
@@ -19417,6 +19455,7 @@
 		<member name="M:IsIP" syntax="IsIP(str[])">
 			<stacksize value="17"/>
 			<referrer name="OnDialogResponse"/>
+			<referrer name="cmd_banip"/>
 			<dependency name="IsNumeric"/>
 			<dependency name="strlen"/>
 			<dependency name="strmid"/>
@@ -19785,6 +19824,7 @@
 			<referrer name="cmd_dac"/>
 			<referrer name="cmd_rasv"/>
 			<referrer name="cmd_unbanlast"/>
+			<referrer name="cmd_banip"/>
 			<referrer name="cmd_washplayer"/>
 			<referrer name="cmd_ban"/>
 			<referrer name="cmd_givejp"/>
@@ -20175,7 +20215,6 @@
 			<referrer name="cmd_lock"/>
 			<referrer name="cmd_unlock"/>
 			<referrer name="cmd_sumo1"/>
-			<referrer name="cmd_launcher"/>
 			<referrer name="cmd_cars"/>
 			<referrer name="cmd_bikes"/>
 			<referrer name="cmd_loadcar"/>
@@ -28532,6 +28571,7 @@
 			<referrer name="cmd_kick"/>
 			<referrer name="cmd_unmute"/>
 			<referrer name="cmd_mute"/>
+			<referrer name="cmd_banip"/>
 			<referrer name="cmd_washplayer"/>
 			<referrer name="cmd_ban"/>
 			<referrer name="cmd_givejp"/>
@@ -29493,7 +29533,6 @@
 			<referrer name="cmd_lowrider"/>
 			<referrer name="cmd_waa"/>
 			<referrer name="cmd_club"/>
-			<referrer name="cmd_sws"/>
 			<referrer name="cmd_twister"/>
 			<referrer name="cmd_loopstunt"/>
 			<referrer name="cmd_jump"/>
@@ -29507,6 +29546,7 @@
 			<referrer name="cmd_parajump3"/>
 			<referrer name="cmd_parajump4"/>
 			<referrer name="cmd_parajump5"/>
+			<referrer name="cmd_parajump6"/>
 			<referrer name="cmd_dmzone1"/>
 			<referrer name="cmd_dmzone2"/>
 			<referrer name="cmd_dmzone3"/>
@@ -29517,6 +29557,7 @@
 			<referrer name="cmd_dmzone8"/>
 			<referrer name="cmd_dmzone9"/>
 			<referrer name="cmd_dmzone10"/>
+			<referrer name="cmd_pershing"/>
 			<referrer name="cmd_glenpark"/>
 			<referrer name="cmd_sfa"/>
 			<referrer name="cmd_forcesfa"/>
@@ -29585,6 +29626,7 @@
 			<referrer name="cmd_east"/>
 			<referrer name="cmd_cvondz"/>
 			<referrer name="cmd_jayce"/>
+			<referrer name="cmd_punker"/>
 			<referrer name="cmd_saloun"/>
 			<referrer name="cmd_mehdi"/>
 			<referrer name="cmd_datower"/>
@@ -29615,6 +29657,7 @@
 			<referrer name="cmd_janitor"/>
 			<referrer name="cmd_woozie"/>
 			<referrer name="cmd_restaurant"/>
+			<referrer name="cmd_cjshouse"/>
 			<referrer name="cmd_sweets"/>
 			<referrer name="cmd_dam"/>
 			<referrer name="cmd_donuts"/>
@@ -29641,7 +29684,6 @@
 			<referrer name="cmd_beach2"/>
 			<referrer name="cmd_reefy"/>
 			<referrer name="cmd_icode"/>
-			<referrer name="cmd_launcher"/>
 			<referrer name="cmd_teles"/>
 			<referrer name="cmd_teles2"/>
 			<referrer name="cmd_ask"/>
@@ -29946,6 +29988,7 @@
 			<referrer name="cmd_mute"/>
 			<referrer name="cmd_dac"/>
 			<referrer name="cmd_rasv"/>
+			<referrer name="cmd_banip"/>
 			<referrer name="cmd_washplayer"/>
 			<referrer name="cmd_ban"/>
 			<referrer name="cmd_givejp"/>
@@ -30094,6 +30137,7 @@
 			<referrer name="cmd_poop"/>
 			<referrer name="cmd_cheese"/>
 			<referrer name="cmd_omfg"/>
+			<referrer name="cmd_fuckme"/>
 			<referrer name="cmd_scratch"/>
 			<referrer name="cmd_fart"/>
 			<referrer name="cmd_allbugged"/>
@@ -30554,6 +30598,7 @@
 			<referrer name="cmd_lva"/>
 			<referrer name="cmd_lsa"/>
 			<referrer name="cmd_beach"/>
+			<referrer name="cmd_pershing"/>
 			<referrer name="cmd_glenpark"/>
 			<referrer name="cmd_sfa"/>
 			<referrer name="cmd_island"/>
@@ -30562,11 +30607,16 @@
 			<referrer name="cmd_grove"/>
 			<referrer name="cmd_underbridge"/>
 			<referrer name="cmd_carmods"/>
+			<referrer name="cmd_pirateship"/>
 			<referrer name="cmd_ufo"/>
 			<referrer name="cmd_playpen"/>
 			<referrer name="cmd_bar"/>
 			<referrer name="cmd_casino"/>
 			<referrer name="cmd_panzehir"/>
+			<referrer name="cmd_assa"/>
+			<referrer name="cmd_john"/>
+			<referrer name="cmd_reham"/>
+			<referrer name="cmd_woa"/>
 			<referrer name="cmd_police"/>
 			<referrer name="cmd_kjj"/>
 			<referrer name="cmd_maludadisco"/>
@@ -30580,6 +30630,7 @@
 			<referrer name="cmd_jayce"/>
 			<referrer name="cmd_saloun"/>
 			<referrer name="cmd_mehdi"/>
+			<referrer name="cmd_peckers"/>
 			<referrer name="cmd_city"/>
 			<referrer name="cmd_city2"/>
 			<referrer name="cmd_city3"/>
@@ -30587,6 +30638,7 @@
 			<referrer name="cmd_city5"/>
 			<referrer name="cmd_disco"/>
 			<referrer name="cmd_factory"/>
+			<referrer name="cmd_cjshouse"/>
 			<referrer name="cmd_sweets"/>
 			<referrer name="cmd_icode"/>
 			<dependency name="AdminLvl"/>
@@ -31620,6 +31672,9 @@
 			<referrer name="cmd_da"/>
 			<referrer name="cmd_lva"/>
 			<referrer name="cmd_lsa"/>
+			<referrer name="cmd_loopstunt"/>
+			<referrer name="cmd_parajump6"/>
+			<referrer name="cmd_pershing"/>
 			<referrer name="cmd_glenpark"/>
 			<referrer name="cmd_sfa"/>
 			<referrer name="cmd_forcesfa"/>
@@ -31661,6 +31716,7 @@
 			<referrer name="cmd_peckers"/>
 			<referrer name="cmd_ft"/>
 			<referrer name="cmd_drift2"/>
+			<referrer name="cmd_cjshouse"/>
 			<referrer name="cmd_dam"/>
 			<referrer name="cmd_prison"/>
 			<referrer name="cmd_angelpine"/>
@@ -31680,7 +31736,6 @@
 			<referrer name="cmd_beach2"/>
 			<referrer name="cmd_reefy"/>
 			<referrer name="cmd_icode"/>
-			<referrer name="cmd_launcher"/>
 			<referrer name="StartSurvival"/>
 			<referrer name="cmd_startsurvival"/>
 			<referrer name="cmd_joinsurvival"/>
@@ -31850,7 +31905,6 @@
 			<referrer name="cmd_lowrider"/>
 			<referrer name="cmd_waa"/>
 			<referrer name="cmd_club"/>
-			<referrer name="cmd_sws"/>
 			<referrer name="cmd_twister"/>
 			<referrer name="cmd_loopstunt"/>
 			<referrer name="cmd_jump"/>
@@ -31863,6 +31917,7 @@
 			<referrer name="cmd_parajump2"/>
 			<referrer name="cmd_parajump4"/>
 			<referrer name="cmd_parajump5"/>
+			<referrer name="cmd_parajump6"/>
 			<referrer name="cmd_dmzone1"/>
 			<referrer name="cmd_dmzone2"/>
 			<referrer name="cmd_dmzone3"/>
@@ -31873,6 +31928,7 @@
 			<referrer name="cmd_dmzone8"/>
 			<referrer name="cmd_dmzone9"/>
 			<referrer name="cmd_dmzone10"/>
+			<referrer name="cmd_pershing"/>
 			<referrer name="cmd_glenpark"/>
 			<referrer name="cmd_sfa"/>
 			<referrer name="cmd_ph"/>
@@ -31938,6 +31994,7 @@
 			<referrer name="cmd_east"/>
 			<referrer name="cmd_cvondz"/>
 			<referrer name="cmd_jayce"/>
+			<referrer name="cmd_punker"/>
 			<referrer name="cmd_saloun"/>
 			<referrer name="cmd_mehdi"/>
 			<referrer name="cmd_datower"/>
@@ -31961,6 +32018,7 @@
 			<referrer name="cmd_janitor"/>
 			<referrer name="cmd_woozie"/>
 			<referrer name="cmd_restaurant"/>
+			<referrer name="cmd_cjshouse"/>
 			<referrer name="cmd_sweets"/>
 			<referrer name="cmd_dam"/>
 			<referrer name="cmd_donuts"/>
@@ -31970,7 +32028,6 @@
 			<referrer name="cmd_meathouse"/>
 			<referrer name="cmd_prison"/>
 			<referrer name="cmd_school"/>
-			<referrer name="cmd_launcher"/>
 			<referrer name="cmd_startctf"/>
 			<referrer name="CTFTimeout"/>
 			<referrer name="cmd_closectf"/>
@@ -32460,7 +32517,6 @@
 			<referrer name="dmq"/>
 			<referrer name="cmd_leavedm"/>
 			<referrer name="cmd_kill"/>
-			<referrer name="cmd_sws"/>
 			<referrer name="cmd_sumo1"/>
 			<referrer name="cmd_drift"/>
 			<referrer name="cmd_startctf"/>
@@ -32966,7 +33022,6 @@
 			<referrer name="Utils_ChaosMod"/>
 			<referrer name="OnPlayerKeyStateChange"/>
 			<referrer name="cmd_flip"/>
-			<referrer name="cmd_launcher"/>
 			<referrer name="_B@Action"/>
 			<param name="vehicleid">
 				The ID of the vehicle to set the velocity of
@@ -33185,6 +33240,8 @@
 			<referrer name="cmd_afklist"/>
 			<referrer name="cmd_vips"/>
 			<referrer name="cmd_pros"/>
+			<referrer name="cmd_parajumps"/>
+			<referrer name="cmd_parkour"/>
 			<referrer name="cmd_teles"/>
 			<referrer name="cmd_help"/>
 			<referrer name="cmd_imghelp"/>
@@ -33743,6 +33800,7 @@
 			<referrer name="cmd_east"/>
 			<referrer name="cmd_cvondz"/>
 			<referrer name="cmd_jayce"/>
+			<referrer name="cmd_punker"/>
 			<referrer name="cmd_saloun"/>
 			<referrer name="cmd_mehdi"/>
 			<referrer name="cmd_washplayer"/>
@@ -33774,6 +33832,7 @@
 			<referrer name="cmd_parkour7"/>
 			<referrer name="cmd_parajump1"/>
 			<referrer name="cmd_parajump2"/>
+			<referrer name="cmd_pershing"/>
 			<referrer name="cmd_glenpark"/>
 			<referrer name="cmd_sfa"/>
 			<referrer name="cmd_forcesfa"/>
@@ -33801,7 +33860,6 @@
 			<referrer name="cmd_nrgstunt2"/>
 			<referrer name="cmd_driftcity"/>
 			<referrer name="cmd_sumo1"/>
-			<referrer name="cmd_launcher"/>
 			<referrer name="cmd_joinderby"/>
 			<referrer name="cmd_loopobj"/>
 			<referrer name="cmd_loopobj2"/>
@@ -35871,6 +35929,7 @@
 			<referrer name="GetUserIDName"/>
 			<referrer name="Login"/>
 			<referrer name="LoadKeys"/>
+			<referrer name="DCMD_lastban"/>
 			<referrer name="DCMD_stats"/>
 			<referrer name="cmd_joingroup"/>
 			<referrer name="cmd_myradio"/>
@@ -35889,6 +35948,7 @@
 			<referrer name="cmd_bans"/>
 			<referrer name="cmd_moveproxies"/>
 			<referrer name="cmd_unbanlast"/>
+			<referrer name="cmd_banip"/>
 			<referrer name="cmd_tt"/>
 			<referrer name="cmd_top5"/>
 			<referrer name="cmd_top10"/>
@@ -36031,6 +36091,7 @@
 			<referrer name="GetUserIDName"/>
 			<referrer name="Login"/>
 			<referrer name="LoadKeys"/>
+			<referrer name="DCMD_lastban"/>
 			<referrer name="DCMD_stats"/>
 			<referrer name="cmd_joingroup"/>
 			<referrer name="cmd_creategroup"/>
@@ -36077,6 +36138,7 @@
 			<referrer name="cmd_serverstats"/>
 			<referrer name="cmd_setname"/>
 			<referrer name="cmd_unbanlast"/>
+			<referrer name="cmd_banip"/>
 			<referrer name="cmd_updateraceangle"/>
 			<referrer name="cmd_resettime"/>
 			<referrer name="cmd_resetttime"/>
@@ -37206,8 +37268,11 @@
 			<dependency name="Minigame"/>
 			<dependency name="Players"/>
 			<dependency name="SendClientMessage"/>
+			<dependency name="SendTeleMessageToAdmins"/>
 			<dependency name="SetPlayerInterior"/>
+			<dependency name="formatex"/>
 			<dependency name="true"/>
+			<dependency name="xstring"/>
 			<param name="playerid">
 			</param>
 			<param name="params">
@@ -37386,6 +37451,26 @@
 			<referrer name="cmd_band"/>
 			<dependency name="DIALOG_STYLE_LIST"/>
 			<dependency name="ShowPlayerDialog"/>
+			<param name="playerid">
+			</param>
+			<param name="params">
+				<paraminfo> [] </paraminfo>
+			</param>
+		</member>
+		<member name="M:cmd_banip" syntax="cmd_banip(playerid, params[])">
+			<attribute name="public"/>
+			<stacksize value="471"/>
+			<dependency name="IsIP"/>
+			<dependency name="IsPlayerAdminLevel"/>
+			<dependency name="SQL"/>
+			<dependency name="SSCANF__"/>
+			<dependency name="SendClientMessage"/>
+			<dependency name="__file"/>
+			<dependency name="__line"/>
+			<dependency name="cache_get_value_name"/>
+			<dependency name="cache_num_rows"/>
+			<dependency name="formatex"/>
+			<dependency name="mysql_query"/>
 			<param name="playerid">
 			</param>
 			<param name="params">
@@ -39056,6 +39141,26 @@
 			<dependency name="SetPlayerFacingAngle"/>
 			<dependency name="SetPlayerInterior"/>
 			<dependency name="true"/>
+			<param name="playerid">
+			</param>
+			<param name="params">
+				<paraminfo> [] </paraminfo>
+			</param>
+		</member>
+		<member name="M:cmd_cjshouse" syntax="cmd_cjshouse(playerid, params[])">
+			<attribute name="public"/>
+			<stacksize value="8"/>
+			<dependency name="GameTextForPlayer"/>
+			<dependency name="GotoPosition"/>
+			<dependency name="Minigame"/>
+			<dependency name="Players"/>
+			<dependency name="SendClientMessage"/>
+			<dependency name="SendTeleMessageToAdmins"/>
+			<dependency name="SetPlayerFacingAngle"/>
+			<dependency name="SetPlayerInterior"/>
+			<dependency name="formatex"/>
+			<dependency name="true"/>
+			<dependency name="xstring"/>
 			<param name="playerid">
 			</param>
 			<param name="params">
@@ -43316,6 +43421,18 @@
 				<paraminfo> [] </paraminfo>
 			</param>
 		</member>
+		<member name="M:cmd_fuckme" syntax="cmd_fuckme(playerid, params[])">
+			<attribute name="public"/>
+			<stacksize value="8"/>
+			<dependency name="SendClientMessageToAll"/>
+			<dependency name="formatex"/>
+			<dependency name="xstring"/>
+			<param name="playerid">
+			</param>
+			<param name="params">
+				<paraminfo> [] </paraminfo>
+			</param>
+		</member>
 		<member name="M:cmd_funbowl" syntax="cmd_funbowl(playerid, params[])">
 			<attribute name="public"/>
 			<stacksize value="21"/>
@@ -45895,8 +46012,11 @@
 			<dependency name="Minigame"/>
 			<dependency name="Players"/>
 			<dependency name="SendClientMessage"/>
+			<dependency name="SendTeleMessageToAdmins"/>
 			<dependency name="SetPlayerInterior"/>
+			<dependency name="formatex"/>
 			<dependency name="true"/>
+			<dependency name="xstring"/>
 			<param name="playerid">
 			</param>
 			<param name="params">
@@ -46568,32 +46688,6 @@
 			<dependency name="__line"/>
 			<dependency name="formatex"/>
 			<dependency name="xstring"/>
-			<param name="playerid">
-			</param>
-			<param name="params">
-				<paraminfo> [] </paraminfo>
-			</param>
-		</member>
-		<member name="M:cmd_launcher" syntax="cmd_launcher(playerid, params[])">
-			<attribute name="public"/>
-			<stacksize value="11"/>
-			<dependency name="operator*(Float:,Float:)"/>
-			<dependency name="operator&lt;(Float:,_:)"/>
-			<dependency name="GameTextForPlayer"/>
-			<dependency name="GetPlayerVehicleID"/>
-			<dependency name="GetVehicleVelocity"/>
-			<dependency name="GotoPosition"/>
-			<dependency name="IsPlayerInAnyVehicle"/>
-			<dependency name="Minigame"/>
-			<dependency name="Players"/>
-			<dependency name="SendClientMessage"/>
-			<dependency name="SetPlayerFacingAngle"/>
-			<dependency name="SetPlayerInterior"/>
-			<dependency name="SetVehicleVelocity"/>
-			<dependency name="SpeedBoostMultiplier"/>
-			<dependency name="Streamer_UpdateEx"/>
-			<dependency name="floatabs"/>
-			<dependency name="true"/>
 			<param name="playerid">
 			</param>
 			<param name="params">
@@ -47439,6 +47533,7 @@
 			<dependency name="Minigame"/>
 			<dependency name="Players"/>
 			<dependency name="SendClientMessage"/>
+			<dependency name="SetPlayerFacingAngle"/>
 			<dependency name="SetPlayerInterior"/>
 			<dependency name="Streamer_UpdateEx"/>
 			<dependency name="true"/>
@@ -49462,6 +49557,45 @@
 				<paraminfo> [] </paraminfo>
 			</param>
 		</member>
+		<member name="M:cmd_parajump6" syntax="cmd_parajump6(playerid, params[])">
+			<attribute name="public"/>
+			<stacksize value="8"/>
+			<dependency name="GameTextForPlayer"/>
+			<dependency name="GotoPosition"/>
+			<dependency name="Minigame"/>
+			<dependency name="Players"/>
+			<dependency name="SendClientMessage"/>
+			<dependency name="SetPlayerFacingAngle"/>
+			<dependency name="SetPlayerInterior"/>
+			<dependency name="true"/>
+			<param name="playerid">
+			</param>
+			<param name="params">
+				<paraminfo> [] </paraminfo>
+			</param>
+		</member>
+		<member name="M:cmd_parajumps" syntax="cmd_parajumps(playerid, params[])">
+			<attribute name="public"/>
+			<stacksize value="9"/>
+			<dependency name="DIALOG_STYLE_LIST"/>
+			<dependency name="ShowPlayerDialog"/>
+			<param name="playerid">
+			</param>
+			<param name="params">
+				<paraminfo> [] </paraminfo>
+			</param>
+		</member>
+		<member name="M:cmd_parkour" syntax="cmd_parkour(playerid, params[])">
+			<attribute name="public"/>
+			<stacksize value="9"/>
+			<dependency name="DIALOG_STYLE_LIST"/>
+			<dependency name="ShowPlayerDialog"/>
+			<param name="playerid">
+			</param>
+			<param name="params">
+				<paraminfo> [] </paraminfo>
+			</param>
+		</member>
 		<member name="M:cmd_parkour1" syntax="cmd_parkour1(playerid, params[])">
 			<attribute name="public"/>
 			<stacksize value="8"/>
@@ -49589,10 +49723,13 @@
 			<dependency name="Minigame"/>
 			<dependency name="Players"/>
 			<dependency name="SendClientMessage"/>
+			<dependency name="SendTeleMessageToAdmins"/>
 			<dependency name="SetPlayerFacingAngle"/>
 			<dependency name="SetPlayerInterior"/>
 			<dependency name="Streamer_UpdateEx"/>
+			<dependency name="formatex"/>
 			<dependency name="true"/>
+			<dependency name="xstring"/>
 			<param name="playerid">
 			</param>
 			<param name="params">
@@ -49627,6 +49764,28 @@
 			<dependency name="false"/>
 			<dependency name="modelID"/>
 			<dependency name="true"/>
+			<param name="playerid">
+			</param>
+			<param name="params">
+				<paraminfo> [] </paraminfo>
+			</param>
+		</member>
+		<member name="M:cmd_pershing" syntax="cmd_pershing(playerid, params[])">
+			<attribute name="public"/>
+			<stacksize value="11"/>
+			<dependency name="GameTextForPlayer"/>
+			<dependency name="GotoPosition"/>
+			<dependency name="Minigame"/>
+			<dependency name="Players"/>
+			<dependency name="SendClientMessage"/>
+			<dependency name="SendTeleMessageToAdmins"/>
+			<dependency name="SetPlayerFacingAngle"/>
+			<dependency name="SetPlayerInterior"/>
+			<dependency name="Streamer_UpdateEx"/>
+			<dependency name="formatex"/>
+			<dependency name="random"/>
+			<dependency name="true"/>
+			<dependency name="xstring"/>
 			<param name="playerid">
 			</param>
 			<param name="params">
@@ -49736,8 +49895,11 @@
 			<dependency name="Minigame"/>
 			<dependency name="Players"/>
 			<dependency name="SendClientMessage"/>
+			<dependency name="SendTeleMessageToAdmins"/>
 			<dependency name="SetPlayerInterior"/>
+			<dependency name="formatex"/>
 			<dependency name="true"/>
+			<dependency name="xstring"/>
 			<param name="playerid">
 			</param>
 			<param name="params">
@@ -50305,6 +50467,23 @@
 			<dependency name="eXist"/>
 			<dependency name="false"/>
 			<dependency name="modelID"/>
+			<dependency name="true"/>
+			<param name="playerid">
+			</param>
+			<param name="params">
+				<paraminfo> [] </paraminfo>
+			</param>
+		</member>
+		<member name="M:cmd_punker" syntax="cmd_punker(playerid, params[])">
+			<attribute name="public"/>
+			<stacksize value="8"/>
+			<dependency name="GameTextForPlayer"/>
+			<dependency name="GotoPosition"/>
+			<dependency name="Minigame"/>
+			<dependency name="Players"/>
+			<dependency name="SendClientMessage"/>
+			<dependency name="SetPlayerInterior"/>
+			<dependency name="Streamer_Update"/>
 			<dependency name="true"/>
 			<param name="playerid">
 			</param>
@@ -50938,8 +51117,11 @@
 			<dependency name="Minigame"/>
 			<dependency name="Players"/>
 			<dependency name="SendClientMessage"/>
+			<dependency name="SendTeleMessageToAdmins"/>
 			<dependency name="SetPlayerInterior"/>
+			<dependency name="formatex"/>
 			<dependency name="true"/>
+			<dependency name="xstring"/>
 			<param name="playerid">
 			</param>
 			<param name="params">
@@ -54624,23 +54806,6 @@
 				<paraminfo> [] </paraminfo>
 			</param>
 		</member>
-		<member name="M:cmd_sws" syntax="cmd_sws(playerid, params[])">
-			<attribute name="public"/>
-			<stacksize value="8"/>
-			<dependency name="GameTextForPlayer"/>
-			<dependency name="GotoPosition"/>
-			<dependency name="Minigame"/>
-			<dependency name="Players"/>
-			<dependency name="SendClientMessage"/>
-			<dependency name="SetPlayerInterior"/>
-			<dependency name="SetPlayerVirtualWorld"/>
-			<dependency name="true"/>
-			<param name="playerid">
-			</param>
-			<param name="params">
-				<paraminfo> [] </paraminfo>
-			</param>
-		</member>
 		<member name="M:cmd_t" syntax="cmd_t(playerid, params[])">
 			<attribute name="public"/>
 			<stacksize value="33"/>
@@ -56806,8 +56971,11 @@
 			<dependency name="Minigame"/>
 			<dependency name="Players"/>
 			<dependency name="SendClientMessage"/>
+			<dependency name="SendTeleMessageToAdmins"/>
 			<dependency name="SetPlayerInterior"/>
+			<dependency name="formatex"/>
 			<dependency name="true"/>
+			<dependency name="xstring"/>
 			<param name="playerid">
 			</param>
 			<param name="params">
@@ -57237,7 +57405,6 @@
 			<attribute name="native"/>
 			<referrer name="MP_OPC"/>
 			<referrer name="OnPlayerKeyStateChange"/>
-			<referrer name="cmd_launcher"/>
 			<referrer name="AngleToPoint"/>
 			<referrer name="GetPlayerSpeed"/>
 			<referrer name="GetPlayerTheoreticAngle"/>
@@ -57578,6 +57745,7 @@
 			<referrer name="Iter_OnRconLoginAttempt"/>
 			<referrer name="IPInfoDB_Admin"/>
 			<referrer name="IPInfoDB_Connect"/>
+			<referrer name="DCMD_lastban"/>
 			<referrer name="DCMD_players"/>
 			<referrer name="DCMD_stats"/>
 			<referrer name="DCMD_uptime"/>
@@ -57667,6 +57835,7 @@
 			<referrer name="cmd_poop"/>
 			<referrer name="cmd_cheese"/>
 			<referrer name="cmd_omfg"/>
+			<referrer name="cmd_fuckme"/>
 			<referrer name="cmd_scratch"/>
 			<referrer name="cmd_fart"/>
 			<referrer name="cmd_allbugged"/>
@@ -57706,6 +57875,7 @@
 			<referrer name="cmd_lva"/>
 			<referrer name="cmd_lsa"/>
 			<referrer name="cmd_beach"/>
+			<referrer name="cmd_pershing"/>
 			<referrer name="cmd_glenpark"/>
 			<referrer name="cmd_sfa"/>
 			<referrer name="cmd_forcesfa"/>
@@ -57715,11 +57885,16 @@
 			<referrer name="cmd_grove"/>
 			<referrer name="cmd_underbridge"/>
 			<referrer name="cmd_carmods"/>
+			<referrer name="cmd_pirateship"/>
 			<referrer name="cmd_ufo"/>
 			<referrer name="cmd_playpen"/>
 			<referrer name="cmd_bar"/>
 			<referrer name="cmd_casino"/>
 			<referrer name="cmd_panzehir"/>
+			<referrer name="cmd_assa"/>
+			<referrer name="cmd_john"/>
+			<referrer name="cmd_reham"/>
+			<referrer name="cmd_woa"/>
 			<referrer name="cmd_police"/>
 			<referrer name="cmd_kjj"/>
 			<referrer name="cmd_maludadisco"/>
@@ -57733,6 +57908,7 @@
 			<referrer name="cmd_jayce"/>
 			<referrer name="cmd_saloun"/>
 			<referrer name="cmd_mehdi"/>
+			<referrer name="cmd_peckers"/>
 			<referrer name="cmd_city"/>
 			<referrer name="cmd_city2"/>
 			<referrer name="cmd_city3"/>
@@ -57740,6 +57916,7 @@
 			<referrer name="cmd_city5"/>
 			<referrer name="cmd_disco"/>
 			<referrer name="cmd_factory"/>
+			<referrer name="cmd_cjshouse"/>
 			<referrer name="cmd_sweets"/>
 			<referrer name="cmd_icode"/>
 			<referrer name="cmd_ask"/>
@@ -57999,6 +58176,7 @@
 			<referrer name="cmd_dac"/>
 			<referrer name="cmd_rasv"/>
 			<referrer name="cmd_unbanlast"/>
+			<referrer name="cmd_banip"/>
 			<referrer name="cmd_washplayer"/>
 			<referrer name="cmd_ban"/>
 			<referrer name="cmd_givejp"/>
@@ -58874,6 +59052,7 @@
 			<referrer name="SaveKeys"/>
 			<referrer name="SaveSettings"/>
 			<referrer name="Save"/>
+			<referrer name="DCMD_lastban"/>
 			<referrer name="DCMD_stats"/>
 			<referrer name="cmd_setpropbuyable"/>
 			<referrer name="cmd_buy"/>
@@ -58930,6 +59109,7 @@
 			<referrer name="cmd_setname"/>
 			<referrer name="cmd_kick"/>
 			<referrer name="cmd_unbanlast"/>
+			<referrer name="cmd_banip"/>
 			<referrer name="cmd_updateraceangle"/>
 			<referrer name="cmd_deleterace"/>
 			<referrer name="cmd_undeleterace"/>
@@ -59144,6 +59324,7 @@
 			<referrer name="cmd_dmzone8"/>
 			<referrer name="cmd_dmzone9"/>
 			<referrer name="cmd_dmzone10"/>
+			<referrer name="cmd_pershing"/>
 			<referrer name="cmd_glenpark"/>
 			<referrer name="cmd_sfa"/>
 			<referrer name="cmd_forcesfa"/>
